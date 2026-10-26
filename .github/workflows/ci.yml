@@ -39,7 +39,7 @@ jobs:
         run: |
           docker run --detach --name masterenglish-web-ci \
             --publish 127.0.0.1:3000:3000 masterenglish-web:ci
-          trap 'docker logs masterenglish-web-ci; docker rm --force masterenglish-web-ci >/dev/null' EXIT
+          trap 'docker inspect --format "{{json .State}}" masterenglish-web-ci; docker logs masterenglish-web-ci; docker rm --force masterenglish-web-ci >/dev/null' EXIT
           curl --fail --silent --show-error \
-            --retry 15 --retry-connrefused --retry-delay 2 --retry-max-time 45 \
+            --retry 15 --retry-all-errors --retry-delay 2 --retry-max-time 45 \
             --max-time 5 --output /dev/null http://127.0.0.1:3000/
