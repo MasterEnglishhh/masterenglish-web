@@ -32,8 +32,14 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-      - name: Build frontend
-        run: npm run build
-        env:
-          # Used to generate rewrites; the current build does not call the API.
-          BACKEND_URL: http://127.0.0.1:8080
+      - name: Build frontend Docker image
+        run: docker build --build-arg BACKEND_URL=http://api:8080 --tag masterenglish-web:ci .
+
+      - name: Smoke test frontend container
+        run: |
+          docker run --detach --name masterenglish-web-ci \
+            --publish 127.0.0.1:3000:3000 masterenglish-web:ci
+          trap 'docker logs masterenglish-web-ci; docker rm --force masterenglish-web-ci >/dev/null' EXIT
+          curl --fail --silent --show-error \
+            --retry 15 --retry-connrefused --retry-delay 2 --retry-max-time 45 \
+            --max-time 5 --output /dev/null http://127.0.0.1:3000/

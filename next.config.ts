@@ -7,6 +7,7 @@ if (!backendUrl) {
 }
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
 
