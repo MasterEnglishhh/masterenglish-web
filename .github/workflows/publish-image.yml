@@ -1,0 +1,80 @@
+name: Publish frontend image
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Get source code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies from lockfile
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Build Docker image
+        id: image
+        run: |
+          web_image="ghcr.io/${GITHUB_REPOSITORY,,}:sha-${GITHUB_SHA}"
+          docker build \
+            --build-arg BACKEND_URL=http://api:8080 \
+            --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --tag "$web_image" .
+          printf 'image=%s\n' "$web_image" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test frontend container
+        env:
+          WEB_IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          docker run --detach --name masterenglish-web-publish-check \
+            --publish 127.0.0.1:3000:3000 "$WEB_IMAGE"
+          trap 'docker inspect --format "{{json .State}}" masterenglish-web-publish-check; docker logs masterenglish-web-publish-check; docker rm --force masterenglish-web-publish-check >/dev/null' EXIT
+          curl --fail --silent --show-error \
+            --retry 15 --retry-all-errors --retry-delay 2 --retry-max-time 45 \
+            --max-time 5 --output /dev/null http://127.0.0.1:3000/
+
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Push Docker image and record version
+        env:
+          WEB_IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          docker push "$WEB_IMAGE"
+          web_digest_ref="$(docker image inspect --format '{{index .RepoDigests 0}}' "$WEB_IMAGE")"
+          {
+            printf '### Frontend image published\n\n'
+            printf 'Commit: `%s`\n\n' "$GITHUB_SHA"
+            printf 'Image tag: `%s`\n\n' "$WEB_IMAGE"
+            printf 'Deploy by digest: `%s`\n' "$web_digest_ref"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Log out of GHCR
+        if: always()
+        run: docker logout ghcr.io
