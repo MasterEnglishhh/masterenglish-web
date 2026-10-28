@@ -33,7 +33,12 @@ jobs:
         run: npm run lint
 
       - name: Build frontend Docker image
-        run: docker build --build-arg BACKEND_URL=http://api:8080 --tag masterenglish-web:ci .
+        run: |
+          docker build \
+            --build-arg BACKEND_URL=http://api:8080 \
+            --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --tag masterenglish-web:ci .
 
       - name: Smoke test frontend container
         run: |
@@ -43,3 +48,65 @@ jobs:
           curl --fail --silent --show-error \
             --retry 15 --retry-all-errors --retry-delay 2 --retry-max-time 45 \
             --max-time 5 --output /dev/null http://127.0.0.1:3000/
+
+      - name: Save verified Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker save masterenglish-web:ci | gzip > "$RUNNER_TEMP/frontend-image.tar.gz"
+
+      - name: Transfer verified image to publish job
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-image-${{ github.sha }}
+          path: ${{ runner.temp }}/frontend-image.tar.gz
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    name: Publish verified frontend image
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download verified image from this run
+        uses: actions/download-artifact@v8
+        with:
+          name: frontend-image-${{ github.sha }}
+          path: ${{ runner.temp }}/frontend-image
+
+      - name: Load and tag verified image
+        id: image
+        run: |
+          docker load --input "$RUNNER_TEMP/frontend-image/frontend-image.tar.gz"
+          web_image="ghcr.io/${GITHUB_REPOSITORY,,}:sha-${GITHUB_SHA}"
+          docker tag masterenglish-web:ci "$web_image"
+          printf 'image=%s\n' "$web_image" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Push verified image and record version
+        env:
+          WEB_IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          docker push "$WEB_IMAGE"
+          web_digest_ref="$(docker image inspect --format '{{index .RepoDigests 0}}' "$WEB_IMAGE")"
+          {
+            printf '### Frontend image automatically published\n\n'
+            printf 'Commit: `%s`\n\n' "$GITHUB_SHA"
+            printf 'Image tag: `%s`\n\n' "$WEB_IMAGE"
+            printf 'Deploy by digest: `%s`\n' "$web_digest_ref"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Log out of GHCR
+        if: always()
+        run: docker logout ghcr.io

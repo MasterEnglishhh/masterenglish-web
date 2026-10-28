@@ -65,25 +65,36 @@ bước build cần truy cập được dịch vụ font.
 Workflow `Frontend CI` cài dependencies, chạy lint, build Docker image (bên trong
 có bước build Next.js và kiểm tra TypeScript), sau đó khởi động container và gửi
 HTTP request tới `/`. Container kiểm tra được dọn khi bước này kết thúc. Bước
-này chưa kiểm tra luồng frontend gọi API và chưa xuất bản image lên GHCR.
+này chưa kiểm tra luồng frontend gọi API. Khi push `main`, workflow tự xuất bản
+đúng image vừa kiểm tra lên GHCR như bên dưới.
 
 ## Xuất bản image lên GHCR
 
-Sau khi commit cấu hình lên `main`, vào GitHub repo Web, chọn **Actions → Publish
-frontend image → Run workflow**, chọn nhánh **main**, rồi chạy. Workflow chỉ cho
-phép xuất bản từ `main`: chạy lint, build Docker image với
-`BACKEND_URL=http://api:8080`, khởi động image và kiểm tra trang `/` trước khi
-đẩy chính image vừa kiểm tra lên GHCR. Bước build bên trong Docker cũng kiểm tra
-TypeScript. Kiểm tra HTTP có retry cho lỗi kết nối khi ứng dụng đang khởi động;
-nếu vẫn không hoạt động trong thời gian chờ thì workflow thất bại.
+Sau mỗi push lên `main`, **Frontend CI** tự cài dependencies, chạy lint, build
+Docker image với `BACKEND_URL=http://api:8080`, khởi động image và kiểm tra trang
+`/`. Bước build bên trong Docker cũng kiểm tra TypeScript. Kiểm tra HTTP có
+retry cho lỗi kết nối khi ứng dụng đang khởi động; nếu vẫn không hoạt động trong
+thời gian chờ thì workflow thất bại.
+
+Job `publish` chỉ chạy khi job `verify` thành công. Nó nhận nguyên image đã
+kiểm tra trong cùng workflow run qua artifact, không build lại image, rồi đẩy
+lên GHCR. Artifact trung chuyển giữ 1 ngày; image trên GHCR tồn tại độc lập.
+Pull request và lần chạy thủ công **Frontend CI** chỉ kiểm tra/build, không
+xuất bản image.
+
+Không cần bấm Publish sau mỗi push nữa. Workflow **Publish frontend image**
+thủ công vẫn giữ để xuất bản lại từ `main` khi cần. Workflow đó chạy lại lint,
+build và smoke test, nên lần build mới có thể cho digest khác dù cùng commit.
 
 Image có dạng `ghcr.io/masterenglishhh/masterenglish-web:sha-<commit SHA đầy đủ>`.
-Workflow dùng `GITHUB_TOKEN` GitHub tự cấp cùng quyền `packages: write`; không cần
-thêm token hoặc secret cho bước xuất bản này. Label source liên kết package với
-repo Web.
+Job xuất bản dùng `GITHUB_TOKEN` GitHub tự cấp cùng quyền `packages: write`;
+job kiểm tra chỉ có `contents: read`. Không cần thêm token hoặc secret cho bước
+xuất bản này. Label source liên kết package với repo Web.
 
 Trong trang Summary của lượt chạy thành công, lấy dòng **Deploy by digest** dạng
 `ghcr.io/masterenglishhh/masterenglish-web@sha256:...` để cố định đúng nội dung
-image khi triển khai. Image vẫn có tag theo commit để truy vết source. Bước này
-chỉ xuất bản image; cấu hình chạy cùng API và PostgreSQL trên EC2 nằm trong repo
-Infra và được chuẩn bị riêng.
+image khi triển khai. Image vẫn có tag theo commit để truy vết source. Sau khi
+**Frontend CI** xanh, lấy dòng **Deploy by digest** từ Summary của job Publish,
+rồi chọn image này ở workflow **Deploy production** trong repo Infra.
+Production tiếp tục triển khai bằng nút chạy thủ công, không tự cập nhật khi
+push code.
