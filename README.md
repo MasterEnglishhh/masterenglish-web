@@ -1,40 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MasterEnglish Web
 
-## Getting Started
+Nền tảng giao diện Next.js 16.4.3 và React 19.3. Trang chủ ở `/`; không gian học ở `/learn` với các trang Từ vựng (`/learn/vocabulary`), Ôn tập (`/learn/review`), Ngữ pháp (`/learn/grammar`), Luyện TOEIC (`/learn/toeic`), Kết quả (`/learn/results`) và AI Tutor (`/learn/ai-tutor`). Các trang tài khoản gồm `/login`, `/register` và `/forgot-password` (hỗ trợ tự động chuyển hướng từ các route tiếng Việt cũ).
 
-First, run the development server:
+## Cấu trúc mã nguồn
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```text
+src/
+  app/                         Đường dẫn, layout và metadata của Next.js
+  components/                  Thành phần dùng chung: logo, biểu tượng, hiệu ứng
+  features/
+    auth/components/           Giao diện tài khoản
+    auth/hooks/                Trạng thái và kiểm tra biểu mẫu tài khoản
+    auth/types/                Kiểu của luồng tài khoản
+    learning/components/       Điều hướng và bài học mẫu
+    learning/data/             Dữ liệu minh họa cho không gian học
+    learning/hooks/            Luồng lật thẻ và làm câu TOEIC mẫu
+    learning/types/            Kiểu thẻ từ, câu TOEIC và điều hướng
+    marketing/components/      Trang chủ, header và footer
+    marketing/data/            Danh mục trên trang chủ
+    marketing/types/           Kiểu danh mục trang chủ
+  styles/                      CSS nền, trang chủ, học tập, tài khoản, responsive
+public/                        Tài nguyên tĩnh được phục vụ trực tiếp
+demo/                          Bản mẫu HTML độc lập
+docs/                          Tài liệu thiết kế và kế hoạch
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Giữ `src/app` gọn cho các file định tuyến. Thành phần dùng ở nhiều khu vực đặt trong `src/components`; giao diện, hook, dữ liệu và type của từng khu vực đặt trong `src/features`. Hook xử lý trạng thái và hành động của biểu mẫu hoặc bài học mẫu; component hiển thị giao diện. Các mảng dữ liệu minh họa dùng `satisfies` để được kiểm tra type mà vẫn giữ literal type. Type dùng chung toàn ứng dụng chỉ cần thêm khi nhiều tính năng thực sự cùng sử dụng. `src/app/globals.css` nạp Tailwind; các lớp giao diện nằm trong `src/styles` và được nhập theo thứ tự từ `src/app/layout.tsx`. Alias `@/` trỏ tới `src/`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Thẻ từ có hai mặt cố định trong DOM và chuyển giữa hai mặt bằng `rotateY` từ trái sang phải. Nút vẫn dùng được bằng bàn phím; CSS tắt chuyển động khi hệ điều hành bật giảm hiệu ứng.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Cách chia theo tính năng tham khảo [Bulletproof React](https://github.com/alan2207/bulletproof-react/blob/master/docs/project-structure.md); ranh giới server/client và cách tổ chức route theo tài liệu [Next.js](https://nextjs.org/docs/app/getting-started/project-structure) và [React custom hooks](https://react.dev/learn/reusing-logic-with-custom-hooks).
 
-## Learn More
+Chạy local bằng `npm run dev`, mở `http://127.0.0.1:3000`. Chạy `npm run lint`, `npm run test` và `npm run build` trước khi tích hợp thay đổi. Cần đặt `BACKEND_URL` trong `.env.local` để cấu hình rewrite `/api/*` cho biểu mẫu đăng nhập.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
+**Trạng thái bản xem trước:** nội dung thẻ từ, bài ngữ pháp và câu TOEIC là dữ liệu minh họa. Lật thẻ, đánh giá ghi nhớ và xem lời giải chỉ thay đổi trong phiên trình duyệt; không lưu tiến độ hay kết quả. Các trang Ôn tập, Kết quả và AI Tutor hiển thị trạng thái chờ dữ liệu. Biểu mẫu đăng nhập gọi API sau khi lấy mã CSRF; backend hiện chưa có endpoint đăng nhập nên chưa tạo phiên thật. Đăng ký và quên mật khẩu vẫn là giao diện bản xem trước. Phân quyền Learner/Content Admin/System Admin, media thật và các luồng học tập có lưu dữ liệu sẽ được nối với backend ở giai đoạn tiếp theo.
 ## Docker cho triển khai EC2
 
 Chạy từ repo `masterenglish-web`, cần Docker đang hoạt động:
@@ -59,8 +58,7 @@ của frontend như trước.
 
 `.dockerignore` loại `.env*`, private key, Git history và output/dependencies
 trên máy local khỏi build context. Image được build trực tiếp trên Linux, không
-dùng output standalone tạo trên Windows. Ứng dụng hiện dùng Google Fonts nên
-bước build cần truy cập được dịch vụ font.
+dùng output standalone tạo trên Windows.
 
 Workflow `Frontend CI` cài dependencies, chạy lint, build Docker image (bên trong
 có bước build Next.js và kiểm tra TypeScript), sau đó khởi động container và gửi
