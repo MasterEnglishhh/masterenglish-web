@@ -5,7 +5,10 @@ import { getSafeRedirectUrl } from "./redirect.ts";
 test("getSafeRedirectUrl - valid relative paths", () => {
   assert.equal(getSafeRedirectUrl("/learn"), "/learn");
   assert.equal(getSafeRedirectUrl("/learn/toeic"), "/learn/toeic");
-  assert.equal(getSafeRedirectUrl("/learn/vocabulary?tab=flashcard"), "/learn/vocabulary?tab=flashcard");
+  assert.equal(
+    getSafeRedirectUrl("/learn/vocabulary?tab=flashcard"),
+    "/learn/vocabulary?tab=flashcard"
+  );
 });
 
 test("getSafeRedirectUrl - invalid or missing inputs use fallback", () => {
@@ -42,4 +45,18 @@ test("getSafeRedirectUrl - blocks auth loop redirects", () => {
   assert.equal(getSafeRedirectUrl("/dang-nhap"), "/learn");
   assert.equal(getSafeRedirectUrl("/dang-ky"), "/learn");
   assert.equal(getSafeRedirectUrl("/quen-mat-khau"), "/learn");
+  assert.equal(getSafeRedirectUrl("/login#form"), "/learn");
+  assert.equal(getSafeRedirectUrl("/login/"), "/learn");
+  assert.equal(getSafeRedirectUrl("/learn/../login"), "/learn");
+  assert.equal(getSafeRedirectUrl("/log%69n"), "/learn");
+});
+
+test("getSafeRedirectUrl - blocks control characters and encoded slash tricks", () => {
+  assert.equal(getSafeRedirectUrl("/\n/evil.com"), "/learn");
+  assert.equal(getSafeRedirectUrl("/%2fevil.com"), "/learn");
+  assert.equal(getSafeRedirectUrl("/%5cevil.com"), "/learn");
+  assert.equal(
+    getSafeRedirectUrl("/learn?tab=review#today"),
+    "/learn?tab=review#today"
+  );
 });

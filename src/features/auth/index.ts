@@ -16,6 +16,7 @@ export {
   login,
   getCurrentUser,
   logout,
+  refreshSession,
 } from "./lib/auth-client";
 export { getSafeRedirectUrl } from "./lib/redirect";
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { AuthArt } from "./auth-art";
+import { RegisterArt } from "./register-art";
 import type { AuthMode } from "../types/auth";
 
 const copy: Record<
@@ -18,9 +19,9 @@ const copy: Record<
   },
   register: {
     eyebrow: "BẮT ĐẦU TỪ HÔM NAY",
-    title: "Một hành trình mới bắt đầu ở đây.",
+    title: "Bắt đầu hành trình của riêng bạn.",
     description:
-      "Tạo tài khoản học viên để sau này lưu tiến độ và học theo mục tiêu của riêng bạn.",
+      "Một không gian cho tiếng Anh, một nhịp học dành riêng cho bạn.",
   },
   forgot: {
     eyebrow: "KHÔI PHỤC TÀI KHOẢN",
@@ -45,8 +46,12 @@ export function AuthLayout({ mode, children }: AuthLayoutProps) {
   const current = copy[mode];
 
   return (
-    <div className="auth-shell">
-      <AuthArt />
+    <div
+      className={
+        mode === "register" ? "auth-shell auth-shell--register" : "auth-shell"
+      }
+    >
+      {mode === "register" ? <RegisterArt /> : <AuthArt />}
 
       <main className="auth-content">
         <header className="auth-header">
@@ -61,7 +66,12 @@ export function AuthLayout({ mode, children }: AuthLayoutProps) {
 
         <div className="auth-form-wrap">
           <div className="auth-form-heading">
-            <span className="section-kicker">{current.eyebrow}</span>
+            <div className="auth-heading-kicker-row">
+              <span className="section-kicker">{current.eyebrow}</span>
+              {mode === "register" && (
+                <span className="register-preview-badge">XEM TRƯỚC</span>
+              )}
+            </div>
             <h1>{current.title}</h1>
             <p>{current.description}</p>
           </div>
@@ -91,21 +101,15 @@ export function AuthLayout({ mode, children }: AuthLayoutProps) {
             {mode === "login" ? (
               <>
                 Chưa có tài khoản?{" "}
-                <Link href={`/register${querySuffix}`}>
-                  Bắt đầu tại đây ↗
-                </Link>
+                <Link href={`/register${querySuffix}`}>Bắt đầu tại đây ↗</Link>
               </>
             ) : mode === "register" ? (
               <>
                 Đã có tài khoản?{" "}
-                <Link href={`/login${querySuffix}`}>
-                  Đăng nhập ↗
-                </Link>
+                <Link href={`/login${querySuffix}`}>Đăng nhập ↗</Link>
               </>
             ) : (
-              <Link href={`/login${querySuffix}`}>
-                ← Quay lại đăng nhập
-              </Link>
+              <Link href={`/login${querySuffix}`}>← Quay lại đăng nhập</Link>
             )}
           </div>
         </div>

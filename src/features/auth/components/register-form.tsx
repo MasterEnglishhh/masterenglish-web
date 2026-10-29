@@ -1,155 +1,159 @@
 "use client";
 
-import { useState } from "react";
+import { Check, Mail, ShieldCheck, Sparkles } from "lucide-react";
 import { ArrowIcon } from "@/components/arrow-icon";
+import { useRegisterForm } from "../hooks/use-register-form";
 import { AuthField } from "./auth-field";
 
-const strengthLabels = [
-  "Dùng ít nhất 8 ký tự, có chữ và số.",
-  "Cần mạnh hơn",
-  "Khá tốt",
-  "Mạnh",
-];
-
-function passwordStrength(value: string) {
-  if (!value) return 0;
-  const requirements = [
-    value.length >= 8,
-    /[A-Za-zÀ-ỹ]/.test(value) && /\d/.test(value),
-    /[^A-Za-zÀ-ỹ0-9]/.test(value) ||
-      (/[a-zà-ỹ]/.test(value) && /[A-ZÀ-Ỹ]/.test(value)),
-  ];
-  return requirements.filter(Boolean).length;
-}
-
 export function RegisterForm() {
-  const [displayName, setDisplayName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [confirmError, setConfirmError] = useState("");
-  const [notice, setNotice] = useState("");
-  const strength = passwordStrength(password);
-
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setNotice("");
-    setConfirmError("");
-
-    if (password !== confirmPassword) {
-      setConfirmError("Mật khẩu xác nhận chưa khớp.");
-      return;
-    }
-
-    if (strength < 2) {
-      setNotice("Hãy chọn mật khẩu mạnh hơn: ít nhất 8 ký tự, có chữ và số.");
-      return;
-    }
-
-    setNotice(
-      "Thông tin đã được nhập đầy đủ. Bản xem trước chưa tạo tài khoản hoặc gửi mã xác minh; thông tin của bạn không được gửi đi."
-    );
-    setPassword("");
-    setConfirmPassword("");
-  }
+  const {
+    formRef,
+    values,
+    errors,
+    passwordRules,
+    showPassword,
+    showConfirmation,
+    isPreviewComplete,
+    changeField,
+    onSubmit,
+    togglePassword,
+    toggleConfirmation,
+  } = useRegisterForm();
+  const fulfilledRules = passwordRules.filter((rule) => rule.met).length;
 
   return (
-    <form onSubmit={onSubmit} className="auth-form">
-      <AuthField
-        id="display-name"
-        name="displayName"
-        label="Tên hiển thị"
-        type="text"
-        value={displayName}
-        onChange={(e) => setDisplayName(e.target.value)}
-        placeholder="Tên bạn muốn được gọi"
-        autoComplete="name"
-        minLength={2}
-        maxLength={80}
-        required
-        helperText="Đây là tên sẽ xuất hiện trong không gian học của bạn."
-      />
+    <form
+      ref={formRef}
+      onSubmit={onSubmit}
+      className="auth-form register-form"
+      noValidate
+    >
+      <div className="register-name-row">
+        <AuthField
+          id="register-last-name"
+          name="lastName"
+          label="Họ và tên đệm"
+          value={values.lastName}
+          onChange={(event) => changeField("lastName", event.target.value)}
+          placeholder="Nguyễn Hoàng"
+          autoComplete="family-name"
+          maxLength={30}
+          required
+          error={errors.lastName}
+        />
+        <AuthField
+          id="register-first-name"
+          name="firstName"
+          label="Tên"
+          value={values.firstName}
+          onChange={(event) => changeField("firstName", event.target.value)}
+          placeholder="An"
+          autoComplete="given-name"
+          maxLength={30}
+          required
+          error={errors.firstName}
+        />
+      </div>
 
       <AuthField
-        id="auth-email"
+        id="register-email"
         name="email"
-        label="Email"
+        label="Email của bạn"
         type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        value={values.email}
+        onChange={(event) => changeField("email", event.target.value)}
         placeholder="ban@example.com"
         autoComplete="email"
+        maxLength={254}
         required
+        error={errors.email}
+        helperText="Dùng email bạn thường xuyên truy cập."
       />
 
-      <div className="auth-field">
-        <div className="auth-field-label">
-          <label htmlFor="register-password">Mật khẩu</label>
-        </div>
-        <div className="auth-password">
-          <input
-            id="register-password"
-            name="password"
-            type={isPasswordVisible ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Tối thiểu 8 ký tự"
-            autoComplete="new-password"
-            minLength={8}
-            required
-          />
-          <button
-            type="button"
-            onClick={() => setIsPasswordVisible((v) => !v)}
-            aria-label={isPasswordVisible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-          >
-            {isPasswordVisible ? "Ẩn" : "Hiện"}
-          </button>
-        </div>
-        <div className="password-strength" aria-live="polite">
-          <div className={`strength-bars level-${strength}`}>
-            <span />
+      <div className="register-password-group">
+        <AuthField
+          id="register-password"
+          name="password"
+          label="Mật khẩu"
+          type="password"
+          value={values.password}
+          onChange={(event) => changeField("password", event.target.value)}
+          placeholder="Tạo mật khẩu của bạn"
+          autoComplete="new-password"
+          required
+          error={errors.password}
+          showPasswordToggle
+          isPasswordVisible={showPassword}
+          onTogglePassword={togglePassword}
+        />
+        <div className={`register-password-guide rules-${fulfilledRules}`}>
+          <div className="register-password-meter" aria-hidden="true">
             <span />
             <span />
           </div>
-          <small>{strengthLabels[strength]}</small>
+          <ul aria-label="Yêu cầu mật khẩu">
+            {passwordRules.map((rule) => (
+              <li key={rule.label} className={rule.met ? "is-met" : ""}>
+                <Check size={13} aria-hidden="true" />
+                <span>
+                  {rule.label}
+                  <span className="sr-only">
+                    {rule.met ? ": đã đạt" : ": chưa đạt"}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
       <AuthField
-        id="confirm-password"
+        id="register-confirm-password"
         name="confirmPassword"
         label="Nhập lại mật khẩu"
         type="password"
-        value={confirmPassword}
-        onChange={(e) => {
-          setConfirmPassword(e.target.value);
-          if (confirmError) setConfirmError("");
-        }}
-        placeholder="Xác nhận mật khẩu"
+        value={values.confirmPassword}
+        onChange={(event) => changeField("confirmPassword", event.target.value)}
+        placeholder="Nhập lại để chắc chắn nhé"
         autoComplete="new-password"
         required
-        error={confirmError}
+        error={errors.confirmPassword}
         showPasswordToggle
-        isPasswordVisible={isPasswordVisible}
-        onTogglePassword={() => setIsPasswordVisible((v) => !v)}
+        isPasswordVisible={showConfirmation}
+        onTogglePassword={toggleConfirmation}
       />
 
-      <button className="button button-dark auth-submit" type="submit">
-        <span>Tạo tài khoản</span>
+      <div className="register-preview-note">
+        <Mail size={18} aria-hidden="true" />
+        <p>
+          <strong>Hẹn bạn ở một khởi đầu mới.</strong>
+          <span>
+            Đăng ký sẽ sớm mở. Hiện bạn có thể trải nghiệm biểu mẫu này.
+          </span>
+        </p>
+      </div>
+
+      <button
+        className="button button-dark auth-submit register-submit"
+        type="submit"
+      >
+        <span>Tạo tài khoản của tôi</span>
         <ArrowIcon />
       </button>
 
-      {notice && (
-        <p className="auth-notice" role="status">
-          <span>✳</span>
-          {notice}
-        </p>
+      {isPreviewComplete && (
+        <div className="register-feedback" role="status">
+          <Sparkles size={20} aria-hidden="true" />
+          <p>
+            <strong>Thông tin của bạn đã hợp lệ.</strong>Đăng ký tài khoản chưa
+            mở. Chưa có tài khoản được tạo hoặc email xác minh được gửi.
+          </p>
+        </div>
       )}
 
-      <p className="auth-demo-note">
-        Bản xem trước giao diện · Chưa kết nối dịch vụ xác thực
+      <p className="register-privacy-note">
+        <ShieldCheck size={15} aria-hidden="true" />
+        Thông tin chỉ được kiểm tra trên thiết bị của bạn trong bản xem trước.
       </p>
     </form>
   );

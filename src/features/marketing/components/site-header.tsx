@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowIcon } from "@/components/arrow-icon";
 import { Brand } from "@/components/brand";
+import { AccountMenu } from "@/features/auth/components/account-menu";
 
 export function SiteHeader() {
   return (
@@ -12,8 +13,10 @@ export function SiteHeader() {
         <a href="#experience">Trải nghiệm</a>
       </nav>
       <div className="header-actions">
-        <Link className="header-login" href="/login">Đăng nhập</Link>
-        <Link className="header-cta" href="/learn">Vào không gian học <ArrowIcon /></Link>
+        <AccountMenu />
+        <Link className="header-cta" href="/learn">
+          Vào không gian học <ArrowIcon />
+        </Link>
       </div>
     </header>
   );

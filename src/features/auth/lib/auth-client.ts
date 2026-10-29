@@ -10,274 +10,267 @@ interface CsrfPayload {
   token: string;
 }
 
-/**
- * Reads a cookie value by name in the browser document.
- */
-function getCookie(name: string): string | null {
+const requestOptions = {
+  credentials: "same-origin",
+  cache: "no-store",
+  headers: { Accept: "application/json, application/problem+json" },
+} satisfies RequestInit;
+
+let csrfRequest: Promise<CsrfPayload | null> | null = null;
+let refreshRequest: Promise<boolean> | null = null;
+let profileRequest: Promise<AuthUser | null> | null = null;
+
+function readCsrfCookie(): string | null {
   if (typeof document === "undefined") return null;
-  const match = document.cookie.match(
-    new RegExp(`(?:^|; )${name.replace(/[-.$*+?()[\]{}|\\]/g, "\\$&")}=([^;]*)`)
-  );
-  return match ? decodeURIComponent(match[1]) : null;
+  const cookie = document.cookie
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith("XSRF-TOKEN="));
+  return cookie
+    ? decodeURIComponent(cookie.slice("XSRF-TOKEN=".length)) || null
+    : null;
 }
 
-/**
- * Fetches the CSRF token and header name from the backend.
- * Falls back to extracting the XSRF-TOKEN cookie if already set.
- */
-export async function fetchCsrfToken(): Promise<CsrfPayload | null> {
-  try {
-    const res = await fetch("/api/v1/auth/csrf", {
-      method: "GET",
-      credentials: "same-origin",
-      headers: {
-        Accept: "application/json",
-      },
-    });
+async function withAuthLock<T>(operation: () => Promise<T>): Promise<T> {
+  if (typeof navigator !== "undefined" && navigator.locks) {
+    return await navigator.locks.request("masterenglish-auth", operation);
+  }
+  return operation();
+}
 
-    if (res.ok) {
-      const data = (await res.json()) as { headerName?: string; token?: string };
-      if (data && data.headerName && data.token) {
-        return { headerName: data.headerName, token: data.token };
+export function fetchCsrfToken(): Promise<CsrfPayload | null> {
+  if (!csrfRequest) {
+    csrfRequest = (async () => {
+      try {
+        const res = await fetch("/api/v1/auth/csrf", requestOptions);
+        if (!res.ok) return null;
+        const data = (await res.json()) as Partial<CsrfPayload>;
+        if (
+          typeof data.headerName === "string" &&
+          typeof data.token === "string" &&
+          data.token
+        ) {
+          // A response may set the cookie more than once while renewing CSRF.
+          // Use the final browser cookie, which the next request will send.
+          return {
+            headerName: data.headerName,
+            token: readCsrfCookie() ?? data.token,
+          };
+        }
+      } catch {
+        // Never submit credentials with a missing or stale CSRF token.
       }
-    }
-  } catch {
-    // If endpoint fails, check if an existing XSRF cookie exists
+      return null;
+    })().finally(() => {
+      csrfRequest = null;
+    });
   }
-
-  const cookieToken = getCookie("XSRF-TOKEN");
-  if (cookieToken) {
-    return { headerName: "X-XSRF-TOKEN", token: cookieToken };
-  }
-
-  return null;
+  return csrfRequest;
 }
 
-/**
- * Attempts to parse a response body as an RFC 7807 ProblemDetail object.
- */
-async function parseProblemDetail(res: Response): Promise<ProblemDetail | null> {
+async function postAuth(
+  path: string,
+  body?: LoginCredentials
+): Promise<Response> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const csrf = await fetchCsrfToken();
+    if (!csrf)
+      throw new Error(
+        "Không thể kết nối đến máy chủ bảo mật. Vui lòng thử lại."
+      );
+    const res = await fetch(`/api/v1/auth/${path}`, {
+      ...requestOptions,
+      method: "POST",
+      headers: {
+        ...requestOptions.headers,
+        "Content-Type": "application/json",
+        [csrf.headerName]: csrf.token,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    // CSRF rejection occurs before the controller; bootstrap once and retry.
+    if (res.status !== 403 || attempt === 1) return res;
+  }
+  throw new Error("Không thể xác nhận phiên bảo mật.");
+}
+
+function isAuthUser(data: unknown): data is AuthUser {
+  if (!data || typeof data !== "object") return false;
+  const user = data as Partial<AuthUser>;
+  return (
+    typeof user.id === "string" &&
+    !!user.id &&
+    typeof user.email === "string" &&
+    !!user.email
+  );
+}
+
+async function parseProblemDetail(
+  res: Response
+): Promise<ProblemDetail | null> {
   try {
-    const text = await res.text();
-    if (!text) return null;
-    return JSON.parse(text) as ProblemDetail;
+    return (await res.json()) as ProblemDetail;
   } catch {
     return null;
   }
 }
 
-/**
- * Calls the login API endpoint, handling CSRF, HttpOnly session cookies,
- * RFC 7807 problem details, rate limiting, and network failures.
- */
-export async function login(credentials: LoginCredentials): Promise<AuthResult> {
-  let csrf: CsrfPayload | null = null;
-
+export async function login(
+  credentials: LoginCredentials
+): Promise<AuthResult> {
   try {
-    csrf = await fetchCsrfToken();
-  } catch {
-    // Network or server issue fetching CSRF
-    return {
-      success: false,
-      error: {
-        code: "NETWORK_ERROR",
-        message: "Không thể kết nối đến máy chủ bảo mật. Vui lòng kiểm tra lại mạng.",
-        retryable: true,
-      },
-    };
-  }
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    Accept: "application/json, application/problem+json",
-  };
-
-  if (csrf) {
-    headers[csrf.headerName] = csrf.token;
-  }
-
-  let res: Response;
-  try {
-    res = await fetch("/api/v1/auth/login", {
-      method: "POST",
-      credentials: "same-origin",
-      headers,
-      body: JSON.stringify({
+    // Let an earlier session check finish before replacing its cookies.
+    await profileRequest?.catch(() => null);
+    const res = await withAuthLock(() =>
+      postAuth("login", {
         email: credentials.email.trim().toLowerCase(),
         password: credentials.password,
-      }),
-    });
-  } catch {
-    return {
-      success: false,
-      error: {
-        code: "NETWORK_ERROR",
-        message: "Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.",
-        retryable: true,
-      },
-    };
-  }
+      })
+    );
 
-  // 1. Success (200 / 201)
-  if (res.ok) {
-    let user: AuthUser | null = null;
-    try {
-      const data = await res.json();
-      if (data && (data.id || data.email)) {
-        user = data as AuthUser;
+    if (res.ok) {
+      const data: unknown = await res.json().catch(() => null);
+      const user = isAuthUser(data) ? data : await getCurrentUser();
+      if (user) return { success: true, user };
+      return {
+        success: false,
+        error: {
+          code: "SESSION_UNAVAILABLE",
+          message: "Không thể xác nhận phiên đăng nhập. Vui lòng thử lại.",
+          retryable: true,
+        },
+      };
+    }
+
+    const problem = await parseProblemDetail(res);
+    if (res.status === 401) {
+      return {
+        success: false,
+        error: {
+          code: "BAD_CREDENTIALS",
+          message: "Email hoặc mật khẩu không chính xác.",
+          status: 401,
+        },
+      };
+    }
+    if (res.status === 429) {
+      const retryHeader = res.headers.get("Retry-After");
+      const seconds =
+        retryHeader && /^\d+$/.test(retryHeader)
+          ? Number(retryHeader)
+          : retryHeader
+            ? Math.ceil((Date.parse(retryHeader) - Date.now()) / 1000)
+            : NaN;
+      const retryAfterSeconds =
+        Number.isFinite(seconds) && seconds > 0 ? seconds : 60;
+      return {
+        success: false,
+        error: {
+          code: "RATE_LIMITED",
+          message: `Bạn đã thử đăng nhập quá nhiều lần. Vui lòng chờ ${retryAfterSeconds} giây trước khi thử lại.`,
+          retryAfterSeconds,
+          status: 429,
+        },
+      };
+    }
+    if (res.status === 400 && problem?.code === "VALIDATION_ERROR") {
+      const fieldViolations: Record<string, string> = {};
+      for (const violation of problem.errors ?? []) {
+        if (violation.field === "email" || violation.field === "password") {
+          fieldViolations[violation.field] =
+            violation.field === "email"
+              ? "Vui lòng nhập email hợp lệ."
+              : "Vui lòng nhập mật khẩu.";
+        }
       }
-    } catch {
-      // Body may be empty if session cookie was set
+      return {
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Vui lòng kiểm tra lại thông tin đăng nhập.",
+          status: 400,
+          fieldViolations,
+        },
+      };
     }
-
-    if (!user) {
-      // Attempt to load current user profile via /api/v1/users/me
-      user = await getCurrentUser();
-    }
-
-    if (user) {
-      return { success: true, user };
-    }
-
-    // A successful response without a verifiable user is not a usable session.
     return {
       success: false,
       error: {
-        code: "SESSION_UNAVAILABLE",
-        message: "Không thể xác nhận phiên đăng nhập. Vui lòng thử lại.",
-        retryable: true,
-      },
-    };
-  }
-
-  // 2. Error handling based on status code and problem detail
-  const problem = await parseProblemDetail(res);
-
-  // Status 401 or 400 with invalid credentials
-  if (res.status === 401 || (res.status === 400 && problem?.code === "BAD_CREDENTIALS")) {
-    return {
-      success: false,
-      error: {
-        code: "BAD_CREDENTIALS",
-        message: "Email hoặc mật khẩu không chính xác.",
-        status: 401,
-      },
-    };
-  }
-
-  // Status 429 Too Many Requests (Rate limited)
-  if (res.status === 429) {
-    let retryAfterSeconds = 60;
-    const retryHeader = res.headers.get("Retry-After");
-    if (retryHeader) {
-      const parsed = parseInt(retryHeader, 10);
-      if (!Number.isNaN(parsed) && parsed > 0) {
-        retryAfterSeconds = parsed;
-      }
-    }
-
-    const detailMessage =
-      problem?.detail ||
-      `Bạn đã nhập sai quá số lần quy định. Vui lòng chờ ${retryAfterSeconds} giây trước khi thử lại.`;
-
-    return {
-      success: false,
-      error: {
-        code: "RATE_LIMITED",
-        message: detailMessage,
-        retryAfterSeconds,
-        status: 429,
-      },
-    };
-  }
-
-  // Status 403 Forbidden (CSRF token mismatch or expired)
-  if (res.status === 403) {
-    return {
-      success: false,
-      error: {
-        code: "FORBIDDEN",
-        message: "Phiên bảo mật không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.",
-        retryable: true,
-        status: 403,
-      },
-    };
-  }
-
-  // Status 404 or 501: Backend endpoint not implemented yet
-  if (res.status === 404 || res.status === 501) {
-    return {
-      success: false,
-      error: {
-        code: "SERVICE_UNAVAILABLE",
-        message: "Dịch vụ đăng nhập chưa sẵn sàng. Vui lòng thử lại sau.",
+        code: res.status === 403 ? "FORBIDDEN" : "SERVICE_UNAVAILABLE",
+        message:
+          res.status === 403
+            ? "Phiên bảo mật không hợp lệ hoặc đã hết hạn. Vui lòng thử lại."
+            : "Dịch vụ đăng nhập đang gián đoạn. Vui lòng thử lại sau.",
         retryable: true,
         status: res.status,
       },
     };
-  }
-
-  // Status 500, 502, 503, 504
-  return {
-    success: false,
-    error: {
-      code: problem?.code || "SERVER_ERROR",
-      message:
-        problem?.detail ||
-        "Máy chủ đang bận hoặc xảy ra lỗi xử lý. Vui lòng bấm thử lại.",
-      retryable: true,
-      status: res.status,
-    },
-  };
-}
-
-/**
- * Fetches the authenticated user profile from GET /api/v1/users/me.
- * Returns null if not authenticated or if the endpoint fails.
- */
-export async function getCurrentUser(): Promise<AuthUser | null> {
-  try {
-    const res = await fetch("/api/v1/users/me", {
-      method: "GET",
-      credentials: "same-origin",
-      headers: {
-        Accept: "application/json",
-      },
-    });
-
-    if (res.ok) {
-      const data = (await res.json()) as AuthUser;
-      if (data && (data.id || data.email)) {
-        return data;
-      }
-    }
   } catch {
-    // Session not authenticated or network error
+    return {
+      success: false,
+      error: {
+        code: "NETWORK_ERROR",
+        message:
+          "Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.",
+        retryable: true,
+      },
+    };
   }
-
-  return null;
 }
 
-/**
- * Calls POST /api/v1/auth/logout to invalidate the session and clear cookies.
- */
+/** Single flight prevents rotating the same refresh token twice in one tab. */
+export function refreshSession(): Promise<boolean> {
+  if (!refreshRequest) {
+    refreshRequest = withAuthLock(async () => {
+      // Another tab may have rotated the shared cookies while we waited.
+      if (typeof navigator !== "undefined" && navigator.locks) {
+        const profile = await fetch("/api/v1/users/me", requestOptions);
+        if (profile.ok) return true;
+        if (profile.status !== 401)
+          throw new Error("Không thể kiểm tra phiên đăng nhập.");
+      }
+      const res = await postAuth("refresh");
+      if (res.status === 401) return false;
+      if (!res.ok)
+        throw new Error("Không thể làm mới phiên đăng nhập. Vui lòng thử lại.");
+      return true;
+    }).finally(() => {
+      refreshRequest = null;
+    });
+  }
+  return refreshRequest;
+}
+
+/** Null means unauthenticated; service/network failures remain distinguishable. */
+export function getCurrentUser(): Promise<AuthUser | null> {
+  if (!profileRequest) {
+    profileRequest = (async () => {
+      let res = await fetch("/api/v1/users/me", requestOptions);
+      if (res.status === 401) {
+        if (!(await refreshSession())) return null;
+        res = await fetch("/api/v1/users/me", requestOptions);
+      }
+      if (res.status === 401) return null;
+      if (!res.ok)
+        throw new Error("Không thể tải tài khoản. Vui lòng thử lại.");
+      const data: unknown = await res.json();
+      if (!isAuthUser(data))
+        throw new Error("Thông tin tài khoản không hợp lệ.");
+      return data;
+    })().finally(() => {
+      profileRequest = null;
+    });
+  }
+  return profileRequest;
+}
+
 export async function logout(): Promise<boolean> {
   try {
-    const csrf = await fetchCsrfToken();
-    const headers: Record<string, string> = {
-      Accept: "application/json",
-    };
-    if (csrf) {
-      headers[csrf.headerName] = csrf.token;
-    }
-
-    const res = await fetch("/api/v1/auth/logout", {
-      method: "POST",
-      credentials: "same-origin",
-      headers,
-    });
-
-    return res.ok || res.status === 204;
+    // Revoke the latest rotated token, and prevent refresh from restoring cookies.
+    await profileRequest?.catch(() => null);
+    await refreshRequest?.catch(() => false);
+    const res = await withAuthLock(() => postAuth("logout"));
+    return res.ok;
   } catch {
     return false;
   }

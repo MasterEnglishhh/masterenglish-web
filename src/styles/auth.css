@@ -620,3 +620,68 @@
   font-size: 11px;
   letter-spacing: .02em;
 }
+.session-status {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 32px;
+  text-align: center;
+}
+
+.account-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.account-name {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.account-logout {
+  flex-shrink: 0;
+  border: 1px solid #d6d3ea;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--indigo);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.account-logout:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
+.account-error {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 240px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff0ed;
+  color: #a32e24;
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  .account-menu { gap: 8px; }
+  .account-name { max-width: 100px; font-size: 12px; }
+  .account-logout { padding: 8px; }
+  .public-header:has(.account-menu) .header-cta { display: none; }
+}

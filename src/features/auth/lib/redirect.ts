@@ -17,14 +17,30 @@ export function getSafeRedirectUrl(
   if (
     !trimmed.startsWith("/") ||
     trimmed.startsWith("//") ||
-    trimmed.includes("\\")
+    trimmed.includes("\\") ||
+    /[\u0000-\u0020\u007f]/.test(trimmed)
   ) {
     return fallback;
   }
 
-  // Prevent redirect loops back to auth pages
-  const isAuthPath = (path: string) =>
-    trimmed === path || trimmed.startsWith(`${path}?`);
+  let url: URL;
+  let pathname: string;
+  try {
+    url = new URL(trimmed, "https://masterenglish.local");
+    pathname = decodeURIComponent(url.pathname).replace(/\/+$/, "");
+  } catch {
+    return fallback;
+  }
+  if (
+    url.origin !== "https://masterenglish.local" ||
+    pathname.startsWith("//") ||
+    pathname.includes("\\")
+  ) {
+    return fallback;
+  }
+
+  // Compare normalized paths, including hash and trailing-slash variants.
+  const isAuthPath = (path: string) => pathname === path;
 
   if (
     isAuthPath("/login") ||
@@ -37,5 +53,5 @@ export function getSafeRedirectUrl(
     return fallback;
   }
 
-  return trimmed;
+  return `${url.pathname}${url.search}${url.hash}`;
 }

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "../lib/auth-client";
 import { getSafeRedirectUrl } from "../lib/redirect";
+import { useAuthSession } from "./use-auth-session";
 import type { AuthError, FormStatus, LoginCredentials } from "../types/auth";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -14,14 +15,21 @@ export interface UseLoginFormOptions {
 
 export function useLoginForm(options: UseLoginFormOptions = {}) {
   const router = useRouter();
+  const { user, acceptLogin } = useAuthSession();
   const safeRedirect = getSafeRedirectUrl(options.redirectTo, "/learn");
+
+  useEffect(() => {
+    if (user) router.replace(safeRedirect);
+  }, [user, router, safeRedirect]);
 
   const [values, setValues] = useState<LoginCredentials>({
     email: "",
     password: "",
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof LoginCredentials, string>>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof LoginCredentials, string>>
+  >({});
   const [status, setStatus] = useState<FormStatus>("idle");
   const [serverError, setServerError] = useState<AuthError | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
@@ -65,7 +73,9 @@ export function useLoginForm(options: UseLoginFormOptions = {}) {
     }
   }
 
-  function validate(data: LoginCredentials): Partial<Record<keyof LoginCredentials, string>> {
+  function validate(
+    data: LoginCredentials
+  ): Partial<Record<keyof LoginCredentials, string>> {
     const newErrors: Partial<Record<keyof LoginCredentials, string>> = {};
 
     const trimmedEmail = data.email.trim();
@@ -106,14 +116,21 @@ export function useLoginForm(options: UseLoginFormOptions = {}) {
 
     if (result.success) {
       setStatus("success");
+      acceptLogin(result.user);
       // Safe navigation to requested route or default learning hub
-      router.push(safeRedirect);
+      router.replace(safeRedirect);
       return;
     }
 
     // Handle failure
     setStatus("error");
     setServerError(result.error);
+    if (result.error.fieldViolations) {
+      setErrors(result.error.fieldViolations);
+      if (result.error.fieldViolations.email) emailRef.current?.focus();
+      else if (result.error.fieldViolations.password)
+        passwordRef.current?.focus();
+    }
 
     if (result.error.retryAfterSeconds && result.error.retryAfterSeconds > 0) {
       setCooldownSeconds(result.error.retryAfterSeconds);

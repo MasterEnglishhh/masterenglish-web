@@ -8,13 +8,12 @@ export interface LoginCredentials {
 export interface AuthUser {
   id: string;
   email: string;
-  displayName?: string;
-  firstName?: string;
-  lastName?: string;
-  role?: string;
-  roles?: string[];
-  emailVerified?: boolean;
-  avatarUrl?: string;
+  displayName: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  roles: string[];
+  phone: string | null;
+  avatarMediaId: string | null;
 }
 
 export interface ProblemDetail {
@@ -42,8 +41,7 @@ export interface AuthError {
 }
 
 export type AuthResult =
-  | { success: true; user: AuthUser }
-  | { success: false; error: AuthError };
+  { success: true; user: AuthUser } | { success: false; error: AuthError };
 
 export type FormStatus = "idle" | "submitting" | "success" | "error";
 

@@ -33,7 +33,23 @@ Cách chia theo tính năng tham khảo [Bulletproof React](https://github.com/a
 
 Chạy local bằng `npm run dev`, mở `http://127.0.0.1:3000`. Chạy `npm run lint`, `npm run test` và `npm run build` trước khi tích hợp thay đổi. Cần đặt `BACKEND_URL` trong `.env.local` để cấu hình rewrite `/api/*` cho biểu mẫu đăng nhập.
 
-**Trạng thái bản xem trước:** nội dung thẻ từ, bài ngữ pháp và câu TOEIC là dữ liệu minh họa. Lật thẻ, đánh giá ghi nhớ và xem lời giải chỉ thay đổi trong phiên trình duyệt; không lưu tiến độ hay kết quả. Các trang Ôn tập, Kết quả và AI Tutor hiển thị trạng thái chờ dữ liệu. Biểu mẫu đăng nhập gọi API sau khi lấy mã CSRF; backend hiện chưa có endpoint đăng nhập nên chưa tạo phiên thật. Đăng ký và quên mật khẩu vẫn là giao diện bản xem trước. Phân quyền Learner/Content Admin/System Admin, media thật và các luồng học tập có lưu dữ liệu sẽ được nối với backend ở giai đoạn tiếp theo.
+**Trạng thái bản xem trước:** nội dung thẻ từ, bài ngữ pháp và câu TOEIC là dữ liệu minh họa. Lật thẻ, đánh giá ghi nhớ và xem lời giải chỉ thay đổi trong phiên trình duyệt; không lưu tiến độ hay kết quả. Các trang Ôn tập, Kết quả và AI Tutor hiển thị trạng thái chờ dữ liệu. Đăng nhập, khôi phục phiên và đăng xuất đã nối API thật. Đăng ký và quên mật khẩu vẫn là giao diện bản xem trước vì backend chưa có endpoint tương ứng. Phân quyền Learner/Content Admin/System Admin, media thật và các luồng học tập có lưu dữ liệu sẽ được nối với backend ở giai đoạn tiếp theo.
+
+## Xác thực với backend
+
+Sao chép `.env.example` thành `.env.local`, đặt `BACKEND_URL=http://127.0.0.1:8080`, chạy backend với profile `local`, rồi chạy `npm run dev`. Mở `http://127.0.0.1:3000` và dùng tài khoản đang hoạt động, đã xác minh email trong database backend. Frontend không tạo tài khoản hoặc phiên giả. Backend cần cho phép origin frontend; dùng nhất quán `127.0.0.1` hoặc `localhost` và tắt cookie Secure chỉ trong môi trường HTTP local.
+
+Browser gọi URL tương đối qua rewrite `/api/*`:
+
+- `GET /api/v1/auth/csrf`: bootstrap trước mỗi thao tác auth, gửi token qua header do backend trả về. Ưu tiên giá trị cuối của cookie `XSRF-TOKEN` trong trình duyệt để khớp khi backend cấp lại cookie; không gửi POST nếu bootstrap thất bại. Nếu bị 403 thì bootstrap lại và thử lại tối đa một lần.
+- `POST /api/v1/auth/login`: gửi email/mật khẩu, nhận `UserProfileResponse`; access/refresh token chỉ nằm trong cookie HttpOnly do backend cấp.
+- `GET /api/v1/users/me`: khôi phục tài khoản khi tải trang, quay lại tab và định kỳ 5 phút khi đang đăng nhập. Nếu nhận 401, gọi `POST /api/v1/auth/refresh` rồi đọc lại profile một lần. Các lần kiểm tra đồng thời trong một tab dùng chung request để tránh xoay refresh token trùng.
+- `POST /api/v1/auth/logout`: thu hồi phiên, xóa cookie và chuyển về đăng nhập. Nếu thất bại, giữ tài khoản hiện tại và hiển thị lỗi để thử lại.
+
+`AuthSessionProvider` giữ thông tin tài khoản trong bộ nhớ React, không lưu token vào localStorage. Web Locks (trên HTTPS hoặc localhost) phối hợp login/refresh/logout giữa các tab; trước khi xoay refresh token, tab chờ kiểm tra lại cookie đã được tab khác làm mới hay chưa. `/learn` và các trang con có chặn giao diện khi chưa xác thực, đưa người dùng về `/login?redirect=...` và quay lại đúng trang sau đăng nhập. Đây là kiểm soát điều hướng phía client; backend vẫn phải xác thực/phân quyền mọi API dữ liệu. Lỗi mạng/máy chủ khi kiểm tra phiên có nút thử lại và không bị coi là hết phiên. HTTP 401 đăng nhập hiện thông báo chung, 429 dùng `Retry-After` để đếm ngược, lỗi validation gắn vào trường tương ứng.
+
+Trang `/register` có minh họa riêng, biểu mẫu họ/tên (tối đa 30 ký tự mỗi phần, khớp cấu trúc profile backend), email, mật khẩu và xác nhận mật khẩu. Yêu cầu mật khẩu được cập nhật khi nhập; hai nút hiện/ẩn hoạt động độc lập. Gửi biểu mẫu kiểm tra các trường và chuyển focus tới lỗi đầu tiên. Đây vẫn là bản xem trước: chỉ xác nhận thông tin hợp lệ trên trình duyệt, không gọi API đăng ký, tạo phiên hay gửi email. Không lưu các trường vào bộ nhớ trình duyệt. Layout tự chuyển từ hai cột sang một cột trên điện thoại.
+
 ## Docker cho triển khai EC2
 
 Chạy từ repo `masterenglish-web`, cần Docker đang hoạt động:

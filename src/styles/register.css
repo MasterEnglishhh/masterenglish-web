@@ -1,0 +1,434 @@
+.auth-heading-kicker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.auth-heading-kicker-row .section-kicker {
+  margin-bottom: 0;
+}
+
+.auth-shell--register {
+  grid-template-columns: minmax(360px, 43%) minmax(0, 1fr);
+}
+
+.auth-shell--register .auth-content {
+  padding: 30px clamp(30px, 5.2vw, 84px) 24px;
+}
+
+.auth-shell--register .auth-form-wrap {
+  width: min(100%, 500px);
+  padding-block: 35px 30px;
+}
+
+.auth-shell--register .auth-form-heading h1 {
+  font-size: clamp(34px, 3.35vw, 48px);
+  max-width: 460px;
+}
+
+.auth-shell--register .auth-tabs {
+  margin: 26px 0 24px;
+}
+
+.register-preview-badge {
+  padding: 5px 8px;
+  border: 1px solid #e3e0d6;
+  border-radius: 5px;
+  color: #858577;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: .09em;
+}
+
+.register-form {
+  gap: 18px;
+  margin-top: 0;
+}
+
+.register-name-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 14px;
+}
+
+.register-name-row > * {
+  min-width: 0;
+}
+
+.register-password-group {
+  display: grid;
+  gap: 10px;
+}
+
+.register-password-meter {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
+}
+
+.register-password-meter span {
+  height: 3px;
+  border-radius: 4px;
+  background: #e5e3ec;
+  transition: background .2s;
+}
+
+.rules-1 .register-password-meter span:first-child {
+  background: #aaa4ec;
+}
+
+.rules-2 .register-password-meter span {
+  background: #519578;
+}
+
+.register-password-guide ul {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 18px;
+  row-gap: 6px;
+  padding: 0;
+  margin: 8px 0 0;
+  list-style: none;
+}
+
+.register-password-guide li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #818391;
+  font-size: 11px;
+}
+
+.register-password-guide li svg {
+  color: #b6b7c0;
+}
+
+.register-password-guide .is-met,
+.register-password-guide .is-met svg {
+  color: #34765b;
+}
+
+.register-preview-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px 14px;
+  border-radius: 12px;
+  background: #f0eef8;
+  color: #635e81;
+}
+
+.register-preview-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--indigo);
+}
+
+.register-preview-note p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.register-preview-note strong {
+  display: block;
+  color: #4c456f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.register-submit {
+  margin-top: 0;
+  min-height: 54px;
+}
+
+.register-privacy-note {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  margin: -4px auto 0;
+  max-width: 360px;
+  color: #7e8190;
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.register-privacy-note svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.register-feedback {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #cce1d4;
+  border-radius: 12px;
+  background: #edf6ef;
+  color: #3d6d54;
+}
+
+.register-feedback svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.register-feedback p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.register-feedback strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.register-art {
+  isolation: isolate;
+  background: radial-gradient(ellipse at 28% 43%, #625bd2 0, transparent 58%), #373197;
+  padding: 38px clamp(28px, 3.6vw, 58px) 44px;
+}
+
+.register-art::after {
+  display: none;
+}
+
+.register-art-orbit {
+  position: absolute;
+  z-index: -1;
+  width: 650px;
+  height: 650px;
+  top: 12%;
+  left: -100px;
+  border: 1px solid #ffffff17;
+  border-radius: 50%;
+  box-shadow: 0 0 0 70px #ffffff04, 0 0 0 140px #ffffff03;
+}
+
+.register-art-scene {
+  position: relative;
+  width: min(100%, 385px);
+  min-height: 410px;
+  margin: 50px auto 40px;
+  display: grid;
+  place-items: center;
+}
+
+.register-art-caption {
+  position: absolute;
+  left: 2px;
+  top: -14px;
+  color: #d5d2ff;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: .22em;
+  transform: rotate(-6deg);
+}
+
+.register-paper-back {
+  position: absolute;
+  inset: 30px 18px 15px 22px;
+  background: #a29aea;
+  border: 1px solid #b6aff3;
+  border-radius: 20px;
+  transform: rotate(-8deg);
+}
+
+.register-learning-card {
+  position: relative;
+  width: calc(100% - 35px);
+  padding: 25px 25px 19px;
+  border: 1px solid #ffffffc9;
+  border-radius: 20px;
+  background: #fbfaf2;
+  color: #262444;
+  transform: rotate(5deg);
+  box-shadow: 0 25px 60px #18134845;
+}
+
+.register-card-top,
+.register-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: .12em;
+}
+
+.register-card-hello {
+  position: relative;
+  width: fit-content;
+  margin-top: 16px;
+  color: var(--indigo-deep);
+  font-family: "Charter", Cambria, Georgia, serif;
+  font-size: 91px;
+  font-style: italic;
+  letter-spacing: -.075em;
+  line-height: 1.15;
+}
+
+.register-card-hello > span {
+  color: #99ae45;
+}
+
+.register-card-hello > svg {
+  position: absolute;
+  top: -2px;
+  right: -35px;
+  color: #867dda;
+  transform: rotate(6deg);
+}
+
+.register-learning-card > p {
+  margin: 8px 0 20px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: #747282;
+}
+
+.register-card-divider {
+  border-top: 1px dashed #d8d4cc;
+  margin-bottom: 18px;
+}
+
+.register-card-topic {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-block: 12px;
+}
+
+.register-card-topic > span {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #e9e5f8;
+  color: #6459b4;
+}
+
+.register-card-topic:nth-last-child(2) > span {
+  color: #4c7960;
+  background: #e0ebd7;
+}
+
+.register-card-topic > div {
+  flex: 1;
+}
+
+.register-card-topic strong,
+.register-card-topic small {
+  display: block;
+}
+
+.register-card-topic strong {
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.register-card-topic small {
+  margin-top: 3px;
+  color: #92909a;
+  font-size: 8px;
+}
+
+.register-card-topic > svg {
+  color: #8477c2;
+}
+
+.register-card-bottom {
+  border-top: 1px solid #e4e0d7;
+  margin-top: 22px;
+  padding-top: 15px;
+  color: #8f8c9c;
+  font-size: 7px;
+}
+
+.register-start-sticker {
+  position: absolute;
+  right: -12px;
+  top: -7px;
+  display: grid;
+  align-content: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: var(--lime);
+  color: #383656;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: center;
+  transform: rotate(12deg);
+  box-shadow: 0 7px 0 #26216b25;
+}
+
+.register-start-sticker strong {
+  font-size: 23px;
+  font-family: Cambria, Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.register-art-spark {
+  position: absolute;
+  left: -17px;
+  bottom: -12px;
+  color: var(--peach);
+  font-size: 86px;
+  line-height: 1;
+  transform: rotate(-10deg);
+}
+
+.register-art-bottom h2 {
+  margin-block: 16px;
+  font-size: clamp(38px, 3.65vw, 58px);
+}
+
+.register-art-bottom p {
+  max-width: 360px;
+  font-size: 13px;
+  color: #cfcbf0;
+}
+
+@media (min-width: 851px) and (max-width: 1100px) {
+  .register-art { padding-inline: 28px; }
+  .register-art-scene { min-height: 380px; }
+  .register-learning-card { padding-inline: 20px; }
+  .register-card-hello { font-size: 76px; }
+  .register-start-sticker { width: 94px; height: 94px; right: -5px; }
+  .register-art-bottom > span { font-size: 8px; }
+}
+
+@media (max-width: 850px) {
+  .auth-shell--register { display: block; }
+  .auth-shell--register .auth-content { padding: 24px clamp(24px, 7vw, 70px); }
+  .auth-shell--register .auth-form-wrap { padding-block: 45px; }
+  .auth-shell--register .auth-form-heading h1 { font-size: 42px; }
+}
+
+@media (max-width: 480px) {
+  .auth-shell--register .auth-content { padding-inline: 22px; }
+  .auth-shell--register .auth-form-wrap { padding-block: 35px; }
+  .auth-shell--register .auth-form-heading h1 { font-size: 36px; }
+  .auth-shell--register .section-kicker { font-size: 9px; letter-spacing: .1em; }
+  .register-name-row { grid-template-columns: 1.2fr 1fr; gap: 10px; }
+  .register-name-row input { padding-inline: 12px; }
+  .register-preview-badge { font-size: 7px; }
+  .register-password-guide ul { column-gap: 12px; }
+}
+
+@media (max-width: 360px) {
+  .register-name-row { grid-template-columns: 1fr; gap: 18px; }
+  .auth-shell--register .auth-form-heading h1 { font-size: 33px; }
+}
