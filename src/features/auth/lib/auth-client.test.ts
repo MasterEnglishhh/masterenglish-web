@@ -6,6 +6,12 @@ import {
   getCurrentUser,
   logout,
   refreshSession,
+  registerAccount,
+  resendRegistrationOtp,
+  verifyRegistrationOtp,
+  requestPasswordReset,
+  verifyPasswordResetOtp,
+  resetPassword,
 } from "./auth-client.ts";
 
 const originalFetch = globalThis.fetch;
@@ -371,4 +377,260 @@ test("logout waits for an in-flight refresh before revoking the session", async 
   release();
   await Promise.all([refresh, signOut]);
   assert.deepEqual(calls, ["refresh", "logout"]);
+});
+
+const registration = {
+  registrationId: "315c26ae-bf40-4edc-8375-c117e999a811",
+  expiresAt: "2026-10-29T18:05:00Z",
+  resendAfterSeconds: 60,
+  message: "Nếu email có thể đăng ký, mã xác minh đã được gửi.",
+};
+
+test("registration submits only account fields and moves to a real challenge", async () => {
+  globalThis.fetch = async (input, init) => {
+    if (input === "/api/v1/auth/csrf") return csrf();
+    assert.equal(input, "/api/v1/auth/register");
+    assert.equal(init?.credentials, "same-origin");
+    assert.equal(new Headers(init?.headers).get("X-XSRF-TOKEN"), "csrf-token");
+    assert.deepEqual(JSON.parse(init?.body as string), {
+      email: "An@Example.com",
+      firstName: "An",
+      lastName: "Nguyễn Hoàng",
+      password: "  A long private passphrase  ",
+    });
+    return json(registration, 202);
+  };
+  const result = await registerAccount({
+    email: " An@Example.com ",
+    firstName: " An ",
+    lastName: " Nguyễn Hoàng ",
+    password: "  A long private passphrase  ",
+  });
+  assert.deepEqual(result, { success: true, challenge: registration });
+});
+
+test("registration never advances to OTP when sending fails", async () => {
+  globalThis.fetch = async (input) =>
+    input === "/api/v1/auth/csrf"
+      ? csrf()
+      : json({ code: "SERVICE_UNAVAILABLE" }, 503);
+  const result = await registerAccount({
+    ...credentials,
+    firstName: "An",
+    lastName: "Nguyễn",
+  });
+  assert.equal(result.success, false);
+  if (!result.success) assert.equal(result.error.status, 503);
+});
+
+test("registration rejects incomplete API challenge responses", async () => {
+  globalThis.fetch = async (input) =>
+    input === "/api/v1/auth/csrf" ? csrf() : json({ message: "ok" }, 202);
+  const result = await registerAccount({
+    ...credentials,
+    firstName: "An",
+    lastName: "Nguyễn",
+  });
+  assert.equal(result.success, false);
+  if (!result.success) assert.equal(result.error.code, "INVALID_RESPONSE");
+});
+
+test("OTP verification preserves leading zeros and never logs in automatically", async () => {
+  globalThis.fetch = async (input, init) => {
+    if (input === "/api/v1/auth/csrf") return csrf();
+    assert.equal(input, "/api/v1/auth/register/verify");
+    assert.deepEqual(JSON.parse(init?.body as string), {
+      registrationId: registration.registrationId,
+      email: "an@example.com",
+      otp: "001234",
+    });
+    return json({ message: "Tài khoản đã được xác minh." });
+  };
+  assert.deepEqual(
+    await verifyRegistrationOtp({
+      registrationId: registration.registrationId,
+      email: "an@example.com",
+      otp: "001234",
+    }),
+    { success: true }
+  );
+});
+
+test("OTP verification exposes expired-code errors and persistent cooldown", async () => {
+  const identity = {
+    registrationId: registration.registrationId,
+    email: "an@example.com",
+    otp: "001234",
+  };
+  globalThis.fetch = async (input) =>
+    input === "/api/v1/auth/csrf"
+      ? csrf()
+      : json({ code: "OTP_EXPIRED", detail: "Mã xác minh đã hết hạn." }, 400);
+  const expired = await verifyRegistrationOtp(identity);
+  assert.equal(expired.success, false);
+  if (!expired.success) assert.equal(expired.error.code, "OTP_EXPIRED");
+  globalThis.fetch = async (input) =>
+    input === "/api/v1/auth/csrf"
+      ? csrf()
+      : json({ code: "RATE_LIMITED" }, 429, { "Retry-After": "900" });
+  const limited = await verifyRegistrationOtp(identity);
+  assert.equal(limited.success, false);
+  if (!limited.success) assert.equal(limited.error.retryAfterSeconds, 900);
+});
+
+test("resend binds the request ID and email and uses its own cooldown", async () => {
+  globalThis.fetch = async (input, init) => {
+    if (input === "/api/v1/auth/csrf") return csrf();
+    assert.equal(input, "/api/v1/auth/register/resend");
+    assert.deepEqual(JSON.parse(init?.body as string), {
+      registrationId: registration.registrationId,
+      email: "an@example.com",
+    });
+    return json(registration, 202);
+  };
+  const result = await resendRegistrationOtp({
+    registrationId: registration.registrationId,
+    email: "an@example.com",
+  });
+  assert.equal(result.success, true);
+});
+
+test("registration validation maps field errors and password-policy errors", async () => {
+  globalThis.fetch = async (input) =>
+    input === "/api/v1/auth/csrf"
+      ? csrf()
+      : json(
+          {
+            code: "VALIDATION_ERROR",
+            errors: [{ field: "firstName", message: "must not be blank" }],
+          },
+          400
+        );
+  const invalid = await registerAccount({
+    ...credentials,
+    firstName: "",
+    lastName: "Nguyễn",
+  });
+  assert.equal(invalid.success, false);
+  if (!invalid.success) assert.ok(invalid.error.fieldViolations?.firstName);
+  globalThis.fetch = async (input) =>
+    input === "/api/v1/auth/csrf"
+      ? csrf()
+      : json({ code: "PASSWORD_REJECTED", detail: "Mật khẩu đã bị lộ." }, 400);
+  const rejected = await registerAccount({
+    ...credentials,
+    firstName: "An",
+    lastName: "Nguyễn",
+  });
+  assert.equal(rejected.success, false);
+  if (!rejected.success) assert.equal(rejected.error.code, "PASSWORD_REJECTED");
+});
+
+test("registration and OTP return a retryable error on network failure", async () => {
+  globalThis.fetch = async () => {
+    throw new TypeError("offline");
+  };
+  const result = await resendRegistrationOtp({
+    registrationId: registration.registrationId,
+    email: "an@example.com",
+  });
+  assert.equal(result.success, false);
+  if (!result.success) assert.equal(result.error.code, "NETWORK_ERROR");
+});
+
+test("forgot password starts a generic real challenge with CSRF and normalized email", async () => {
+  globalThis.fetch = async (input, init) => {
+    if (input === "/api/v1/auth/csrf") return csrf();
+    assert.equal(input, "/api/v1/auth/password/forgot");
+    assert.deepEqual(JSON.parse(init?.body as string), {
+      email: "an@example.com",
+    });
+    assert.equal(new Headers(init?.headers).get("X-XSRF-TOKEN"), "csrf-token");
+    return json(
+      {
+        challengeId: registration.registrationId,
+        expiresAt: registration.expiresAt,
+        resendAfterSeconds: 60,
+        message: "Nếu email đã có tài khoản, mã sẽ được gửi.",
+      },
+      202
+    );
+  };
+  const result = await requestPasswordReset(" an@example.com ");
+  assert.equal(result.success, true);
+});
+
+test("reset OTP keeps leading zeros and returns a short-lived grant without login", async () => {
+  globalThis.fetch = async (input, init) => {
+    if (input === "/api/v1/auth/csrf") return csrf();
+    assert.equal(input, "/api/v1/auth/password/verify");
+    assert.equal(JSON.parse(init?.body as string).otp, "001234");
+    return json({
+      resetToken: "a".repeat(64),
+      expiresAt: registration.expiresAt,
+    });
+  };
+  const result = await verifyPasswordResetOtp({
+    challengeId: registration.registrationId,
+    email: "an@example.com",
+    otp: "001234",
+  });
+  assert.equal(result.success, true);
+  if (result.success) assert.equal(result.data.resetToken.length, 64);
+});
+
+test("reset password uses only the grant and preserves password spaces", async () => {
+  globalThis.fetch = async (input, init) => {
+    if (input === "/api/v1/auth/csrf") return csrf();
+    assert.equal(input, "/api/v1/auth/password/reset");
+    assert.deepEqual(JSON.parse(init?.body as string), {
+      email: "an@example.com",
+      resetToken: "b".repeat(64),
+      newPassword: "  A new private passphrase  ",
+    });
+    return json({ message: "Mật khẩu đã được cập nhật." });
+  };
+  assert.deepEqual(
+    await resetPassword({
+      email: "an@example.com",
+      resetToken: "b".repeat(64),
+      newPassword: "  A new private passphrase  ",
+    }),
+    { success: true }
+  );
+});
+
+test("reset rejects invalid grant responses and forwards expired grant errors", async () => {
+  globalThis.fetch = async (input) =>
+    input === "/api/v1/auth/csrf"
+      ? csrf()
+      : json({ resetToken: "not-a-token", expiresAt: registration.expiresAt });
+  const invalid = await verifyPasswordResetOtp({
+    challengeId: registration.registrationId,
+    email: "an@example.com",
+    otp: "001234",
+  });
+  assert.equal(invalid.success, false);
+  globalThis.fetch = async (input) =>
+    input === "/api/v1/auth/csrf"
+      ? csrf()
+      : json(
+          { code: "RESET_TOKEN_INVALID", detail: "Yêu cầu đã hết hạn." },
+          400
+        );
+  const expired = await resetPassword({
+    email: "an@example.com",
+    resetToken: "a".repeat(64),
+    newPassword: "A completely new password!",
+  });
+  assert.equal(expired.success, false);
+  if (!expired.success) assert.equal(expired.error.code, "RESET_TOKEN_INVALID");
+});
+
+test("forgot password does not fake a challenge on mail/network failures", async () => {
+  globalThis.fetch = async () => {
+    throw new TypeError("offline");
+  };
+  const result = await requestPasswordReset("an@example.com");
+  assert.equal(result.success, false);
 });

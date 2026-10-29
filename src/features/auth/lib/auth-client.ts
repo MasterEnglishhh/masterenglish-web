@@ -3,6 +3,14 @@ import type {
   AuthUser,
   LoginCredentials,
   ProblemDetail,
+  RegisterCredentials,
+  RegistrationChallenge,
+  RegistrationIdentity,
+  RegistrationResult,
+  VerificationResult,
+  PasswordResetChallenge,
+  PasswordResetGrant,
+  AuthActionResult,
 } from "../types/auth";
 
 interface CsrfPayload {
@@ -68,10 +76,7 @@ export function fetchCsrfToken(): Promise<CsrfPayload | null> {
   return csrfRequest;
 }
 
-async function postAuth(
-  path: string,
-  body?: LoginCredentials
-): Promise<Response> {
+async function postAuth(path: string, body?: object): Promise<Response> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const csrf = await fetchCsrfToken();
     if (!csrf)
@@ -274,4 +279,193 @@ export async function logout(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+async function registrationError(res: Response) {
+  const problem = await parseProblemDetail(res);
+  const seconds = Number(res.headers.get("Retry-After"));
+  const fieldViolations: Record<string, string> = {};
+  const labels: Record<string, string> = {
+    firstName: "Vui lòng nhập tên hợp lệ (tối đa 30 ký tự).",
+    lastName: "Vui lòng nhập họ và tên đệm hợp lệ (tối đa 30 ký tự).",
+    email: "Vui lòng nhập email hợp lệ.",
+    otp: "Vui lòng nhập đủ 6 chữ số.",
+    password: "Vui lòng kiểm tra lại mật khẩu.",
+    newPassword: "Vui lòng kiểm tra lại mật khẩu mới.",
+  };
+  for (const violation of problem?.errors ?? []) {
+    if (labels[violation.field])
+      fieldViolations[violation.field] = labels[violation.field];
+  }
+  return {
+    code: problem?.code ?? "SERVICE_UNAVAILABLE",
+    message:
+      res.status >= 500
+        ? "Chưa thể hoàn tất yêu cầu. Vui lòng thử lại sau."
+        : (problem?.detail ?? "Không thể hoàn tất yêu cầu. Vui lòng thử lại."),
+    status: res.status,
+    retryable: res.status >= 500 || res.status === 403,
+    ...(res.status === 429
+      ? {
+          retryAfterSeconds:
+            Number.isFinite(seconds) && seconds > 0 ? seconds : 60,
+        }
+      : {}),
+    ...(Object.keys(fieldViolations).length ? { fieldViolations } : {}),
+  };
+}
+
+function networkRegistrationError() {
+  return {
+    success: false as const,
+    error: {
+      code: "NETWORK_ERROR",
+      message:
+        "Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.",
+      retryable: true,
+    },
+  };
+}
+
+async function requestRegistrationChallenge(
+  path: string,
+  payload: object
+): Promise<RegistrationResult> {
+  try {
+    const res = await postAuth(path, payload);
+    if (!res.ok) return { success: false, error: await registrationError(res) };
+    const data = (await res.json()) as Partial<RegistrationChallenge>;
+    if (
+      typeof data.registrationId !== "string" ||
+      !/^[0-9a-f-]{36}$/i.test(data.registrationId) ||
+      typeof data.expiresAt !== "string" ||
+      !Number.isFinite(Date.parse(data.expiresAt)) ||
+      typeof data.resendAfterSeconds !== "number" ||
+      !Number.isFinite(data.resendAfterSeconds) ||
+      data.resendAfterSeconds < 0 ||
+      typeof data.message !== "string"
+    ) {
+      return {
+        success: false,
+        error: {
+          code: "INVALID_RESPONSE",
+          message: "Không thể xác nhận lượt đăng ký. Vui lòng thử lại.",
+          retryable: true,
+        },
+      };
+    }
+    return { success: true, challenge: data as RegistrationChallenge };
+  } catch {
+    return networkRegistrationError();
+  }
+}
+
+export function registerAccount(
+  credentials: RegisterCredentials
+): Promise<RegistrationResult> {
+  return requestRegistrationChallenge("register", {
+    email: credentials.email.trim(),
+    firstName: credentials.firstName.trim(),
+    lastName: credentials.lastName.trim(),
+    password: credentials.password,
+  });
+}
+
+export function resendRegistrationOtp(
+  identity: RegistrationIdentity
+): Promise<RegistrationResult> {
+  return requestRegistrationChallenge("register/resend", {
+    ...identity,
+    email: identity.email.trim(),
+  });
+}
+
+export async function verifyRegistrationOtp(
+  identity: RegistrationIdentity & { otp: string }
+): Promise<VerificationResult> {
+  try {
+    const res = await postAuth("register/verify", {
+      ...identity,
+      email: identity.email.trim(),
+    });
+    if (!res.ok) return { success: false, error: await registrationError(res) };
+    return { success: true };
+  } catch {
+    return networkRegistrationError();
+  }
+}
+
+export async function requestPasswordReset(
+  email: string
+): Promise<AuthActionResult<PasswordResetChallenge>> {
+  try {
+    const res = await postAuth("password/forgot", { email: email.trim() });
+    if (!res.ok) return { success: false, error: await registrationError(res) };
+    const data = (await res.json()) as Partial<PasswordResetChallenge>;
+    if (
+      typeof data.challengeId !== "string" ||
+      !/^[0-9a-f-]{36}$/i.test(data.challengeId) ||
+      typeof data.expiresAt !== "string" ||
+      !Number.isFinite(Date.parse(data.expiresAt)) ||
+      typeof data.resendAfterSeconds !== "number" ||
+      !Number.isFinite(data.resendAfterSeconds) ||
+      data.resendAfterSeconds < 0 ||
+      typeof data.message !== "string"
+    )
+      return invalidResetResponse();
+    return { success: true, data: data as PasswordResetChallenge };
+  } catch {
+    return networkRegistrationError();
+  }
+}
+export async function verifyPasswordResetOtp(input: {
+  challengeId: string;
+  email: string;
+  otp: string;
+}): Promise<AuthActionResult<PasswordResetGrant>> {
+  try {
+    const res = await postAuth("password/verify", {
+      ...input,
+      email: input.email.trim(),
+    });
+    if (!res.ok) return { success: false, error: await registrationError(res) };
+    const data = (await res.json()) as Partial<PasswordResetGrant>;
+    if (
+      typeof data.resetToken !== "string" ||
+      !/^[0-9a-f]{64}$/.test(data.resetToken) ||
+      typeof data.expiresAt !== "string" ||
+      !Number.isFinite(Date.parse(data.expiresAt))
+    )
+      return invalidResetResponse();
+    return { success: true, data: data as PasswordResetGrant };
+  } catch {
+    return networkRegistrationError();
+  }
+}
+export async function resetPassword(input: {
+  email: string;
+  resetToken: string;
+  newPassword: string;
+}): Promise<VerificationResult> {
+  try {
+    const res = await postAuth("password/reset", {
+      ...input,
+      email: input.email.trim(),
+    });
+    if (!res.ok) return { success: false, error: await registrationError(res) };
+    return { success: true };
+  } catch {
+    return networkRegistrationError();
+  }
+}
+function invalidResetResponse() {
+  return {
+    success: false as const,
+    error: {
+      code: "INVALID_RESPONSE",
+      message:
+        "Không thể xác nhận yêu cầu khôi phục mật khẩu. Vui lòng thử lại.",
+      retryable: true,
+    },
+  };
 }

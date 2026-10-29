@@ -17,6 +17,12 @@ export {
   getCurrentUser,
   logout,
   refreshSession,
+  registerAccount,
+  resendRegistrationOtp,
+  verifyRegistrationOtp,
+  requestPasswordReset,
+  verifyPasswordResetOtp,
+  resetPassword,
 } from "./lib/auth-client";
 export { getSafeRedirectUrl } from "./lib/redirect";
 
@@ -30,4 +36,7 @@ export type {
   LoginCredentials,
   LoginFormState,
   ProblemDetail,
+  PasswordResetChallenge,
+  PasswordResetGrant,
+  AuthActionResult,
 } from "./types/auth";

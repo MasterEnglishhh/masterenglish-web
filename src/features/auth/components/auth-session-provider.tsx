@@ -19,6 +19,7 @@ interface AuthSession {
   refreshSession: () => Promise<AuthUser | null>;
   acceptLogin: (user: AuthUser) => void;
   logout: () => Promise<boolean>;
+  clearSession: () => void;
 }
 
 export const AuthSessionContext = createContext<AuthSession | null>(null);
@@ -103,6 +104,13 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const clearSession = useCallback(() => {
+    ++revision.current;
+    setUser(null);
+    setError(null);
+    setIsLoading(false);
+  }, []);
+
   return (
     <AuthSessionContext.Provider
       value={{
@@ -113,6 +121,7 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
         refreshSession,
         acceptLogin,
         logout,
+        clearSession,
       }}
     >
       {children}

@@ -31,6 +31,27 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="auth-form" noValidate>
+      {searchParams.get("reset") === "1" && (
+        <div className="auth-alert register-verified" role="status">
+          <span aria-hidden="true">✓</span>
+          <div className="auth-alert-body">
+            <strong>Mật khẩu đã được cập nhật</strong>
+            <p>
+              Các phiên đăng nhập cũ đã được thu hồi. Hãy đăng nhập bằng mật
+              khẩu mới.
+            </p>
+          </div>
+        </div>
+      )}
+      {searchParams.get("registered") === "1" && (
+        <div className="auth-alert register-verified" role="status">
+          <span aria-hidden="true">✓</span>
+          <div className="auth-alert-body">
+            <strong>Email đã được xác minh</strong>
+            <p>Tài khoản đã sẵn sàng. Đăng nhập để bắt đầu nhé.</p>
+          </div>
+        </div>
+      )}
       {/* Rate limit warning banner */}
       {isBlockedByCooldown && (
         <div className="auth-alert auth-alert-warning" role="alert">
@@ -41,8 +62,8 @@ export function LoginForm() {
             <strong>Giới hạn lượt đăng nhập</strong>
             <p>
               Vui lòng chờ{" "}
-              <span className="auth-cooldown-count">{cooldownSeconds}</span> giây
-              nữa trước khi thử lại.
+              <span className="auth-cooldown-count">{cooldownSeconds}</span>{" "}
+              giây nữa trước khi thử lại.
             </p>
           </div>
         </div>
@@ -66,8 +87,8 @@ export function LoginForm() {
               {serverError.code === "BAD_CREDENTIALS"
                 ? "Đăng nhập không thành công"
                 : serverError.code === "SERVICE_UNAVAILABLE"
-                ? "Dịch vụ đang cập nhật"
-                : "Không thể hoàn tất yêu cầu"}
+                  ? "Dịch vụ đang cập nhật"
+                  : "Không thể hoàn tất yêu cầu"}
             </strong>
             <p>{serverError.message}</p>
             {serverError.retryable && (
@@ -141,8 +162,8 @@ export function LoginForm() {
           {isSubmitting
             ? "Đang xác thực..."
             : isBlockedByCooldown
-            ? `Chờ ${cooldownSeconds}s`
-            : "Đăng nhập"}
+              ? `Chờ ${cooldownSeconds}s`
+              : "Đăng nhập"}
         </span>
         {isSubmitting ? (
           <span className="auth-spinner" aria-hidden="true" />

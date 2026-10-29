@@ -1,14 +1,27 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  registerAccount,
+  resendRegistrationOtp,
+  verifyRegistrationOtp,
+} from "../lib/auth-client";
+import { getSafeRedirectUrl } from "../lib/redirect";
+import type { AuthError, RegistrationChallenge } from "../types/auth";
 
 type RegisterField =
   "lastName" | "firstName" | "email" | "password" | "confirmPassword";
 type RegisterValues = Record<RegisterField, string>;
 type RegisterErrors = Partial<Record<RegisterField, string>>;
+type PendingAction = "register" | "verify" | "resend" | null;
 
 export function useRegisterForm() {
   const formRef = useRef<HTMLFormElement>(null);
+  const otpRef = useRef<HTMLInputElement>(null);
+  const submitting = useRef(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [values, setValues] = useState<RegisterValues>({
     lastName: "",
     firstName: "",
@@ -19,15 +32,51 @@ export function useRegisterForm() {
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [isPreviewComplete, setIsPreviewComplete] = useState(false);
+  const [challenge, setChallenge] = useState<RegistrationChallenge | null>(
+    null
+  );
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [serverError, setServerError] = useState<AuthError | null>(null);
+  const [notice, setNotice] = useState("");
+  const [pending, setPending] = useState<PendingAction>(null);
+  const [resendAt, setResendAt] = useState(0);
+  const [sendBlockedUntil, setSendBlockedUntil] = useState(0);
+  const [verifyBlockedUntil, setVerifyBlockedUntil] = useState(0);
+  const [now, setNow] = useState(Date.now);
 
+  const normalizedPassword = values.password.normalize("NFC");
   const passwordRules = [
-    { label: "Ít nhất 8 ký tự", met: values.password.length >= 8 },
+    { label: "Từ 15 ký tự", met: [...normalizedPassword].length >= 15 },
     {
-      label: "Có cả chữ và số",
-      met: /\p{L}/u.test(values.password) && /\d/.test(values.password),
+      label: "Tối đa 72 byte UTF-8",
+      met:
+        !!values.password &&
+        new TextEncoder().encode(normalizedPassword).length <= 72,
     },
   ];
+
+  useEffect(() => {
+    if (
+      !challenge &&
+      sendBlockedUntil <= Date.now() &&
+      verifyBlockedUntil <= Date.now()
+    )
+      return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [challenge, sendBlockedUntil, verifyBlockedUntil]);
+
+  useEffect(() => {
+    if (challenge) otpRef.current?.focus();
+  }, [challenge]);
+
+  const remaining = (until: number) =>
+    Math.max(0, Math.ceil((until - now) / 1000));
+  const sendCooldown = remaining(sendBlockedUntil);
+  const resendCooldown = remaining(Math.max(resendAt, sendBlockedUntil));
+  const verifyCooldown = remaining(verifyBlockedUntil);
+  const expiresIn = challenge ? remaining(Date.parse(challenge.expiresAt)) : 0;
 
   function changeField(field: RegisterField, value: string) {
     setValues((previous) => ({ ...previous, [field]: value }));
@@ -36,11 +85,22 @@ export function useRegisterForm() {
       [field]: undefined,
       ...(field === "password" ? { confirmPassword: undefined } : {}),
     }));
-    setIsPreviewComplete(false);
+    if (!sendCooldown) setServerError(null);
   }
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  function acceptChallenge(next: RegistrationChallenge) {
+    const time = Date.now();
+    setNow(time);
+    setChallenge(next);
+    setResendAt(time + next.resendAfterSeconds * 1000);
+    setOtp("");
+    setOtpError("");
+    setServerError(null);
+  }
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting.current || sendCooldown) return;
     const nextErrors: RegisterErrors = {};
     for (const field of ["lastName", "firstName"] as const) {
       if (!values[field].trim())
@@ -56,14 +116,14 @@ export function useRegisterForm() {
       values.email.trim().length > 254
     )
       nextErrors.email = "Vui lòng nhập địa chỉ email hợp lệ.";
-    if (!passwordRules.every((rule) => rule.met))
-      nextErrors.password = "Mật khẩu cần ít nhất 8 ký tự, có cả chữ và số.";
+    if (!passwordRules.every((rule) => rule.met) || !normalizedPassword.trim())
+      nextErrors.password =
+        "Mật khẩu cần từ 15 ký tự và không quá 72 byte UTF-8.";
     if (!values.confirmPassword)
       nextErrors.confirmPassword = "Vui lòng nhập lại mật khẩu.";
-    else if (values.confirmPassword !== values.password)
+    else if (values.confirmPassword.normalize("NFC") !== normalizedPassword)
       nextErrors.confirmPassword = "Mật khẩu nhập lại chưa khớp.";
     setErrors(nextErrors);
-    setIsPreviewComplete(false);
     const firstInvalid = Object.keys(nextErrors)[0] as
       RegisterField | undefined;
     if (firstInvalid) {
@@ -71,20 +131,157 @@ export function useRegisterForm() {
       if (input instanceof HTMLInputElement) input.focus();
       return;
     }
-    // UI preview only: registration and email verification APIs are not available.
-    setIsPreviewComplete(true);
+    submitting.current = true;
+    setPending("register");
+    setServerError(null);
+    try {
+      const result = await registerAccount(values);
+      if (result.success) {
+        acceptChallenge(result.challenge);
+        setValues((previous) => ({
+          ...previous,
+          email: previous.email.trim(),
+          password: "",
+          confirmPassword: "",
+        }));
+      } else {
+        setServerError(result.error);
+        if (result.error.fieldViolations)
+          setErrors(result.error.fieldViolations);
+        if (result.error.code === "PASSWORD_REJECTED")
+          setErrors((previous) => ({
+            ...previous,
+            password: result.error.message,
+          }));
+        if (result.error.retryAfterSeconds) {
+          const time = Date.now();
+          setNow(time);
+          setSendBlockedUntil(time + result.error.retryAfterSeconds * 1000);
+        }
+      }
+    } finally {
+      submitting.current = false;
+      setPending(null);
+    }
+  }
+
+  async function onVerify(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!challenge || submitting.current || verifyCooldown) return;
+    setOtpError("");
+    setServerError(null);
+    if (!/^[0-9]{6}$/.test(otp)) {
+      setOtpError("Vui lòng nhập đủ 6 chữ số trong email.");
+      otpRef.current?.focus();
+      return;
+    }
+    if (!expiresIn) {
+      setOtpError("Mã đã hết hạn. Vui lòng yêu cầu mã mới.");
+      return;
+    }
+    submitting.current = true;
+    setPending("verify");
+    try {
+      const result = await verifyRegistrationOtp({
+        registrationId: challenge.registrationId,
+        email: values.email,
+        otp,
+      });
+      if (result.success) {
+        const redirect = getSafeRedirectUrl(searchParams.get("redirect"));
+        router.replace(
+          `/login?registered=1&redirect=${encodeURIComponent(redirect)}`
+        );
+      } else {
+        setServerError(result.error);
+        if (
+          result.error.code === "OTP_INVALID" ||
+          result.error.code === "OTP_EXPIRED" ||
+          result.error.fieldViolations?.otp
+        ) {
+          setOtpError(
+            result.error.fieldViolations?.otp ?? result.error.message
+          );
+          setOtp("");
+          otpRef.current?.focus();
+        }
+        if (result.error.retryAfterSeconds) {
+          const time = Date.now();
+          setNow(time);
+          setVerifyBlockedUntil(time + result.error.retryAfterSeconds * 1000);
+        }
+      }
+    } finally {
+      submitting.current = false;
+      setPending(null);
+    }
+  }
+
+  async function resend() {
+    if (!challenge || submitting.current || resendCooldown) return;
+    submitting.current = true;
+    setPending("resend");
+    setServerError(null);
+    setNotice("");
+    try {
+      const result = await resendRegistrationOtp({
+        registrationId: challenge.registrationId,
+        email: values.email,
+      });
+      if (result.success) {
+        acceptChallenge(result.challenge);
+        setNotice(result.challenge.message);
+      } else {
+        setServerError(result.error);
+        if (result.error.retryAfterSeconds) {
+          const time = Date.now();
+          setNow(time);
+          setSendBlockedUntil(time + result.error.retryAfterSeconds * 1000);
+        }
+      }
+    } finally {
+      submitting.current = false;
+      setPending(null);
+    }
+  }
+
+  function changeEmail() {
+    if (submitting.current) return;
+    setChallenge(null);
+    setOtp("");
+    setOtpError("");
+    setServerError(null);
+    setNotice("");
+    // Server-side limits survive changing email or starting a new request.
   }
 
   return {
     formRef,
+    otpRef,
     values,
     errors,
     passwordRules,
     showPassword,
     showConfirmation,
-    isPreviewComplete,
+    challenge,
+    otp,
+    otpError,
+    serverError,
+    notice,
+    pending,
+    sendCooldown,
+    resendCooldown,
+    verifyCooldown,
+    expiresIn,
     changeField,
     onSubmit,
+    onVerify,
+    resend,
+    changeEmail,
+    changeOtp: (value: string) => {
+      setOtp(value.replace(/[^0-9]/g, "").slice(0, 6));
+      setOtpError("");
+    },
     togglePassword: () => setShowPassword((value) => !value),
     toggleConfirmation: () => setShowConfirmation((value) => !value),
   };

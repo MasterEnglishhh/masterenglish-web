@@ -27,7 +27,7 @@ const copy: Record<
     eyebrow: "KHÔI PHỤC TÀI KHOẢN",
     title: "Mình cùng bắt đầu lại nhé.",
     description:
-      "Nhập email để tiếp tục quy trình đặt lại mật khẩu khi dịch vụ xác thực được kết nối.",
+      "Xác minh email bằng mã OTP, rồi chọn một mật khẩu mới để quay lại nhịp học của bạn.",
   },
 };
 
@@ -68,9 +68,6 @@ export function AuthLayout({ mode, children }: AuthLayoutProps) {
           <div className="auth-form-heading">
             <div className="auth-heading-kicker-row">
               <span className="section-kicker">{current.eyebrow}</span>
-              {mode === "register" && (
-                <span className="register-preview-badge">XEM TRƯỚC</span>
-              )}
             </div>
             <h1>{current.title}</h1>
             <p>{current.description}</p>

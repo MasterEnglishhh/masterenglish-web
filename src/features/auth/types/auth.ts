@@ -43,6 +43,43 @@ export interface AuthError {
 export type AuthResult =
   { success: true; user: AuthUser } | { success: false; error: AuthError };
 
+export interface RegisterCredentials extends LoginCredentials {
+  firstName: string;
+  lastName: string;
+}
+
+export interface RegistrationChallenge {
+  registrationId: string;
+  expiresAt: string;
+  resendAfterSeconds: number;
+  message: string;
+}
+
+export interface RegistrationIdentity {
+  registrationId: string;
+  email: string;
+}
+
+export type RegistrationResult =
+  | { success: true; challenge: RegistrationChallenge }
+  | { success: false; error: AuthError };
+
+export type VerificationResult =
+  { success: true } | { success: false; error: AuthError };
+
+export interface PasswordResetChallenge {
+  challengeId: string;
+  expiresAt: string;
+  resendAfterSeconds: number;
+  message: string;
+}
+export interface PasswordResetGrant {
+  resetToken: string;
+  expiresAt: string;
+}
+export type AuthActionResult<T> =
+  { success: true; data: T } | { success: false; error: AuthError };
+
 export type FormStatus = "idle" | "submitting" | "success" | "error";
 
 export interface LoginFormState {
