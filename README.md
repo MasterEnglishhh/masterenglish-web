@@ -54,6 +54,14 @@ Trang `/register` có biểu mẫu họ/tên (tối đa 30 ký tự mỗi phần
 
 Trang `/forgot-password` có ba bước email → OTP → mật khẩu mới. API `/api/v1/auth/password/forgot`, `/verify`, `/reset` giữ CSRF và hạn mức; reset grant chỉ nằm trong bộ nhớ, có hạn 5 phút, không xuất hiện trong URL/storage. Đặt lại thành công xóa user cache, chuyển về login với thông báo thành công và giữ redirect an toàn. Dùng lại cấu hình Gmail/SMTP backend, không cần thêm biến frontend. Chi tiết: [quên mật khẩu](../masterenglish-api/docs/PASSWORD_RESET_SETUP.md).
 
+## Cloudflare Pages
+
+Frontend hỗ trợ thêm bản static export cho Cloudflare Pages, giữ API trên EC2.
+Chạy `npm run build:pages` để sinh `out/`; Pages Function trong `functions/api/`
+chuyển tiếp `/api/*` đến `BACKEND_URL` HTTPS, giữ cookie và CSRF, không cache API.
+Các giá trị JWT/OTP/SMTP vẫn chỉ nằm ở backend. Bản Docker hiện có vẫn được giữ
+trong giai đoạn chuyển đổi. Xem [hướng dẫn chuyển sang Pages](docs/CLOUDFLARE_PAGES.md).
+
 ## Docker cho triển khai EC2
 
 Chạy từ repo `masterenglish-web`, cần Docker đang hoạt động:

@@ -1,0 +1,9 @@
+/dang-nhap /login 308
+/dang-ky /register 308
+/quen-mat-khau /forgot-password 308
+/hoc/tu-vung /learn/vocabulary 308
+/hoc/ngu-phap /learn/grammar 308
+/hoc/on-tap /learn/review 308
+/hoc/ket-qua /learn/results 308
+/hoc /learn 308
+/hoc/* /learn/:splat 308
