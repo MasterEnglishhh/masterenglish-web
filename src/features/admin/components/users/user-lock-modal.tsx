@@ -28,7 +28,7 @@ export function UserLockModal({ user, isOpen, onClose, onConfirm }: UserLockModa
     <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
       <div className="admin-modal">
         <div>
-          <span className="admin-kicker">M09.02 / TRẠNG THÁI TÀI KHOẢN</span>
+          <span className="admin-kicker">TRẠNG THÁI TÀI KHOẢN</span>
           <h2 className="admin-modal-title">
             {isLocking ? "Khóa tài khoản người dùng" : "Mở khóa tài khoản"}
           </h2>

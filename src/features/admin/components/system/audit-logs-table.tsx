@@ -34,7 +34,7 @@ export function AuditLogsTable({
   return (
     <div className="admin-card">
       <div style={{ marginBottom: 20 }}>
-        <span className="admin-kicker">M09.09 / NHẬT KÝ KIỂM TOÁN</span>
+        <span className="admin-kicker">NHẬT KÝ KIỂM TOÁN</span>
         <h2 style={{ fontSize: 20, fontWeight: 750, margin: "4px 0 0" }}>
           Sổ cái kiểm toán hệ thống <em>(Audit Ledger)</em>
         </h2>

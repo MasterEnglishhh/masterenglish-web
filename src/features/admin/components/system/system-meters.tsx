@@ -17,7 +17,7 @@ export function SystemMeters({ storage, ai }: SystemMetersProps) {
               <Database size={18} />
             </div>
             <div>
-              <span className="admin-kicker">M09.07 / BỘ NHỚ ĐÁM MÂY</span>
+              <span className="admin-kicker">BỘ NHỚ ĐÁM MÂY</span>
               <h3 style={{ fontSize: 16, fontWeight: 750, margin: 0 }}>Cloudflare R2 Storage</h3>
             </div>
           </div>
@@ -55,7 +55,7 @@ export function SystemMeters({ storage, ai }: SystemMetersProps) {
               <Sparkles size={18} />
             </div>
             <div>
-              <span className="admin-kicker">M09.06 / QUOTA TRỢ LÝ AI</span>
+              <span className="admin-kicker">QUOTA TRỢ LÝ AI</span>
               <h3 style={{ fontSize: 16, fontWeight: 750, margin: 0 }}>Hạn ngạch AI Token hằng ngày</h3>
             </div>
           </div>

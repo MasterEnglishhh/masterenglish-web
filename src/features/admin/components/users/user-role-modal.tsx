@@ -33,7 +33,7 @@ export function UserRoleModal({ user, isOpen, onClose, onSave }: UserRoleModalPr
     <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
       <div className="admin-modal">
         <div>
-          <span className="admin-kicker">M09.03 / PHÂN QUYỀN HỆ THỐNG</span>
+          <span className="admin-kicker">PHÂN QUYỀN HỆ THỐNG</span>
           <h2 className="admin-modal-title">Cập nhật vai trò cho {user.displayName}</h2>
           <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--muted)" }}>
             Email: <strong>{user.email}</strong>

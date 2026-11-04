@@ -12,7 +12,7 @@ export function FeatureFlagsPanel({ flags, onToggle }: FeatureFlagsPanelProps) {
   return (
     <div className="admin-card" style={{ marginBottom: 32 }}>
       <div style={{ marginBottom: 20 }}>
-        <span className="admin-kicker">M09.05 / ĐIỀU PHỐI TÍNH NĂNG</span>
+        <span className="admin-kicker">ĐIỀU PHỐI TÍNH NĂNG</span>
         <h2 style={{ fontSize: 20, fontWeight: 750, margin: "4px 0 0" }}>
           Cờ tính năng hệ thống <em>(Feature Flags)</em>
         </h2>

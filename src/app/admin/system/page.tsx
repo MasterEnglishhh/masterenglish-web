@@ -22,7 +22,7 @@ export default function AdminSystemPage() {
   return (
     <div>
       <div className="admin-heading">
-        <span className="admin-kicker">M09.05 - M09.15 / CHÍNH SÁCH, QUOTA & AN TOÀN</span>
+        <span className="admin-kicker">CHÍNH SÁCH, QUOTA & AN TOÀN</span>
         <h1 className="admin-title">
           Cấu hình Hệ thống & <em>Sổ cái Kiểm toán</em>
         </h1>

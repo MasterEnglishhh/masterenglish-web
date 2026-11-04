@@ -28,7 +28,7 @@ export function ContentPreviewModal({
       <div className="admin-modal" style={{ maxWidth: 600 }}>
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <span className="admin-kicker">M08.18 - M08.20 / PHÊ DUYỆT & XUẤT BẢN</span>
+            <span className="admin-kicker">PHÊ DUYỆT & XUẤT BẢN</span>
             <ContentStatusBadge status={item.status} />
           </div>
           <h2 className="admin-modal-title">{item.title}</h2>

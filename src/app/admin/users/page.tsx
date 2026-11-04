@@ -17,7 +17,7 @@ export default function AdminUsersPage() {
   return (
     <div>
       <div className="admin-heading">
-        <span className="admin-kicker">M09.01 - M09.04 / QUẢN TRỊ TÀI KHOẢN</span>
+        <span className="admin-kicker">QUẢN TRỊ TÀI KHOẢN & PHÂN QUYỀN</span>
         <h1 className="admin-title">
           Quản lý Người dùng & <em>Phân quyền</em>
         </h1>

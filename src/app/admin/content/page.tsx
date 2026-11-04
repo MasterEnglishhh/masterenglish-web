@@ -16,7 +16,7 @@ export default function AdminContentPage() {
   return (
     <div>
       <div className="admin-heading">
-        <span className="admin-kicker">M08 / QUẢN TRỊ NỘI DUNG & NGÂN HÀNG ĐỀ</span>
+        <span className="admin-kicker">QUẢN TRỊ NỘI DUNG & NGÂN HÀNG ĐỀ</span>
         <h1 className="admin-title">
           Kiểm duyệt Từ vựng, Ngữ pháp & <em>Đề thi</em>
         </h1>

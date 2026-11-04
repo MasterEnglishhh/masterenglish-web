@@ -11,7 +11,7 @@ export default function AdminOverviewPage() {
   return (
     <div>
       <div className="admin-heading">
-        <span className="admin-kicker">M09 / TỔNG QUAN HỆ THỐNG</span>
+        <span className="admin-kicker">TỔNG QUAN HỆ THỐNG</span>
         <h1 className="admin-title">
           Bảng điều khiển <em>Quản trị & Vận hành</em>
         </h1>
