@@ -41,8 +41,21 @@ export function AccountMenu() {
     [user.firstName, user.lastName].filter(Boolean).join(" ") ||
     user.email;
 
+  const isAdmin = user.roles.some(
+    (r) => r === "SYSTEM_ADMIN" || r === "CONTENT_ADMIN"
+  );
+
   return (
     <div className="account-menu">
+      {isAdmin && (
+        <Link
+          href="/admin"
+          className="admin-brand-badge"
+          style={{ textDecoration: "none", marginRight: 4 }}
+        >
+          Quản trị ↗
+        </Link>
+      )}
       <span className="account-name" title={user.email}>
         {name}
       </span>
