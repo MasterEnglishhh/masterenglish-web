@@ -10,8 +10,8 @@
   được Pages phục vụ trực tiếp. `public/_redirects` giữ các URL tiếng Việt cũ.
 - Không đổi auth client sang gọi domain API trực tiếp. Cookie vẫn thuộc hostname
   frontend, nên trình duyệt tiếp tục đọc XSRF-TOKEN và gửi cookie cùng origin.
-- `npm run build`, Dockerfile và cách deploy EC2 cũ vẫn hoạt động để chuyển đổi
-  theo từng bước. Job `Verify Cloudflare Pages build` bổ sung kiểm tra bản Pages.
+- `npm run build` và Dockerfile chỉ giữ cho chạy thử thủ công. Production frontend
+  chạy trên Pages; GitHub CI kiểm tra lint/tests và bản build Pages.
 
 ## 1. Đưa code lên GitHub
 
@@ -21,7 +21,7 @@ Không cần chuyển code hay cấu hình email trong repo API cho bước này
 
 ## 2. Tạo Pages project
 
-Cloudflare dashboard → Workers & Pages → Create application → Pages → Import an
+Cloudflare dashboard → Workers & Pages → Create application → Continue to Pages → Import an
 existing Git repository. Cho phép Cloudflare truy cập repo `masterenglish-web`.
 
 | Thiết lập | Giá trị |
@@ -102,22 +102,18 @@ Sau khi xác nhận domain chính hoạt động, có thể bỏ origin Pages t�
 nếu không tiếp tục dùng nó để thử. Không chuyển dữ liệu PostgreSQL hay cấu hình
 Gmail sang Pages.
 
-## 5. CI/CD và container Web EC2
+## 5. CI/CD và chuyển Infra sang chỉ chạy API
 
 Git integration của Pages tự build/deploy sau mỗi push lên nhánh production;
-build command ở trên bắt buộc lint/tests thành công trước deploy. GitHub CI vẫn
-kiểm tra cả Pages và Docker trong giai đoạn chuyển đổi. Không cần Cloudflare API
-token trong GitHub khi dùng Git integration này.
+build command ở trên bắt buộc lint/tests thành công trước deploy. GitHub CI chỉ
+kiểm tra lint, tests và Pages build, không còn publish frontend Docker image.
+Không cần Cloudflare API token trong GitHub khi dùng Pages Git integration.
 
-**Giữ container Web EC2 và workflow Deploy production hiện tại trong giai đoạn
-thử.** Chúng vẫn phụ thuộc nhau: Nginx có upstream `web`, Compose HTTPS chờ Web
-healthy, deploy script cập nhật hai image và kiểm tra API từ container Web.
-Không stop/xóa Web hoặc bỏ WEB_IMAGE lúc này.
-
-Sau khi Pages/domain chính đã được kiểm tra thành công, bước tiếp theo trên Infra
-là tách deploy chỉ cho backend: bỏ phụ thuộc Web trong Compose/Nginx, chuyển probe
-health sang API/Nginx và bỏ input image frontend. Chỉ sau bước đó mới dừng Web.
-Frontend Pages không được triển khai bằng workflow hai Docker image hiện tại.
+Sau khi thử thành công trên Pages, thực hiện
+[chuyển Infra](../../masterenglish-infra/docs/PAGES_MIGRATION.md): sao lưu cấu
+hình cũ trên EC2, cập nhật hai Compose và Nginx bằng WinSCP, test config và tạo
+lại riêng Nginx, kiểm tra API/Pages, rồi mới dừng container Web cũ. Không tự dừng
+Web chỉ vì đã push repo. Workflow Deploy production mới chỉ nhận api_image.
 
 ## Tài liệu chính thức
 
