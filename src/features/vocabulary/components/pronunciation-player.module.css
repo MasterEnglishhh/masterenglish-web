@@ -1,0 +1,58 @@
+.player {
+  margin: 16px 0;
+}
+.compact {
+  margin: 0;
+  flex: none;
+  max-width: 160px;
+}
+.compact button {
+  padding: 9px;
+  min-height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  box-shadow: none;
+  border: 1px solid #e2ddf7;
+  background: #f3f0ff;
+  color: #6251c7;
+}
+.compact button svg {
+  transform: none;
+}
+.compact .error {
+  max-width: 140px;
+}
+.actions button {
+  box-shadow: none;
+  border-radius: 9px;
+  min-height: 40px;
+  padding: 10px 15px;
+  font-size: 12px;
+}
+.compact .actions button {
+  padding: 9px;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.note {
+  display: block;
+  margin-top: 8px;
+  color: #6c7184;
+}
+.audio {
+  display: block;
+  width: min(100%, 320px);
+  height: 38px;
+  margin-top: 10px;
+}
+.audio[hidden] {
+  display: none;
+}
+.error {
+  color: #a13728;
+  font-size: 13px;
+  margin-top: 8px;
+}
