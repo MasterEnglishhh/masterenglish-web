@@ -4,7 +4,13 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const result = spawnSync(
   process.execPath,
-  [require.resolve("next/dist/bin/next"), "build"],
+  // Turbopack's CSS worker exits before connecting on this Windows toolchain.
+  // Keep the Linux/Cloudflare build path unchanged; use the supported bundler locally.
+  [
+    require.resolve("next/dist/bin/next"),
+    "build",
+    ...(process.platform === "win32" ? ["--webpack"] : []),
+  ],
   {
     stdio: "inherit",
     env: { ...process.env, DEPLOY_TARGET: "cloudflare-pages" },

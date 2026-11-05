@@ -1,3 +1,22 @@
-import { FlashcardDemo } from "@/features/learning/components/flashcard-demo";
+import { Suspense } from "react";
+import { VocabularyView } from "@/features/vocabulary/components/vocabulary-view";
+import styles from "@/features/vocabulary/components/vocabulary.module.css";
 
-export default function VocabularyPage() { return <main className="learning-content inner-page"><div className="page-heading"><span className="section-kicker">TỪ VỰNG / HỌC THEO NGHĨA</span><h1>Mỗi từ mở ra<br /><em>một cách hiểu.</em></h1><p>Từ vựng được học theo từng nghĩa và ngữ cảnh. Hãy thử lật thẻ mẫu để cảm nhận nhịp học.</p></div><FlashcardDemo /><div className="info-line"><span>✳</span><p>Thẻ học này chỉ để xem thử giao diện. Lịch ôn và trạng thái ghi nhớ sẽ đến từ API sau khi kết nối tài khoản.</p></div></main>; }
+export default function VocabularyPage() {
+  return (
+    <main className={`learning-content ${styles.page}`}>
+      <Suspense
+        fallback={
+          <div style={{ textAlign: "center", padding: "60px 0" }}>
+            <div style={{ fontSize: "28px", color: "var(--indigo)" }}>✳</div>
+            <p style={{ fontSize: "14px", color: "#777", marginTop: "12px" }}>
+              Đang mở không gian từ vựng...
+            </p>
+          </div>
+        }
+      >
+        <VocabularyView />
+      </Suspense>
+    </main>
+  );
+}

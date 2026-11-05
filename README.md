@@ -59,10 +59,9 @@ Trang `/forgot-password` có ba bước email → OTP → mật khẩu mới. AP
 Frontend hỗ trợ thêm bản static export cho Cloudflare Pages, giữ API trên EC2.
 Chạy `npm run build:pages` để sinh `out/`; Pages Function trong `functions/api/`
 chuyển tiếp `/api/*` đến `BACKEND_URL` HTTPS, giữ cookie và CSRF, không cache API.
-Các giá trị JWT/OTP/SMTP vẫn chỉ nằm ở backend. Bản Docker hiện có vẫn được giữ
-trong giai đoạn chuyển đổi. Xem [hướng dẫn chuyển sang Pages](docs/CLOUDFLARE_PAGES.md).
+Các giá trị JWT/OTP/SMTP vẫn chỉ nằm ở backend. Production frontend chỉ chạy trên Pages. Xem [hướng dẫn chuyển sang Pages](docs/CLOUDFLARE_PAGES.md).
 
-## Docker cho triển khai EC2
+## Docker cho chạy thử thủ công
 
 Chạy từ repo `masterenglish-web`, cần Docker đang hoạt động:
 
@@ -88,39 +87,18 @@ của frontend như trước.
 trên máy local khỏi build context. Image được build trực tiếp trên Linux, không
 dùng output standalone tạo trên Windows.
 
-Workflow `Frontend CI` cài dependencies, chạy lint, build Docker image (bên trong
-có bước build Next.js và kiểm tra TypeScript), sau đó khởi động container và gửi
-HTTP request tới `/`. Container kiểm tra được dọn khi bước này kết thúc. Bước
-này chưa kiểm tra luồng frontend gọi API. Khi push `main`, workflow tự xuất bản
-đúng image vừa kiểm tra lên GHCR như bên dưới.
+## CI/CD cho Cloudflare Pages
 
-## Xuất bản image lên GHCR
+Workflow `Frontend CI` chạy lint, 46 kiểm thử auth/proxy và `npm run build:pages`
+trên Node.js 24. Không build hay publish frontend Docker image lên GHCR nữa;
+workflow Publish frontend image đã bỏ. Dockerfile chỉ giữ cho việc chạy thử
+thủ công khi cần, không còn trong luồng production.
 
-Sau mỗi push lên `main`, **Frontend CI** tự cài dependencies, chạy lint, build
-Docker image với `BACKEND_URL=http://api:8080`, khởi động image và kiểm tra trang
-`/`. Bước build bên trong Docker cũng kiểm tra TypeScript. Kiểm tra HTTP có
-retry cho lỗi kết nối khi ứng dụng đang khởi động; nếu vẫn không hoạt động trong
-thời gian chờ thì workflow thất bại.
+Cloudflare Pages Git integration tự deploy nhánh production với build command
+`npm run lint && npm test && npm run build:pages`, output `out`, rồi bundle
+Functions từ thư mục `functions/`. Không cần Cloudflare token trong GitHub khi
+sử dụng Git integration. Để chặn bản lỗi trước deploy, giữ đủ lint/test trong
+build command trên Pages; GitHub CI và Pages build là hai lượt chạy độc lập.
 
-Job `publish` chỉ chạy khi job `verify` thành công. Nó nhận nguyên image đã
-kiểm tra trong cùng workflow run qua artifact, không build lại image, rồi đẩy
-lên GHCR. Artifact trung chuyển giữ 1 ngày; image trên GHCR tồn tại độc lập.
-Pull request và lần chạy thủ công **Frontend CI** chỉ kiểm tra/build, không
-xuất bản image.
-
-Không cần bấm Publish sau mỗi push nữa. Workflow **Publish frontend image**
-thủ công vẫn giữ để xuất bản lại từ `main` khi cần. Workflow đó chạy lại lint,
-build và smoke test, nên lần build mới có thể cho digest khác dù cùng commit.
-
-Image có dạng `ghcr.io/masterenglishhh/masterenglish-web:sha-<commit SHA đầy đủ>`.
-Job xuất bản dùng `GITHUB_TOKEN` GitHub tự cấp cùng quyền `packages: write`;
-job kiểm tra chỉ có `contents: read`. Không cần thêm token hoặc secret cho bước
-xuất bản này. Label source liên kết package với repo Web.
-
-Trong trang Summary của lượt chạy thành công, lấy dòng **Deploy by digest** dạng
-`ghcr.io/masterenglishhh/masterenglish-web@sha256:...` để cố định đúng nội dung
-image khi triển khai. Image vẫn có tag theo commit để truy vết source. Sau khi
-**Frontend CI** xanh, lấy dòng **Deploy by digest** từ Summary của job Publish,
-rồi chọn image này ở workflow **Deploy production** trong repo Infra.
-Production tiếp tục triển khai bằng nút chạy thủ công, không tự cập nhật khi
-push code.
+Repo Infra chỉ deploy API lên EC2 và kiểm tra kết nối qua Pages. Xem
+[hướng dẫn chuyển Infra](../masterenglish-infra/docs/PAGES_MIGRATION.md).
