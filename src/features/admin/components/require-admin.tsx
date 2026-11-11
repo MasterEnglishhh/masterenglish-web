@@ -64,3 +64,42 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
+export function RequireSystemAdmin({ children }: { children: ReactNode }) {
+  const { user, isLoading } = useAuthSession();
+
+  if (isLoading) {
+    return (
+      <main className="session-status" role="status">
+        Đang xác thực quyền hạn...
+      </main>
+    );
+  }
+
+  const isSystemAdmin = Boolean(user?.roles?.includes("SYSTEM_ADMIN"));
+
+  if (isSystemAdmin) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className="admin-card" style={{ maxWidth: 580, margin: "40px auto", padding: 36, textAlign: "center" }}>
+      <span className="admin-kicker">403 / TRUY CẬP GIỚI HẠN</span>
+      <h2 className="admin-title" style={{ fontSize: 26, margin: "14px 0 10px" }}>
+        Quyền hạn <em>SYSTEM_ADMIN</em>
+      </h2>
+      <p className="admin-description" style={{ fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
+        Tính năng này thuộc phân hệ Quản trị hệ thống (M09), chỉ dành riêng cho tài khoản Quản trị viên tối cao. Giảng viên (CONTENT_ADMIN) có quyền biên soạn và thẩm định học liệu tại phân hệ Quản trị nội dung (M08).
+      </p>
+
+      <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+        <Link href="/admin/content" className="btn-3d-lime">
+          ← Chuyển đến Quản trị Nội dung
+        </Link>
+        <Link href="/admin" className="btn-3d-outline">
+          Về Tổng quan
+        </Link>
+      </div>
+    </div>
+  );
+}
