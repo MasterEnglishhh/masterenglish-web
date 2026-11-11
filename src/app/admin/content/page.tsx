@@ -7,10 +7,12 @@ export default function AdminContentPage() {
   const {
     items,
     totalCount,
+    totalPages,
+    isLoading,
+    error,
     filters,
     setFilters,
-    changeRevisionStatus,
-    deleteContentItem,
+    refreshContent,
   } = useAdminContent();
 
   return (
@@ -25,13 +27,20 @@ export default function AdminContentPage() {
         </p>
       </div>
 
+      {error && (
+        <div style={{ background: "#fee2e2", border: "1px solid #f87171", color: "#991b1b", padding: "10px 14px", borderRadius: 10, marginBottom: 20, fontSize: 13, fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
       <ContentTable
         items={items}
         totalCount={totalCount}
+        totalPages={totalPages}
+        isLoading={isLoading}
         filters={filters}
         onFilterChange={setFilters}
-        onStatusChange={changeRevisionStatus}
-        onDeleteItem={deleteContentItem}
+        onReload={refreshContent}
       />
     </div>
   );

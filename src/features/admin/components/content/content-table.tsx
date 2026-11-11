@@ -10,24 +10,29 @@ import type {
 } from "../../types/content-ops";
 import { ContentStatusBadge } from "./content-status-badge";
 import { ContentPreviewModal } from "./content-preview-modal";
+import { CreateContentModal } from "./create-content-modal";
 
 interface ContentTableProps {
   items: ContentItem[];
   totalCount: number;
+  totalPages?: number;
+  isLoading?: boolean;
   filters: ContentFilterState;
   onFilterChange: (filters: ContentFilterState) => void;
-  onStatusChange: (itemId: string, status: ContentRevisionStatus) => void;
-  onDeleteItem: (itemId: string) => void;
+  onReload: () => void;
 }
 
 export function ContentTable({
   items,
   totalCount,
+  totalPages = 1,
+  isLoading = false,
   filters,
   onFilterChange,
-  onStatusChange,
+  onReload,
 }: ContentTableProps) {
   const [previewItem, setPreviewItem] = useState<ContentItem | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const tabs: { label: string; value: ContentModule | "ALL" }[] = [
     { label: "Tất cả nội dung", value: "ALL" },
@@ -46,7 +51,7 @@ export function ContentTable({
             key={tab.value}
             type="button"
             className={filters.module === tab.value ? "btn-3d-dark btn-sm" : "btn-3d-outline btn-sm"}
-            onClick={() => onFilterChange({ ...filters, module: tab.value })}
+            onClick={() => onFilterChange({ ...filters, module: tab.value, page: 1 })}
           >
             {tab.label}
           </button>
@@ -60,30 +65,36 @@ export function ContentTable({
           <input
             type="text"
             className="admin-search-input"
-            placeholder="Tìm theo tiêu đề hoặc mã bài..."
+            placeholder="Tìm theo tiêu đề hoặc mã..."
             value={filters.search}
-            onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
+            onChange={(e) => onFilterChange({ ...filters, search: e.target.value, page: 1 })}
           />
         </div>
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <select
             className="admin-select"
             value={filters.status}
             onChange={(e) =>
-              onFilterChange({ ...filters, status: e.target.value as ContentRevisionStatus | "ALL" })
+              onFilterChange({
+                ...filters,
+                status: e.target.value as ContentRevisionStatus | "ALL",
+                page: 1,
+              })
             }
           >
-            <option value="ALL">Tất cả trạng thái xuất bản</option>
+            <option value="ALL">Tất cả trạng thái</option>
             <option value="DRAFT">Bản nháp (Draft)</option>
-            <option value="IN_REVIEW">Đang thẩm định (In Review)</option>
+            <option value="IN_REVIEW">Chờ thẩm định (In Review)</option>
+            <option value="APPROVED">Đã phê duyệt (Approved)</option>
             <option value="PUBLISHED">Đã xuất bản (Published)</option>
+            <option value="ARCHIVED">Đã lưu trữ (Archived)</option>
           </select>
 
           <button
             type="button"
             className="btn-3d-lime btn-sm"
-            onClick={() => alert("Chức năng tạo nội dung mới sẽ được tích hợp với trình soạn thảo Markdown / Media uploader.")}
+            onClick={() => setIsCreateOpen(true)}
           >
             <Plus size={14} /> Soạn nội dung mới
           </button>
@@ -108,7 +119,7 @@ export function ContentTable({
             {items.length === 0 ? (
               <tr>
                 <td colSpan={7} style={{ textAlign: "center", padding: "40px 20px", color: "var(--muted)" }}>
-                  Không tìm thấy mục nội dung nào phù hợp.
+                  {isLoading ? "Đang tải dữ liệu..." : "Không tìm thấy mục nội dung nào phù hợp."}
                 </td>
               </tr>
             ) : (
@@ -142,7 +153,7 @@ export function ContentTable({
                       type="button"
                       className="btn-3d-outline btn-sm"
                       onClick={() => setPreviewItem(it)}
-                      title="Xem chi tiết & phê duyệt"
+                      title="Xem chi tiết & thẩm định"
                     >
                       <Eye size={13} /> Thẩm định
                     </button>
@@ -154,8 +165,30 @@ export function ContentTable({
         </table>
 
         <div className="admin-pagination">
-          <span>Hiển thị <strong>{items.length}</strong> / <strong>{totalCount}</strong> mục nội dung</span>
-          <span>Trang 1 / 1</span>
+          <span>
+            Hiển thị <strong>{items.length}</strong> / <strong>{totalCount}</strong> mục nội dung
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span>
+              Trang <strong>{filters.page}</strong> / <strong>{totalPages}</strong>
+            </span>
+            <button
+              type="button"
+              className="btn-3d-outline btn-sm"
+              disabled={filters.page <= 1 || isLoading}
+              onClick={() => onFilterChange({ ...filters, page: filters.page - 1 })}
+            >
+              ← Trước
+            </button>
+            <button
+              type="button"
+              className="btn-3d-outline btn-sm"
+              disabled={filters.page >= totalPages || isLoading}
+              onClick={() => onFilterChange({ ...filters, page: filters.page + 1 })}
+            >
+              Sau →
+            </button>
+          </div>
         </div>
       </div>
 
@@ -164,7 +197,15 @@ export function ContentTable({
           item={previewItem}
           isOpen={true}
           onClose={() => setPreviewItem(null)}
-          onStatusChange={onStatusChange}
+          onReload={onReload}
+        />
+      )}
+
+      {isCreateOpen && (
+        <CreateContentModal
+          isOpen={true}
+          onClose={() => setIsCreateOpen(false)}
+          onCreated={onReload}
         />
       )}
     </div>

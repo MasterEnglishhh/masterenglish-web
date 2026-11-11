@@ -7,6 +7,9 @@ export default function AdminUsersPage() {
   const {
     users,
     totalCount,
+    totalPages,
+    isLoading,
+    error,
     filters,
     setFilters,
     toggleLockUser,
@@ -26,9 +29,17 @@ export default function AdminUsersPage() {
         </p>
       </div>
 
+      {error && (
+        <div style={{ background: "#fee2e2", border: "1px solid #f87171", color: "#991b1b", padding: "10px 14px", borderRadius: 10, marginBottom: 20, fontSize: 13, fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
       <UserTable
         users={users}
         totalCount={totalCount}
+        totalPages={totalPages}
+        isLoading={isLoading}
         filters={filters}
         onFilterChange={setFilters}
         onToggleLock={toggleLockUser}

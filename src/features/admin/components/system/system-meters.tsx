@@ -3,10 +3,20 @@ import type { StorageQuota, AiQuotaMetric } from "../../types/system-policy";
 
 interface SystemMetersProps {
   storage: StorageQuota;
-  ai: AiQuotaMetric;
+  ai: AiQuotaMetric | AiQuotaMetric[];
 }
 
 export function SystemMeters({ storage, ai }: SystemMetersProps) {
+  const aiMetric = Array.isArray(ai)
+    ? ai[0] || {
+        provider: "Anthropic",
+        model: "claude-3-5-haiku",
+        dailyTokenUsage: 0,
+        dailyTokenLimit: 1000000,
+        percentUsed: 0,
+        resetHours: 24,
+      }
+    : ai;
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, marginBottom: 32 }}>
       {/* Cloudflare R2 Meter */}
@@ -60,14 +70,14 @@ export function SystemMeters({ storage, ai }: SystemMetersProps) {
             </div>
           </div>
           <span style={{ fontSize: 12, fontWeight: 750, color: "#059669" }}>
-            {ai.percentUsed}%
+            {aiMetric.percentUsed}%
           </span>
         </div>
 
         <div style={{ width: "100%", height: 10, background: "#e5e7eb", borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
           <div
             style={{
-              width: `${ai.percentUsed}%`,
+              width: `${aiMetric.percentUsed}%`,
               height: "100%",
               background: "#10b981",
               borderRadius: 8,
@@ -77,11 +87,11 @@ export function SystemMeters({ storage, ai }: SystemMetersProps) {
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--muted)" }}>
-          <span>Đã tiêu thụ: <strong>{(ai.dailyTokenUsage / 1000000).toFixed(2)}M tokens</strong></span>
-          <span>Hạn mức: {(ai.dailyTokenLimit / 1000000).toFixed(0)}M tokens/ngày</span>
+          <span>Đã tiêu thụ: <strong>{(aiMetric.dailyTokenUsage / 1000000).toFixed(2)}M tokens</strong></span>
+          <span>Hạn mức: {(aiMetric.dailyTokenLimit / 1000000).toFixed(0)}M tokens/ngày</span>
         </div>
         <p style={{ margin: "10px 0 0", fontSize: 11, color: "#9ca3af" }}>
-          Mô hình: {ai.model} · Đặt lại sau: {ai.resetHours} giờ
+          Mô hình: {aiMetric.model} · Đặt lại sau: {aiMetric.resetHours} giờ
         </p>
       </div>
     </div>

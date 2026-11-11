@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowIcon } from "@/components/arrow-icon";
+import { GoalCard } from "@/features/learning/components/goal-card";
 
 export default function LearningHome() {
   return (
@@ -80,21 +81,7 @@ export default function LearningHome() {
             </Link>
           </div>
         </div>
-        <aside className="dashboard-aside">
-          <div className="aside-head">
-            <span className="section-kicker">LỘ TRÌNH CỦA BẠN</span>
-            <span>↗</span>
-          </div>
-          <div className="empty-orbit" aria-hidden="true">
-            <span>✳</span>
-          </div>
-          <h3>Trang học của riêng bạn đang chờ.</h3>
-          <p>
-            Tiến độ, bài đang làm và lịch ôn sẽ hiện ở đây khi kết nối tài khoản và API học tập.
-          </p>
-          <div className="aside-divider" />
-          <span className="aside-caption">HIỆN TẠI · BẢN XEM TRƯỚC GIAO DIỆN</span>
-        </aside>
+        <GoalCard />
       </section>
     </main>
   );

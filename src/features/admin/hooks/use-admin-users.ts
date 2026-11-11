@@ -1,11 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { mockAdminUsers } from "../data/mock-admin-users";
-import type { AdminUser, UserFilterState, UserRole, UserStatus } from "../types/user-management";
+import { useCallback, useEffect, useState } from "react";
+import {
+  fetchAdminUsers,
+  lockAdminUser,
+  revokeAdminUserSessions,
+  unlockAdminUser,
+  updateAdminUserRoles,
+} from "../lib/admin-client";
+import type { AdminUser, UserFilterState, UserRole } from "../types/user-management";
 
 export function useAdminUsers() {
-  const [users, setUsers] = useState<AdminUser[]>(mockAdminUsers);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [filters, setFilters] = useState<UserFilterState>({
     search: "",
     role: "ALL",
@@ -14,59 +25,88 @@ export function useAdminUsers() {
     pageSize: 10,
   });
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
-      const matchSearch =
-        filters.search === "" ||
-        u.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-        u.displayName.toLowerCase().includes(filters.search.toLowerCase());
+  const loadUsers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetchAdminUsers(filters);
+      if (res.success) {
+        setUsers(res.data.items);
+        setTotalCount(res.data.totalItems);
+        setTotalPages(Math.max(1, res.data.totalPages));
+      } else {
+        setError(res.error.message);
+      }
+    } catch {
+      setError("Không thể tải danh sách tài khoản.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filters]);
 
-      const matchRole =
-        filters.role === "ALL" || u.roles.includes(filters.role);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadUsers();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [loadUsers]);
 
-      const matchStatus =
-        filters.status === "ALL" || u.status === filters.status;
+  const toggleLockUser = async (userId: string, reason?: string) => {
+    const target = users.find((u) => u.id === userId);
+    if (!target) return;
 
-      return matchSearch && matchRole && matchStatus;
-    });
-  }, [users, filters]);
-
-  const toggleLockUser = (userId: string, reason?: string) => {
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id !== userId) return u;
-        const newStatus: UserStatus = u.status === "LOCKED" ? "ACTIVE" : "LOCKED";
-        return {
-          ...u,
-          status: newStatus,
-          lockReason: newStatus === "LOCKED" ? reason || "Khóa thủ công bởi quản trị viên" : undefined,
-          lockedUntil: newStatus === "LOCKED" ? "2026-12-31T23:59:59Z" : null,
-          activeSessionsCount: newStatus === "LOCKED" ? 0 : u.activeSessionsCount,
-        };
-      })
-    );
+    if (target.status === "LOCKED") {
+      const res = await unlockAdminUser(userId);
+      if (res.success) {
+        await loadUsers();
+      } else {
+        alert(`Mở khóa thất bại: ${res.error.message}`);
+      }
+    } else {
+      const lockReason = reason || "Khóa thủ công bởi quản trị viên";
+      const res = await lockAdminUser(userId, lockReason);
+      if (res.success) {
+        await loadUsers();
+      } else {
+        alert(`Khóa tài khoản thất bại: ${res.error.message}`);
+      }
+    }
   };
 
-  const updateUserRoles = (userId: string, newRoles: UserRole[]) => {
-    if (newRoles.length === 0) return; // Prevent stripping all roles
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, roles: newRoles, authVersion: u.authVersion + 1 } : u))
-    );
+  const updateUserRoles = async (userId: string, newRoles: UserRole[]) => {
+    if (newRoles.length === 0) {
+      alert("Tài khoản phải có tối thiểu 1 vai trò.");
+      return;
+    }
+    const res = await updateAdminUserRoles(userId, newRoles);
+    if (res.success) {
+      await loadUsers();
+    } else {
+      alert(`Đổi vai trò thất bại: ${res.error.message}`);
+    }
   };
 
-  const revokeUserSessions = (userId: string) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, activeSessionsCount: 0, authVersion: u.authVersion + 1 } : u))
-    );
+  const revokeUserSessions = async (userId: string) => {
+    const res = await revokeAdminUserSessions(userId);
+    if (res.success) {
+      alert(res.data.message || "Đã thu hồi toàn bộ phiên đăng nhập của người dùng.");
+      await loadUsers();
+    } else {
+      alert(`Hủy phiên thất bại: ${res.error.message}`);
+    }
   };
 
   return {
-    users: filteredUsers,
-    totalCount: filteredUsers.length,
+    users,
+    totalCount,
+    totalPages,
+    isLoading,
+    error,
     filters,
     setFilters,
     toggleLockUser,
     updateUserRoles,
     revokeUserSessions,
+    refreshUsers: loadUsers,
   };
 }

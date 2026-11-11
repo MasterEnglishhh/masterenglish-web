@@ -9,6 +9,8 @@ import { UserLockModal } from "./user-lock-modal";
 interface UserTableProps {
   users: AdminUser[];
   totalCount: number;
+  totalPages?: number;
+  isLoading?: boolean;
   filters: UserFilterState;
   onFilterChange: (filters: UserFilterState) => void;
   onToggleLock: (userId: string, reason?: string) => void;
@@ -19,6 +21,8 @@ interface UserTableProps {
 export function UserTable({
   users,
   totalCount,
+  totalPages = 1,
+  isLoading = false,
   filters,
   onFilterChange,
   onToggleLock,
@@ -175,8 +179,30 @@ export function UserTable({
         </table>
 
         <div className="admin-pagination">
-          <span>Hiển thị <strong>{users.length}</strong> / <strong>{totalCount}</strong> tài khoản</span>
-          <span>Trang 1 / 1</span>
+          <span>
+            Hiển thị <strong>{users.length}</strong> / <strong>{totalCount}</strong> tài khoản
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span>
+              Trang <strong>{filters.page}</strong> / <strong>{totalPages}</strong>
+            </span>
+            <button
+              type="button"
+              className="btn-3d-outline btn-sm"
+              disabled={filters.page <= 1 || isLoading}
+              onClick={() => onFilterChange({ ...filters, page: filters.page - 1 })}
+            >
+              ← Trước
+            </button>
+            <button
+              type="button"
+              className="btn-3d-outline btn-sm"
+              disabled={filters.page >= totalPages || isLoading}
+              onClick={() => onFilterChange({ ...filters, page: filters.page + 1 })}
+            >
+              Sau →
+            </button>
+          </div>
         </div>
       </div>
 

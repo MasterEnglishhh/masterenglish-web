@@ -22,6 +22,7 @@ export interface ContentItem {
   reviewer?: string;
   updatedAt: string;
   level?: "A1" | "A2" | "B1" | "B2" | "C1" | "TOEIC 500" | "TOEIC 750";
+  latestRevisionId?: string | null;
 }
 
 export interface ContentFilterState {

@@ -1,11 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { mockAdminContent } from "../data/mock-admin-content";
-import type { ContentFilterState, ContentItem, ContentRevisionStatus } from "../types/content-ops";
+import { useCallback, useEffect, useState } from "react";
+import { fetchContentItems } from "../lib/admin-client";
+import type { ContentFilterState, ContentItem } from "../types/content-ops";
 
 export function useAdminContent() {
-  const [items, setItems] = useState<ContentItem[]>(mockAdminContent);
+  const [items, setItems] = useState<ContentItem[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [filters, setFilters] = useState<ContentFilterState>({
     search: "",
     module: "ALL",
@@ -14,47 +19,40 @@ export function useAdminContent() {
     pageSize: 10,
   });
 
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      const matchSearch =
-        filters.search === "" ||
-        item.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-        item.code.toLowerCase().includes(filters.search.toLowerCase());
+  const loadContent = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetchContentItems(filters);
+      if (res.success) {
+        setItems(res.data.items);
+        setTotalCount(res.data.totalItems);
+        setTotalPages(Math.max(1, res.data.totalPages));
+      } else {
+        setError(res.error.message);
+      }
+    } catch {
+      setError("Không thể tải danh sách nội dung.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filters]);
 
-      const matchModule =
-        filters.module === "ALL" || item.module === filters.module;
-
-      const matchStatus =
-        filters.status === "ALL" || item.status === filters.status;
-
-      return matchSearch && matchModule && matchStatus;
-    });
-  }, [items, filters]);
-
-  const changeRevisionStatus = (itemId: string, newStatus: ContentRevisionStatus) => {
-    setItems((prev) =>
-      prev.map((it) => {
-        if (it.id !== itemId) return it;
-        return {
-          ...it,
-          status: newStatus,
-          versionNo: newStatus === "PUBLISHED" ? it.versionNo + 1 : it.versionNo,
-          updatedAt: new Date().toISOString(),
-        };
-      })
-    );
-  };
-
-  const deleteContentItem = (itemId: string) => {
-    setItems((prev) => prev.filter((it) => it.id !== itemId));
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadContent();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [loadContent]);
 
   return {
-    items: filteredItems,
-    totalCount: filteredItems.length,
+    items,
+    totalCount,
+    totalPages,
+    isLoading,
+    error,
     filters,
     setFilters,
-    changeRevisionStatus,
-    deleteContentItem,
+    refreshContent: loadContent,
   };
 }
