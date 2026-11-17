@@ -5,8 +5,8 @@ import { Search, Eye, Plus } from "lucide-react";
 import type {
   ContentFilterState,
   ContentItem,
-  ContentModule,
-  ContentRevisionStatus,
+  ContentStatusFilter,
+  ContentType,
 } from "../../types/content-ops";
 import { ContentStatusBadge } from "./content-status-badge";
 import { ContentPreviewModal } from "./content-preview-modal";
@@ -34,24 +34,28 @@ export function ContentTable({
   const [previewItem, setPreviewItem] = useState<ContentItem | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  const tabs: { label: string; value: ContentModule | "ALL" }[] = [
+  // Backend (admin/CONTRACT.md §2.3) chỉ lọc theo contentType WORD | DECK | ALL.
+  const tabs: { label: string; value: ContentType | "ALL" }[] = [
     { label: "Tất cả nội dung", value: "ALL" },
-    { label: "Từ vựng & Flashcards", value: "VOCABULARY" },
-    { label: "Bài học Ngữ pháp", value: "GRAMMAR" },
-    { label: "Ngân hàng câu hỏi", value: "QUESTION_BANK" },
-    { label: "Đề luyện thi TOEIC", value: "TOEIC" },
+    { label: "Từ vựng", value: "WORD" },
+    { label: "Bộ thẻ Flashcard", value: "DECK" },
   ];
 
   return (
     <div>
-      {/* Module Tabs */}
-      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 12, marginBottom: 16 }}>
+      {/* Content type tabs */}
+      <div
+        role="group"
+        aria-label="Lọc theo loại nội dung"
+        style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 12, marginBottom: 16 }}
+      >
         {tabs.map((tab) => (
           <button
             key={tab.value}
             type="button"
-            className={filters.module === tab.value ? "btn-3d-dark btn-sm" : "btn-3d-outline btn-sm"}
-            onClick={() => onFilterChange({ ...filters, module: tab.value, page: 1 })}
+            aria-pressed={filters.contentType === tab.value}
+            className={filters.contentType === tab.value ? "btn-3d-dark btn-sm" : "btn-3d-outline btn-sm"}
+            onClick={() => onFilterChange({ ...filters, contentType: tab.value, page: 1 })}
           >
             {tab.label}
           </button>
@@ -78,7 +82,7 @@ export function ContentTable({
             onChange={(e) =>
               onFilterChange({
                 ...filters,
-                status: e.target.value as ContentRevisionStatus | "ALL",
+                status: e.target.value as ContentStatusFilter,
                 page: 1,
               })
             }
