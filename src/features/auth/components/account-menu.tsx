@@ -108,9 +108,9 @@ export function AccountMenu() {
         </Link>
       )}
       {getRoleBadge()}
-      <span className="account-name" title={user.email}>
+      <Link className="account-name" href="/learn/account" title={user.email}>
         {name}
-      </span>
+      </Link>
       <button
         type="button"
         className="account-logout"
