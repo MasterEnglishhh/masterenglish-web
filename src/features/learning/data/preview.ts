@@ -18,6 +18,5 @@ export const toeicOptions = [
 export const toeicAnswer: ToeicOptionKey = "B";
 
 export const placeholderSections: Record<string, LearningPlaceholder> = {
-  "results": { kicker: "KẾT QUẢ / NHÌN LẠI ĐỂ ĐI TIẾP", title: "Mỗi lần luyện,", emphasis: "một điều hiểu thêm.", description: "Kết quả bài làm, câu cần xem lại và tiến bộ theo thời gian sẽ nằm tại đây.", empty: "Chưa có kết quả học tập để hiển thị.", next: "Xem bài TOEIC mẫu", href: "/learn/toeic" },
   "ai-tutor": { kicker: "AI TUTOR / HIỂU SÂU CÂU ĐÃ LÀM", title: "Còn thắc mắc?", emphasis: "Cùng tìm lời giải.", description: "Sau khi hoàn thành bài luyện, bạn có thể hỏi thêm về một câu đã nộp và đọc lời giải chuẩn ngay tại đó.", empty: "Chưa có câu đã nộp để hỏi AI Tutor.", next: "Xem bài TOEIC mẫu", href: "/learn/toeic" },
 };

@@ -3,7 +3,9 @@ import type {
   DeckDetailDto,
   DeckDto,
   DueQueueResponse,
+  LearningProgressResponse,
   PageResponse,
+  ReviewHistoryItemDto,
   ReviewRequest,
   ReviewResponse,
   SavedWordDto,
@@ -323,4 +325,25 @@ export function fetchPronunciationTicket(
     });
   }
   return requestWithAuth<{ url: string }>(`${audioUrl}/ticket`, { signal });
+}
+
+export function fetchReviewHistory(params?: {
+  page?: number;
+  size?: number;
+}): Promise<VocabularyResult<PageResponse<ReviewHistoryItemDto>>> {
+  const query = new URLSearchParams();
+  if (params?.page != null) query.set("page", String(params.page));
+  if (params?.size != null) query.set("size", String(params.size));
+  const qs = query.toString();
+  return requestWithAuth<PageResponse<ReviewHistoryItemDto>>(
+    `/api/v1/vocabulary/reviews/history${qs ? `?${qs}` : ""}`
+  );
+}
+
+export function fetchLearningProgress(): Promise<
+  VocabularyResult<LearningProgressResponse>
+> {
+  return requestWithAuth<LearningProgressResponse>(
+    "/api/v1/vocabulary/progress"
+  );
 }

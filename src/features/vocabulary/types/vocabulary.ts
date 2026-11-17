@@ -146,3 +146,24 @@ export interface SessionSummary {
   hardCount: number;
   goodCount: number;
 }
+
+export interface ReviewHistoryItemDto {
+  reviewId: string;
+  wordSenseId: string;
+  wordId: string;
+  lemma: string | null;
+  meaningVi: string | null;
+  rating: RatingType;
+  reviewedAt: string;
+  previousDueAt: string | null;
+  nextDueAt: string;
+}
+
+export interface LearningProgressResponse {
+  studiedSenses: number;
+  masteredSenses: number;
+  dueNow: number;
+  savedSenses: number;
+  totalReviews: number;
+  reviewsLast7Days: number;
+}
