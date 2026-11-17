@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { useAuthSession } from "../hooks/use-auth-session";
 import { AuthField } from "./auth-field";
 import {
@@ -85,8 +84,6 @@ function ProfileForm({ user }: { user: AuthUser }) {
 }
 
 function PasswordForm() {
-  const router = useRouter();
-  const { clearSession } = useAuthSession();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [visible, setVisible] = useState(false);
@@ -97,9 +94,9 @@ function PasswordForm() {
     setStatus({ kind: "saving" });
     const result = await changePassword({ currentPassword, newPassword });
     if (!result.success) return setStatus({ kind: "error", error: result.error });
-    // The server revoked every session and cleared the cookies.
-    clearSession();
-    router.replace("/login?reset=1");
+    // The server revoked every session and cleared the cookies. A full page load starts a
+    // fresh session state; clearing it in place would let RequireAuth redirect elsewhere first.
+    window.location.replace("/login?reset=1");
   }
 
   return (
