@@ -1,4 +1,8 @@
 // Components
+export { AuthSessionProvider } from "./components/auth-session-provider";
+export { RequireAuth } from "./components/require-auth";
+export { AccountMenu } from "./components/account-menu";
+export { AccountSettings } from "./components/account-settings";
 export { AuthLayout } from "./components/auth-layout";
 export { AuthArt } from "./components/auth-art";
 export { AuthField } from "./components/auth-field";

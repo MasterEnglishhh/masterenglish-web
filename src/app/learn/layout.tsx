@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Brand } from "@/components/brand";
-import { LearningNav } from "@/features/learning/components/learning-nav";
-import { RequireAuth } from "@/features/auth/components/require-auth";
-import { AccountMenu } from "@/features/auth/components/account-menu";
+import { LearningNav } from "@/features/learning";
+import { AccountMenu, RequireAuth } from "@/features/auth";
 
 export default function LearningLayout({
   children,

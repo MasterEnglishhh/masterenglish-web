@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowIcon } from "@/components/arrow-icon";
 import { Brand } from "@/components/brand";
-import { AccountMenu } from "@/features/auth/components/account-menu";
+import { AccountMenu } from "@/features/auth";
 
 export function SiteHeader() {
   return (

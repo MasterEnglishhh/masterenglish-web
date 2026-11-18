@@ -1,6 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { RequireAdmin } from "@/features/admin/components/require-admin";
-import { AdminLayoutShell } from "@/features/admin/components/admin-layout-shell";
+import { AdminLayoutShell, RequireAdmin } from "@/features/admin";
 
 export const metadata = {
   title: "Quản trị hệ thống | MasterEnglish Admin",

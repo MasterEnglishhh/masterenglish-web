@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ProgressView } from "@/features/vocabulary/components/progress-view";
+import { ProgressView } from "@/features/vocabulary";
 
 export const metadata: Metadata = { title: "Kết quả | MasterEnglish" };
 

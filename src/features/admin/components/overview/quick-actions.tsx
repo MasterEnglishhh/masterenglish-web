@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { UserPlus, PlusCircle, Sliders, FileText, BookOpen, Layers } from "lucide-react";
-import { useAuthSession } from "@/features/auth/hooks/use-auth-session";
+import { useAuthSession } from "@/features/auth";
 
 export function QuickActions() {
   const { user } = useAuthSession();

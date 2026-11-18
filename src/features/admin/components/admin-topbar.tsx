@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { AccountMenu } from "@/features/auth/components/account-menu";
+import { AccountMenu } from "@/features/auth";
 
 export function AdminTopbar() {
   const pathname = usePathname();

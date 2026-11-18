@@ -1,4 +1,4 @@
-import { HomePage } from "@/features/marketing/components/home-page";
+import { HomePage } from "@/features/marketing";
 
 export default function Home() {
   return <HomePage />;

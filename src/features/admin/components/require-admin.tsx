@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { useAuthSession } from "@/features/auth/hooks/use-auth-session";
+import { useAuthSession } from "@/features/auth";
 
 export function RequireAdmin({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuthSession();

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { adminNavItems } from "../data/navigation";
-import { useAuthSession } from "@/features/auth/hooks/use-auth-session";
+import { useAuthSession } from "@/features/auth";
 
 const iconMap = {
   LayoutDashboard,

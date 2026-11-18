@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toeicAnswer, toeicOptions } from "../data/preview";
+import { toeicAnswer, toeicOptions } from "../data/sample";
 import type { ToeicOptionKey } from "../types/toeic";
 
 export function useToeicPractice() {

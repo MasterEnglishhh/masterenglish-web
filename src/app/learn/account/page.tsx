@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { AccountSettings } from "@/features/auth/components/account-settings";
+import { AccountSettings } from "@/features/auth";
+import { AccountGoalForm } from "@/features/learning";
 
 export const metadata: Metadata = { title: "Tài khoản | MasterEnglish" };
 
@@ -15,7 +16,9 @@ export default function AccountPage() {
         </h1>
         <p>Cập nhật thông tin cá nhân, đổi mật khẩu và đặt mục tiêu TOEIC.</p>
       </div>
-      <AccountSettings />
+      <AccountSettings>
+        <AccountGoalForm />
+      </AccountSettings>
     </main>
   );
 }

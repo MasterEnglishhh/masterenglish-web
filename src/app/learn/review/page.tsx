@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { ReviewView } from "@/features/vocabulary/components/review-view";
+import { ReviewView } from "@/features/vocabulary";
 
 export default function ReviewPage() {
   return (
