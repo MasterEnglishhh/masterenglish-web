@@ -10,10 +10,12 @@ interface CreateContentModalProps {
   onCreated: () => void;
 }
 
-export function CreateContentModal({
-  onClose,
-  onCreated,
-}: CreateContentModalProps) {
+const TYPES = [
+  ["WORD", "Từ vựng (Word)"],
+  ["DECK", "Bộ thẻ (Flashcard Deck)"],
+] as const;
+
+export function CreateContentModal({ onClose, onCreated }: CreateContentModalProps) {
   const create = useCreateContent({ onCreated, onClose });
 
   return (
@@ -21,7 +23,7 @@ export function CreateContentModal({
       kicker="SOẠN NỘI DUNG HỌC LIỆU MỚI"
       title="Tạo Bản Thảo (Draft v1)"
       description={
-        <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>
+        <p className="admin-modal-note">
           Bản thảo tạo mới sẽ ở trạng thái DRAFT. Sau khi lưu, bạn có thể bấm Thẩm định để nộp duyệt.
         </p>
       }
@@ -29,41 +31,34 @@ export function CreateContentModal({
       onClose={onClose}
     >
       {create.error && (
-        <div style={{ background: "#fee2e2", border: "1px solid #f87171", color: "#991b1b", padding: "8px 12px", borderRadius: 8, fontSize: 13, fontWeight: 600 }}>
+        <div role="alert" className="form-alert-error">
           {create.error}
         </div>
       )}
-
-      <div style={{ display: "flex", gap: 10 }}>
-        {(
-          [
-            ["WORD", "Từ vựng (Word)"],
-            ["DECK", "Bộ thẻ (Flashcard Deck)"],
-          ] as const
-        ).map(([type, label]) => (
+      <div className="admin-tabs">
+        {TYPES.map(([type, label]) => (
           <button
             key={type}
             type="button"
-            className={create.contentType === type ? "btn-3d-lime btn-sm" : "btn-3d-outline btn-sm"}
+            aria-pressed={create.contentType === type}
+            className={create.contentType === type ? "btn-lime btn-sm" : "btn-ghost btn-sm"}
             onClick={() => create.setContentType(type)}
           >
             {label}
           </button>
         ))}
       </div>
-
-      <form onSubmit={create.submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <form onSubmit={create.submit} className="admin-form">
         {create.contentType === "WORD" ? (
           <WordDraftFields value={create.word} onChange={create.patchWord} />
         ) : (
           <DeckDraftFields value={create.deck} onChange={create.patchDeck} />
         )}
-
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 10 }}>
-          <button type="button" className="btn-3d-outline btn-sm" onClick={onClose}>
+        <div className="admin-form-actions">
+          <button type="button" className="btn-ghost btn-sm" onClick={onClose}>
             Hủy
           </button>
-          <button type="submit" disabled={create.isSubmitting} className="btn-3d-lime btn-sm">
+          <button type="submit" disabled={create.isSubmitting} className="btn-lime btn-sm">
             {create.isSubmitting ? "Đang lưu..." : "Lưu Bản Thảo (Draft)"}
           </button>
         </div>

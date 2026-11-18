@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ShieldAlert, Key, LogOut } from "lucide-react";
+import { Key, LogOut, Search, ShieldAlert } from "lucide-react";
 import type { AdminUser, UserFilterState, UserRole, UserStatus } from "../../types/user-management";
-import { UserRoleModal } from "./user-role-modal";
 import { UserLockModal } from "./user-lock-modal";
+import { UserRoleModal } from "./user-role-modal";
 
 interface UserTableProps {
   users: AdminUser[];
@@ -16,6 +16,19 @@ interface UserTableProps {
   onToggleLock: (userId: string, reason?: string) => void;
   onUpdateRoles: (userId: string, roles: UserRole[]) => void;
   onRevokeSessions: (userId: string) => void;
+}
+
+const ROLE_BADGE: Record<UserRole, string> = {
+  SYSTEM_ADMIN: "badge-role-admin",
+  CONTENT_ADMIN: "badge-role-content",
+  LEARNER: "badge-role-learner",
+};
+
+function StatusBadge({ status }: { status: UserStatus }) {
+  if (status === "ACTIVE") return <span className="admin-badge badge-active">Hoạt động</span>;
+  if (status === "LOCKED") return <span className="admin-badge badge-locked">Đã khóa</span>;
+  if (status === "PENDING_VERIFICATION") return <span className="admin-badge badge-draft">Chờ OTP</span>;
+  return <span className="admin-badge">{status}</span>;
 }
 
 export function UserTable({
@@ -32,64 +45,37 @@ export function UserTable({
   const [roleModalUser, setRoleModalUser] = useState<AdminUser | null>(null);
   const [lockModalUser, setLockModalUser] = useState<AdminUser | null>(null);
 
-  const getRoleBadgeClass = (role: UserRole) => {
-    switch (role) {
-      case "SYSTEM_ADMIN":
-        return "admin-badge badge-role-admin";
-      case "CONTENT_ADMIN":
-        return "admin-badge badge-role-content";
-      default:
-        return "admin-badge badge-role-learner";
-    }
-  };
-
-  const getStatusBadge = (status: UserStatus) => {
-    switch (status) {
-      case "ACTIVE":
-        return <span className="admin-badge badge-active">Hoạt động</span>;
-      case "LOCKED":
-        return <span className="admin-badge badge-locked">Đã khóa</span>;
-      case "PENDING_VERIFICATION":
-        return <span className="admin-badge badge-draft">Chờ OTP</span>;
-      default:
-        return <span className="admin-badge">{status}</span>;
-    }
-  };
-
   return (
     <div>
       <div className="admin-toolbar">
-        <div className="admin-search-box">
-          <Search size={16} color="var(--muted)" />
+        <label className="admin-search-box">
+          <Search size={16} aria-hidden="true" />
           <input
             type="text"
             className="admin-search-input"
             placeholder="Tìm theo tên hoặc email..."
+            aria-label="Tìm người dùng theo tên hoặc email"
             value={filters.search}
             onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
           />
-        </div>
-
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        </label>
+        <div className="admin-filters">
           <select
             className="admin-select"
+            aria-label="Lọc theo vai trò"
             value={filters.role}
-            onChange={(e) =>
-              onFilterChange({ ...filters, role: e.target.value as UserRole | "ALL" })
-            }
+            onChange={(e) => onFilterChange({ ...filters, role: e.target.value as UserRole | "ALL" })}
           >
             <option value="ALL">Tất cả vai trò</option>
             <option value="SYSTEM_ADMIN">SYSTEM_ADMIN</option>
             <option value="CONTENT_ADMIN">CONTENT_ADMIN</option>
             <option value="LEARNER">LEARNER</option>
           </select>
-
           <select
             className="admin-select"
+            aria-label="Lọc theo trạng thái"
             value={filters.status}
-            onChange={(e) =>
-              onFilterChange({ ...filters, status: e.target.value as UserStatus | "ALL" })
-            }
+            onChange={(e) => onFilterChange({ ...filters, status: e.target.value as UserStatus | "ALL" })}
           >
             <option value="ALL">Tất cả trạng thái</option>
             <option value="ACTIVE">Hoạt động (Active)</option>
@@ -108,13 +94,13 @@ export function UserTable({
               <th>Trạng thái</th>
               <th>Phiên hoạt động</th>
               <th>Đăng nhập cuối</th>
-              <th style={{ textAlign: "right" }}>Thao tác</th>
+              <th className="cell-right">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             {users.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: "center", padding: "40px 20px", color: "var(--muted)" }}>
+                <td colSpan={6} className="cell-empty">
                   Không tìm thấy người dùng nào phù hợp với bộ lọc.
                 </td>
               </tr>
@@ -122,53 +108,47 @@ export function UserTable({
               users.map((u) => (
                 <tr key={u.id}>
                   <td>
-                    <div style={{ fontWeight: 700, color: "var(--ink)" }}>{u.displayName}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{u.email}</div>
+                    <div className="cell-name">{u.displayName}</div>
+                    <div className="cell-sub">{u.email}</div>
                   </td>
                   <td>
-                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                    <div className="admin-chip-row">
                       {u.roles.map((r) => (
-                        <span key={r} className={getRoleBadgeClass(r)}>
+                        <span key={r} className={`admin-badge ${ROLE_BADGE[r] ?? "badge-role-learner"}`}>
                           {r}
                         </span>
                       ))}
                     </div>
                   </td>
-                  <td>{getStatusBadge(u.status)}</td>
                   <td>
-                    <span style={{ fontWeight: 700 }}>{u.activeSessionsCount}</span> phiên
+                    <StatusBadge status={u.status} />
                   </td>
-                  <td style={{ fontSize: 12, color: "var(--muted)" }}>{u.lastLoginAt || "Chưa có"}</td>
-                  <td style={{ textAlign: "right" }}>
-                    <div style={{ display: "inline-flex", gap: 6 }}>
-                      <button
-                        type="button"
-                        className="btn-3d-outline btn-sm"
-                        title="Phân vai trò"
-                        onClick={() => setRoleModalUser(u)}
-                      >
-                        <Key size={13} /> Vai trò
+                  <td>
+                    <strong>{u.activeSessionsCount}</strong> phiên
+                  </td>
+                  <td className="cell-sub">{u.lastLoginAt || "Chưa có"}</td>
+                  <td className="cell-right">
+                    <div className="admin-row-actions">
+                      <button type="button" className="btn-ghost btn-sm" title="Phân vai trò" onClick={() => setRoleModalUser(u)}>
+                        <Key size={13} aria-hidden="true" /> Vai trò
                       </button>
-
                       {u.activeSessionsCount > 0 && (
                         <button
                           type="button"
-                          className="btn-3d-outline btn-sm"
+                          className="btn-ghost btn-sm"
                           title="Thu hồi phiên (Revoke Session)"
                           onClick={() => onRevokeSessions(u.id)}
                         >
-                          <LogOut size={13} /> Hủy phiên
+                          <LogOut size={13} aria-hidden="true" /> Hủy phiên
                         </button>
                       )}
-
                       <button
                         type="button"
-                        className={u.status === "LOCKED" ? "btn-3d-lime btn-sm" : "btn-3d-outline btn-sm"}
-                        style={u.status !== "LOCKED" ? { color: "#dc2626" } : undefined}
+                        className={u.status === "LOCKED" ? "btn-lime btn-sm" : "btn-danger-soft btn-sm"}
                         title={u.status === "LOCKED" ? "Mở khóa tài khoản" : "Khóa tài khoản"}
                         onClick={() => setLockModalUser(u)}
                       >
-                        <ShieldAlert size={13} /> {u.status === "LOCKED" ? "Mở khóa" : "Khóa"}
+                        <ShieldAlert size={13} aria-hidden="true" /> {u.status === "LOCKED" ? "Mở khóa" : "Khóa"}
                       </button>
                     </div>
                   </td>
@@ -177,18 +157,17 @@ export function UserTable({
             )}
           </tbody>
         </table>
-
         <div className="admin-pagination">
           <span>
             Hiển thị <strong>{users.length}</strong> / <strong>{totalCount}</strong> tài khoản
           </span>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div>
             <span>
               Trang <strong>{filters.page}</strong> / <strong>{totalPages}</strong>
             </span>
             <button
               type="button"
-              className="btn-3d-outline btn-sm"
+              className="btn-ghost btn-sm"
               disabled={filters.page <= 1 || isLoading}
               onClick={() => onFilterChange({ ...filters, page: filters.page - 1 })}
             >
@@ -196,7 +175,7 @@ export function UserTable({
             </button>
             <button
               type="button"
-              className="btn-3d-outline btn-sm"
+              className="btn-ghost btn-sm"
               disabled={filters.page >= totalPages || isLoading}
               onClick={() => onFilterChange({ ...filters, page: filters.page + 1 })}
             >
@@ -207,19 +186,10 @@ export function UserTable({
       </div>
 
       {roleModalUser && (
-        <UserRoleModal
-          user={roleModalUser}
-          onClose={() => setRoleModalUser(null)}
-          onSave={onUpdateRoles}
-        />
+        <UserRoleModal user={roleModalUser} onClose={() => setRoleModalUser(null)} onSave={onUpdateRoles} />
       )}
-
       {lockModalUser && (
-        <UserLockModal
-          user={lockModalUser}
-          onClose={() => setLockModalUser(null)}
-          onConfirm={onToggleLock}
-        />
+        <UserLockModal user={lockModalUser} onClose={() => setLockModalUser(null)} onConfirm={onToggleLock} />
       )}
     </div>
   );

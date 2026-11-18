@@ -62,6 +62,7 @@ export function useAdminSystem() {
     const targetFlag = flags.find((f) => f.key === flagKey);
     if (!targetFlag) return;
     const nextState = !targetFlag.enabled;
+    setError(null);
 
     // Optimistic UI update
     setFlags((prev) =>
@@ -74,7 +75,7 @@ export function useAdminSystem() {
       setFlags((prev) =>
         prev.map((f) => (f.key === flagKey ? { ...f, enabled: !nextState } : f))
       );
-      alert(`Không thể đổi trạng thái cờ: ${res.error.message}`);
+      setError(`Không thể đổi trạng thái cờ: ${res.error.message}`);
     } else {
       // Reload audit logs to reflect the new update
       const logsRes = await fetchAuditLogs(logSearch, selectedEntity, 0, 50);

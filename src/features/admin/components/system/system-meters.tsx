@@ -1,99 +1,78 @@
 import { Database, Sparkles } from "lucide-react";
-import type { StorageQuota, AiQuotaMetric } from "../../types/system-policy";
+import type { AiQuotaMetric, StorageQuota } from "../../types/system-policy";
 
 interface SystemMetersProps {
   storage: StorageQuota;
   ai: AiQuotaMetric | AiQuotaMetric[];
 }
 
+const EMPTY_AI: AiQuotaMetric = {
+  provider: "Anthropic",
+  model: "claude-3-5-haiku",
+  dailyTokenUsage: 0,
+  dailyTokenLimit: 1000000,
+  percentUsed: 0,
+  resetHours: 24,
+};
+
 export function SystemMeters({ storage, ai }: SystemMetersProps) {
-  const aiMetric = Array.isArray(ai)
-    ? ai[0] || {
-        provider: "Anthropic",
-        model: "claude-3-5-haiku",
-        dailyTokenUsage: 0,
-        dailyTokenLimit: 1000000,
-        percentUsed: 0,
-        resetHours: 24,
-      }
-    : ai;
+  const aiMetric = Array.isArray(ai) ? ai[0] || EMPTY_AI : ai;
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, marginBottom: 32 }}>
-      {/* Cloudflare R2 Meter */}
-      <div className="admin-card">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div className="admin-kpi-icon" style={{ background: "#fef3c7", color: "#b45309" }}>
-              <Database size={18} />
-            </div>
+    <div className="meter-grid">
+      <section className="glass-card admin-card">
+        <div className="meter-head">
+          <div className="meter-title">
+            <span className="admin-kpi-icon tone-peach">
+              <Database size={18} aria-hidden="true" />
+            </span>
             <div>
               <span className="admin-kicker">BỘ NHỚ ĐÁM MÂY</span>
-              <h3 style={{ fontSize: 16, fontWeight: 750, margin: 0 }}>Cloudflare R2 Storage</h3>
+              <h3>Cloudflare R2 Storage</h3>
             </div>
           </div>
-          <span style={{ fontSize: 12, fontWeight: 750, color: "var(--indigo)" }}>
-            {storage.percentUsed}%
+          <span className="meter-percent">{storage.percentUsed}%</span>
+        </div>
+        <div className="meter-bar" role="img" aria-label={`Đã dùng ${storage.percentUsed}% dung lượng`}>
+          <span style={{ width: `${storage.percentUsed}%` }} />
+        </div>
+        <div className="meter-line">
+          <span>
+            Đã dùng: <strong>{storage.usedFormatted}</strong>
           </span>
-        </div>
-
-        <div style={{ width: "100%", height: 10, background: "#e5e7eb", borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
-          <div
-            style={{
-              width: `${storage.percentUsed}%`,
-              height: "100%",
-              background: "var(--indigo)",
-              borderRadius: 8,
-              transition: "width 0.3s",
-            }}
-          />
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--muted)" }}>
-          <span>Đã dùng: <strong>{storage.usedFormatted}</strong></span>
           <span>Định mức: {storage.limitFormatted}</span>
         </div>
-        <p style={{ margin: "10px 0 0", fontSize: 11, color: "#9ca3af" }}>
-          Bucket: <code style={{ fontFamily: "monospace" }}>{storage.bucket}</code> · {storage.filesCount} file audio & hình ảnh
+        <p className="meter-note">
+          Bucket: <code className="admin-code">{storage.bucket}</code> · {storage.filesCount} file audio & hình ảnh
         </p>
-      </div>
+      </section>
 
-      {/* AI Token Quota Meter */}
-      <div className="admin-card">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div className="admin-kpi-icon" style={{ background: "#ede9fe", color: "var(--indigo-deep)" }}>
-              <Sparkles size={18} />
-            </div>
+      <section className="glass-card admin-card">
+        <div className="meter-head">
+          <div className="meter-title">
+            <span className="admin-kpi-icon">
+              <Sparkles size={18} aria-hidden="true" />
+            </span>
             <div>
               <span className="admin-kicker">QUOTA TRỢ LÝ AI</span>
-              <h3 style={{ fontSize: 16, fontWeight: 750, margin: 0 }}>Hạn ngạch AI Token hằng ngày</h3>
+              <h3>Hạn ngạch AI Token hằng ngày</h3>
             </div>
           </div>
-          <span style={{ fontSize: 12, fontWeight: 750, color: "#059669" }}>
-            {aiMetric.percentUsed}%
+          <span className="meter-percent">{aiMetric.percentUsed}%</span>
+        </div>
+        <div className="meter-bar is-ai" role="img" aria-label={`Đã dùng ${aiMetric.percentUsed}% hạn ngạch`}>
+          <span style={{ width: `${aiMetric.percentUsed}%` }} />
+        </div>
+        <div className="meter-line">
+          <span>
+            Đã tiêu thụ: <strong>{(aiMetric.dailyTokenUsage / 1000000).toFixed(2)}M tokens</strong>
           </span>
-        </div>
-
-        <div style={{ width: "100%", height: 10, background: "#e5e7eb", borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
-          <div
-            style={{
-              width: `${aiMetric.percentUsed}%`,
-              height: "100%",
-              background: "#10b981",
-              borderRadius: 8,
-              transition: "width 0.3s",
-            }}
-          />
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--muted)" }}>
-          <span>Đã tiêu thụ: <strong>{(aiMetric.dailyTokenUsage / 1000000).toFixed(2)}M tokens</strong></span>
           <span>Hạn mức: {(aiMetric.dailyTokenLimit / 1000000).toFixed(0)}M tokens/ngày</span>
         </div>
-        <p style={{ margin: "10px 0 0", fontSize: 11, color: "#9ca3af" }}>
+        <p className="meter-note">
           Mô hình: {aiMetric.model} · Đặt lại sau: {aiMetric.resetHours} giờ
         </p>
-      </div>
+      </section>
     </div>
   );
 }

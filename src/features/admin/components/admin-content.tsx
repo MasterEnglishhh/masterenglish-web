@@ -18,30 +18,17 @@ export function AdminContent() {
   return (
     <div>
       <div className="admin-heading">
-        <span className="admin-kicker">QUẢN TRỊ NỘI DUNG & NGÂN HÀNG ĐỀ</span>
+        <span className="admin-kicker">QUẢN TRỊ NỘI DUNG</span>
         <h1 className="admin-title">
-          Kiểm duyệt Từ vựng, Ngữ pháp & <em>Đề thi</em>
+          Kiểm duyệt <em>Từ vựng & Bộ thẻ</em>
         </h1>
         <p className="admin-description">
-          Quản lý toàn bộ vòng đời nội dung (Bản nháp -&gt; Đang thẩm định -&gt;
-          Đã xuất bản). Tích hợp đồng bộ ngân hàng câu hỏi TOEIC và bộ thẻ
-          Flashcard.
+          Quản lý vòng đời nội dung từ vựng và bộ thẻ Flashcard: Bản nháp, Đang thẩm định, Đã duyệt, Đã xuất bản.
         </p>
       </div>
 
       {error && (
-        <div
-          style={{
-            background: "#fee2e2",
-            border: "1px solid #f87171",
-            color: "#991b1b",
-            padding: "10px 14px",
-            borderRadius: 10,
-            marginBottom: 20,
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
+        <div role="alert" className="admin-alert">
           {error}
         </div>
       )}

@@ -19,8 +19,7 @@ export function DeckDraftFields({
         <input
           type="text"
           required
-          className="admin-search-input"
-          style={{ width: "100%" }}
+          className="field-input"
           placeholder="ví dụ: 600 Từ Vựng TOEIC Căn Bản"
           value={value.title}
           onChange={(e) => onChange({ title: e.target.value })}
@@ -29,8 +28,7 @@ export function DeckDraftFields({
 
       <DraftField label="Mô tả bộ thẻ">
         <textarea
-          className="admin-search-input"
-          style={{ width: "100%", height: 70, resize: "vertical" }}
+          className="admin-textarea"
           placeholder="Mô tả nội dung, mục tiêu của bộ thẻ từ vựng..."
           value={value.description}
           onChange={(e) => onChange({ description: e.target.value })}
@@ -39,8 +37,7 @@ export function DeckDraftFields({
 
       <DraftField label="Cấp độ bộ thẻ">
         <select
-          className="admin-select"
-          style={{ width: "100%" }}
+          className="admin-select field-select"
           value={value.level}
           onChange={(e) => onChange({ level: e.target.value })}
         >

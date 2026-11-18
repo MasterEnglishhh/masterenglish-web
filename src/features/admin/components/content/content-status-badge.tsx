@@ -1,20 +1,15 @@
 import type { ContentRevisionStatus } from "../../types/content-ops";
 
+const BADGES: Record<string, { className: string; label: string }> = {
+  DRAFT: { className: "badge-draft", label: "Bản nháp (Draft)" },
+  IN_REVIEW: { className: "badge-review", label: "Đang thẩm định" },
+  APPROVED: { className: "badge-approved", label: "Đã duyệt" },
+  REJECTED: { className: "badge-locked", label: "Bị từ chối" },
+  PUBLISHED: { className: "badge-published", label: "Đã xuất bản (Live)" },
+  ARCHIVED: { className: "badge-archived", label: "Lưu trữ" },
+};
+
 export function ContentStatusBadge({ status }: { status: ContentRevisionStatus }) {
-  switch (status) {
-    case "DRAFT":
-      return <span className="admin-badge badge-draft">Bản nháp (Draft)</span>;
-    case "IN_REVIEW":
-      return <span className="admin-badge badge-review">Đang thẩm định</span>;
-    case "APPROVED":
-      return <span className="admin-badge badge-role-admin">Đã duyệt</span>;
-    case "REJECTED":
-      return <span className="admin-badge" style={{ background: "#fee2e2", color: "#991b1b" }}>Bị từ chối</span>;
-    case "PUBLISHED":
-      return <span className="admin-badge badge-published">Đã xuất bản (Live)</span>;
-    case "ARCHIVED":
-      return <span className="admin-badge" style={{ background: "#f1f5f9", color: "#64748b" }}>Lưu trữ</span>;
-    default:
-      return <span className="admin-badge">{status}</span>;
-  }
+  const badge = BADGES[status];
+  return <span className={`admin-badge ${badge?.className ?? ""}`}>{badge?.label ?? status}</span>;
 }

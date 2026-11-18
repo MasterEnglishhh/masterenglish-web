@@ -8,6 +8,7 @@ import { RequireSystemAdmin } from "./require-admin";
 
 export function AdminSystem() {
   const {
+    error,
     flags,
     storageQuota,
     aiQuota,
@@ -35,6 +36,11 @@ export function AdminSystem() {
           </p>
         </div>
 
+        {error && (
+          <div role="alert" className="admin-alert">
+            {error}
+          </div>
+        )}
         <SystemMeters storage={storageQuota} ai={aiQuota} />
 
         <FeatureFlagsPanel flags={flags} onToggle={toggleFeatureFlag} />

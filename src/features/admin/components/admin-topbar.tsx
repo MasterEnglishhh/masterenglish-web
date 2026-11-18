@@ -1,34 +1,28 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { Brand } from "@/components/brand";
 import { AccountMenu } from "@/features/auth";
+
+function sectionLabel(pathname: string) {
+  if (pathname.includes("/users")) return "TÀI KHOẢN & PHÂN QUYỀN";
+  if (pathname.includes("/content")) return "QUẢN TRỊ NỘI DUNG";
+  if (pathname.includes("/system")) return "CHÍNH SÁCH & NHẬT KÝ";
+  return "TỔNG QUAN";
+}
 
 export function AdminTopbar() {
   const pathname = usePathname();
-
-  let sectionLabel = "TỔNG QUAN / OVERVIEW";
-  if (pathname.includes("/users")) {
-    sectionLabel = "TÀI KHOẢN & PHÂN QUYỀN / USERS & ROLES";
-  } else if (pathname.includes("/content")) {
-    sectionLabel = "QUẢN TRỊ NỘI DUNG / CONTENT OPS";
-  } else if (pathname.includes("/system")) {
-    sectionLabel = "CHÍNH SÁCH & NHẬT KÝ / SYSTEM & AUDIT";
-  }
-
   return (
-    <header className="admin-topbar">
+    <header className="admin-topbar glass-card">
+      <div className="admin-topbar-brand">
+        <Brand />
+      </div>
       <div className="admin-topbar-breadcrumb">
-        <span>✳</span>
-        <span>{sectionLabel}</span>
+        <span aria-hidden="true">✳</span>
+        <span>{sectionLabel(pathname)}</span>
       </div>
-
-      <div className="admin-topbar-actions">
-        <div className="admin-health-pill">
-          <span className="admin-health-dot" aria-hidden="true" />
-          <span>API Spring Boot: OK</span>
-        </div>
-        <AccountMenu />
-      </div>
+      <AccountMenu />
     </header>
   );
 }

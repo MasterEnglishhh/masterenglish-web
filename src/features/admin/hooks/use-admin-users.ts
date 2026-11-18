@@ -17,6 +17,7 @@ export function useAdminUsers() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<UserFilterState>({
     search: "",
@@ -62,6 +63,8 @@ export function useAdminUsers() {
   }, [loadUsers]);
 
   const toggleLockUser = async (userId: string, reason?: string) => {
+    setError(null);
+    setNotice(null);
     const target = users.find((u) => u.id === userId);
     if (!target) return;
 
@@ -70,7 +73,7 @@ export function useAdminUsers() {
       if (res.success) {
         await loadUsers();
       } else {
-        alert(`Mở khóa thất bại: ${res.error.message}`);
+        setError(`Mở khóa thất bại: ${res.error.message}`);
       }
     } else {
       const lockReason = reason || "Khóa thủ công bởi quản trị viên";
@@ -78,31 +81,33 @@ export function useAdminUsers() {
       if (res.success) {
         await loadUsers();
       } else {
-        alert(`Khóa tài khoản thất bại: ${res.error.message}`);
+        setError(`Khóa tài khoản thất bại: ${res.error.message}`);
       }
     }
   };
 
   const updateUserRoles = async (userId: string, newRoles: UserRole[]) => {
     if (newRoles.length === 0) {
-      alert("Tài khoản phải có tối thiểu 1 vai trò.");
+      setError("Tài khoản phải có tối thiểu 1 vai trò.");
       return;
     }
     const res = await updateAdminUserRoles(userId, newRoles);
     if (res.success) {
       await loadUsers();
     } else {
-      alert(`Đổi vai trò thất bại: ${res.error.message}`);
+      setError(`Đổi vai trò thất bại: ${res.error.message}`);
     }
   };
 
   const revokeUserSessions = async (userId: string) => {
+    setError(null);
+    setNotice(null);
     const res = await revokeAdminUserSessions(userId);
     if (res.success) {
-      alert(res.data.message || "Đã thu hồi toàn bộ phiên đăng nhập của người dùng.");
+      setNotice(res.data.message || "Đã thu hồi toàn bộ phiên đăng nhập của người dùng.");
       await loadUsers();
     } else {
-      alert(`Hủy phiên thất bại: ${res.error.message}`);
+      setError(`Hủy phiên thất bại: ${res.error.message}`);
     }
   };
 
@@ -112,6 +117,7 @@ export function useAdminUsers() {
     totalPages,
     isLoading,
     error,
+    notice,
     filters,
     setFilters,
     toggleLockUser,

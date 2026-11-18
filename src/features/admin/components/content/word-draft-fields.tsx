@@ -26,8 +26,7 @@ export function WordDraftFields({
           <input
             type="text"
             required
-            className="admin-search-input"
-            style={{ width: "100%" }}
+            className="field-input"
             placeholder="ví dụ: persistent"
             value={value.lemma}
             onChange={(e) => onChange({ lemma: e.target.value })}
@@ -36,8 +35,7 @@ export function WordDraftFields({
         <DraftField label="Phiên âm IPA">
           <input
             type="text"
-            className="admin-search-input"
-            style={{ width: "100%" }}
+            className="field-input"
             placeholder="ví dụ: /pəˈsɪstənt/"
             value={value.ipa}
             onChange={(e) => onChange({ ipa: e.target.value })}
@@ -48,8 +46,7 @@ export function WordDraftFields({
       <DraftRow>
         <DraftField label="Từ loại">
           <select
-            className="admin-select"
-            style={{ width: "100%" }}
+            className="admin-select field-select"
             value={value.partOfSpeech}
             onChange={(e) => onChange({ partOfSpeech: e.target.value })}
           >
@@ -62,8 +59,7 @@ export function WordDraftFields({
         </DraftField>
         <DraftField label="Cấp độ CEFR">
           <select
-            className="admin-select"
-            style={{ width: "100%" }}
+            className="admin-select field-select"
             value={value.cefrLevel}
             onChange={(e) => onChange({ cefrLevel: e.target.value })}
           >
@@ -80,8 +76,7 @@ export function WordDraftFields({
         <input
           type="text"
           required
-          className="admin-search-input"
-          style={{ width: "100%" }}
+          className="field-input"
           placeholder="ví dụ: Kiên trì, bền bỉ"
           value={value.meaningVi}
           onChange={(e) => onChange({ meaningVi: e.target.value })}
@@ -91,8 +86,7 @@ export function WordDraftFields({
       <DraftField label="Định nghĩa tiếng Anh">
         <input
           type="text"
-          className="admin-search-input"
-          style={{ width: "100%" }}
+          className="field-input"
           placeholder="ví dụ: Continuing firmly or obstinately in a course of action..."
           value={value.definitionEn}
           onChange={(e) => onChange({ definitionEn: e.target.value })}
@@ -103,8 +97,7 @@ export function WordDraftFields({
         <DraftField label="Ví dụ câu tiếng Anh">
           <input
             type="text"
-            className="admin-search-input"
-            style={{ width: "100%" }}
+            className="field-input"
             placeholder="She is a persistent learner."
             value={value.exampleEn}
             onChange={(e) => onChange({ exampleEn: e.target.value })}
@@ -113,8 +106,7 @@ export function WordDraftFields({
         <DraftField label="Dịch nghĩa câu ví dụ">
           <input
             type="text"
-            className="admin-search-input"
-            style={{ width: "100%" }}
+            className="field-input"
             placeholder="Cô ấy là một người học kiên trì."
             value={value.exampleVi}
             onChange={(e) => onChange({ exampleVi: e.target.value })}

@@ -1,38 +1,18 @@
 import type { ReactNode } from "react";
 
-/** Một ô nhập của biểu mẫu soạn nội dung: nhãn phía trên, điều khiển ở dưới. */
-export function DraftField({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+/** Một ô nhập của biểu mẫu soạn nội dung: nhãn bao quanh điều khiển nên được gắn đúng cho trình đọc màn hình. */
+export function DraftField({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div>
-      <label
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: "var(--ink)",
-          display: "block",
-          marginBottom: 4,
-        }}
-      >
-        {label}
-      </label>
+    <label className="draft-field">
+      <span className="field-label">{label}</span>
       {children}
-    </div>
+    </label>
   );
 }
 
 /** Hai ô nhập cạnh nhau. */
 export function DraftRow({ children }: { children: ReactNode }) {
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-      {children}
-    </div>
-  );
+  return <div className="admin-form-row">{children}</div>;
 }
 
 export const CEFR_OPTIONS = [

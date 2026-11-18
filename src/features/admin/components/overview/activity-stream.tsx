@@ -1,69 +1,43 @@
-import { Clock, ShieldAlert, CheckCircle, Info } from "lucide-react";
+import { CheckCircle, Info, ShieldAlert } from "lucide-react";
 import type { RecentActivity } from "../../types/admin";
+
+const STATUS = {
+  WARNING: { Icon: ShieldAlert, tone: "is-warning" },
+  SUCCESS: { Icon: CheckCircle, tone: "is-success" },
+} as const;
 
 export function ActivityStream({ activities }: { activities: RecentActivity[] }) {
   return (
-    <div className="admin-card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+    <section className="glass-card admin-card">
+      <div className="admin-card-head">
         <div>
           <span className="admin-kicker">NHẬT KÝ VẬN HÀNH</span>
-          <h2 style={{ fontSize: 18, fontWeight: 750, margin: 0 }}>
+          <h2>
             Hoạt động quản trị <em>gần đây</em>
           </h2>
         </div>
-        <span style={{ fontSize: 12, color: "var(--muted)", display: "flex", alignItems: "center", gap: 5 }}>
-          <Clock size={13} /> Cập nhật tức thời
-        </span>
       </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {activities.map((act) => (
-          <div
-            key={act.id}
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 14,
-              padding: "12px 14px",
-              background: "#fafaf7",
-              borderRadius: 14,
-              border: "1px solid #eeeee8",
-            }}
-          >
-            <div
-              style={{
-                marginTop: 2,
-                color:
-                  act.status === "WARNING"
-                    ? "#dc2626"
-                    : act.status === "SUCCESS"
-                    ? "#059669"
-                    : "var(--indigo)",
-              }}
-            >
-              {act.status === "WARNING" ? (
-                <ShieldAlert size={18} />
-              ) : act.status === "SUCCESS" ? (
-                <CheckCircle size={18} />
-              ) : (
-                <Info size={18} />
-              )}
-            </div>
-
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-                <span style={{ fontWeight: 700, fontSize: 13, color: "var(--ink)" }}>
-                  {act.action}
-                </span>
-                <span style={{ fontSize: 11, color: "var(--muted)" }}>{act.timestamp}</span>
+      <div className="admin-list">
+        {activities.map((act) => {
+          const { Icon, tone } = STATUS[act.status as keyof typeof STATUS] ?? { Icon: Info, tone: "" };
+          return (
+            <div key={act.id} className="admin-list-item">
+              <span className={`admin-list-icon ${tone}`}>
+                <Icon size={18} aria-hidden="true" />
+              </span>
+              <div className="admin-list-body">
+                <div className="admin-list-top">
+                  <strong>{act.action}</strong>
+                  <span className="admin-time">{act.timestamp}</span>
+                </div>
+                <p>
+                  Đối tượng: <strong>{act.target}</strong> · Thực hiện bởi: {act.actorName} ({act.actorEmail})
+                </p>
               </div>
-              <p style={{ margin: "3px 0 0", fontSize: 12, color: "#616579" }}>
-                Đối tượng: <strong>{act.target}</strong> · Thực hiện bởi: {act.actorName} ({act.actorEmail})
-              </p>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-    </div>
+    </section>
   );
 }

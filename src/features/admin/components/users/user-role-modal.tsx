@@ -10,12 +10,18 @@ interface UserRoleModalProps {
   onSave: (userId: string, roles: UserRole[]) => void;
 }
 
+const ROLES: { role: UserRole; hint: string }[] = [
+  { role: "LEARNER", hint: "Người học tiếng Anh và luyện đề TOEIC thông thường" },
+  { role: "CONTENT_ADMIN", hint: "Biên soạn, kiểm duyệt và xuất bản từ vựng, ngữ pháp, đề thi" },
+  { role: "SYSTEM_ADMIN", hint: "Toàn quyền quản trị tài khoản, cấu hình hệ thống và audit log" },
+];
+
 export function UserRoleModal({ user, onClose, onSave }: UserRoleModalProps) {
   const [selectedRoles, setSelectedRoles] = useState<UserRole[]>(user.roles);
 
   const toggleRole = (role: UserRole) => {
     if (selectedRoles.includes(role)) {
-      if (selectedRoles.length === 1) return; // Prevent 0 roles
+      if (selectedRoles.length === 1) return; // không để người dùng không còn vai trò nào
       setSelectedRoles(selectedRoles.filter((r) => r !== role));
     } else {
       setSelectedRoles([...selectedRoles, role]);
@@ -32,56 +38,31 @@ export function UserRoleModal({ user, onClose, onSave }: UserRoleModalProps) {
       kicker="PHÂN QUYỀN HỆ THỐNG"
       title={`Cập nhật vai trò cho ${user.displayName}`}
       description={
-        <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--muted)" }}>
+        <p className="admin-modal-note">
           Email: <strong>{user.email}</strong>
         </p>
       }
       onClose={onClose}
     >
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {(["LEARNER", "CONTENT_ADMIN", "SYSTEM_ADMIN"] as UserRole[]).map((role) => {
+      <div className="admin-role-list">
+        {ROLES.map(({ role, hint }) => {
           const isChecked = selectedRoles.includes(role);
           return (
-            <label
-              key={role}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: isChecked ? "2px solid var(--indigo)" : "1px solid var(--line)",
-                background: isChecked ? "#f5f4fd" : "#fff",
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={isChecked}
-                onChange={() => toggleRole(role)}
-                style={{ width: 18, height: 18, accentColor: "var(--indigo)" }}
-              />
-              <div>
-                <strong style={{ fontSize: 13, display: "block" }}>{role}</strong>
-                <span style={{ fontSize: 11, color: "var(--muted)" }}>
-                  {role === "SYSTEM_ADMIN"
-                    ? "Toàn quyền quản trị tài khoản, cấu hình hệ thống và audit log"
-                    : role === "CONTENT_ADMIN"
-                    ? "Biên soạn, kiểm duyệt và xuất bản từ vựng, ngữ pháp, đề thi"
-                    : "Người học tiếng Anh và luyện đề TOEIC thông thường"}
-                </span>
-              </div>
+            <label key={role} className={`admin-role-option ${isChecked ? "is-selected" : ""}`}>
+              <input type="checkbox" checked={isChecked} onChange={() => toggleRole(role)} />
+              <span>
+                <strong>{role}</strong>
+                <small>{hint}</small>
+              </span>
             </label>
           );
         })}
       </div>
-
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 10 }}>
-        <button type="button" className="btn-3d-outline btn-sm" onClick={onClose}>
+      <div className="admin-form-actions">
+        <button type="button" className="btn-ghost btn-sm" onClick={onClose}>
           Hủy bỏ
         </button>
-        <button type="button" className="btn-3d-dark btn-sm" onClick={handleSave}>
+        <button type="button" className="btn-primary btn-sm" onClick={handleSave}>
           Lưu thay đổi vai trò
         </button>
       </div>

@@ -1,42 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { type ReactNode } from "react";
+import type { ReactNode } from "react";
+import { AdminContentTransition } from "./admin-content-transition";
+import { AdminMobileNav } from "./admin-mobile-nav";
 import { AdminSidebar } from "./admin-sidebar";
 import { AdminTopbar } from "./admin-topbar";
-import { adminNavItems } from "../data/navigation";
 import "../styles/admin.css";
 
+/** Khung cổng quản trị: nền pastel, thanh bên kính (màn rộng), thanh đầu, điều hướng ngang (màn hẹp) và chân trang. */
 export function AdminLayoutShell({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-
   return (
-    <div className="admin-shell">
+    <div className="admin-shell app-pastel-bg">
       <AdminSidebar />
       <div className="admin-main">
         <AdminTopbar />
 
-        <div className="admin-mobile-nav" style={{ display: "none" }}>
-          {adminNavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`btn-3d-outline btn-sm ${pathname === item.href ? "btn-3d-dark" : ""}`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
+        <AdminMobileNav />
 
-        <main className="admin-content">{children}</main>
+        <main className="admin-content">
+          <AdminContentTransition>{children}</AdminContentTransition>
+        </main>
 
-        <footer style={{ padding: "20px clamp(20px, 4vw, 56px)", borderTop: "1px solid #e9eae5", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "var(--muted)" }}>
-          <span>© 2026 MasterEnglish — Phân hệ Quản trị & Vận hành</span>
-          <div style={{ display: "flex", gap: 16 }}>
-            <Link href="/learn" style={{ color: "var(--indigo)", fontWeight: 600 }}>Khu học tập</Link>
-            <Link href="/" style={{ color: "var(--indigo)", fontWeight: 600 }}>Trang chủ</Link>
-          </div>
+        <footer className="admin-footer">
+          <span>© 2026 MasterEnglish · Cổng quản trị</span>
+          <nav aria-label="Liên kết cuối trang quản trị">
+            <Link href="/learn">Khu học tập</Link>
+            <Link href="/">Trang chủ</Link>
+          </nav>
         </footer>
       </div>
     </div>

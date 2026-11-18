@@ -11,6 +11,7 @@ export function AdminUsers() {
     totalPages,
     isLoading,
     error,
+    notice,
     filters,
     setFilters,
     toggleLockUser,
@@ -34,19 +35,13 @@ export function AdminUsers() {
         </div>
 
         {error && (
-          <div
-            style={{
-              background: "#fee2e2",
-              border: "1px solid #f87171",
-              color: "#991b1b",
-              padding: "10px 14px",
-              borderRadius: 10,
-              marginBottom: 20,
-              fontSize: 13,
-              fontWeight: 600,
-            }}
-          >
+          <div role="alert" className="admin-alert">
             {error}
+          </div>
+        )}
+        {notice && (
+          <div role="status" className="admin-notice">
+            {notice}
           </div>
         )}
 
