@@ -209,7 +209,6 @@ export function UserTable({
       {roleModalUser && (
         <UserRoleModal
           user={roleModalUser}
-          isOpen={true}
           onClose={() => setRoleModalUser(null)}
           onSave={onUpdateRoles}
         />
@@ -218,7 +217,6 @@ export function UserTable({
       {lockModalUser && (
         <UserLockModal
           user={lockModalUser}
-          isOpen={true}
           onClose={() => setLockModalUser(null)}
           onConfirm={onToggleLock}
         />

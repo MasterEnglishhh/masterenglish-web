@@ -199,7 +199,6 @@ export function ContentTable({
       {previewItem && (
         <ContentPreviewModal
           item={previewItem}
-          isOpen={true}
           onClose={() => setPreviewItem(null)}
           onReload={onReload}
         />
@@ -207,7 +206,6 @@ export function ContentTable({
 
       {isCreateOpen && (
         <CreateContentModal
-          isOpen={true}
           onClose={() => setIsCreateOpen(false)}
           onCreated={onReload}
         />
