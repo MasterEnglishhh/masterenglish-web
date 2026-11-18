@@ -32,7 +32,9 @@ Thẻ từ có hai mặt cố định trong DOM và chuyển giữa hai mặt b�
 
 Cách chia theo tính năng tham khảo [Bulletproof React](https://github.com/alan2207/bulletproof-react/blob/master/docs/project-structure.md); ranh giới server/client và cách tổ chức route theo tài liệu [Next.js](https://nextjs.org/docs/app/getting-started/project-structure) và [React custom hooks](https://react.dev/learn/reusing-logic-with-custom-hooks).
 
-Chạy local bằng `npm run dev`, mở `http://127.0.0.1:3000`. Chạy `npm run lint`, `npm run test` và `npm run build` trước khi tích hợp thay đổi. Cần đặt `BACKEND_URL` trong `.env.local` để cấu hình rewrite `/api/*` cho biểu mẫu đăng nhập.
+Chạy local bằng `npm run dev`, mở `http://127.0.0.1:3000`. Chạy `npm run lint`, `npm run test` và `npm run build` trước khi tích hợp thay đổi. Kiểm tra giao diện bằng trình duyệt thật (4 bề rộng, tràn ngang, giảm chuyển động) bằng `npm run test:e2e`: dùng Microsoft Edge có sẵn, hoặc `npx playwright install chromium` rồi đặt `E2E_CHANNEL=chromium`; bài kiểm tra này chưa nằm trong CI. Cần đặt `BACKEND_URL` trong `.env.local` để cấu hình rewrite `/api/*` cho biểu mẫu đăng nhập.
+
+Phong cách giao diện landing (màu, chữ, kính, chuyển động, linh vật, luật trung thực) được ghi ở [docs/LANDING_STYLE.md](docs/LANDING_STYLE.md); đọc trước khi sửa giao diện công khai.
 
 **Trạng thái bản xem trước:** nội dung thẻ từ, bài ngữ pháp và câu TOEIC là dữ liệu minh họa. Lật thẻ, đánh giá ghi nhớ và xem lời giải chỉ thay đổi trong phiên trình duyệt; không lưu tiến độ hay kết quả. Các trang Ôn tập, Kết quả và AI Tutor hiển thị trạng thái chờ dữ liệu. Đăng ký kèm OTP, quên/đặt lại mật khẩu, đăng nhập, khôi phục phiên và đăng xuất đã nối API thật. Phân quyền Learner/Content Admin/System Admin, media thật và các luồng học tập có lưu dữ liệu sẽ được nối với backend ở giai đoạn tiếp theo.
 
