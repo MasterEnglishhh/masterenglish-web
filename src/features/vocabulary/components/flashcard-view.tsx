@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   Bookmark,
   Check,
-  CheckCircle2,
   RotateCcw,
   Repeat2,
 } from "lucide-react";
@@ -13,6 +12,7 @@ import type { WordSenseCardDto, RatingType } from "../types/vocabulary";
 import { useVocabularyPractice } from "../hooks/use-vocabulary-practice";
 import { partOfSpeechLabels } from "../lib/vocabulary-presentation";
 import { PronunciationPlayer } from "./pronunciation-player";
+import { Mascot } from "@/components/mascot";
 import styles from "./vocabulary.module.css";
 
 export interface FlashcardViewProps {
@@ -105,7 +105,7 @@ export function FlashcardView({
     return (
       <section className={styles.study}>
         <div className={styles.finished}>
-          <CheckCircle2 size={42} aria-hidden="true" />
+          <Mascot expression="celebrating" idSuffix="-done" className={styles.finishedMascot} />
           <h2>
             {summary.totalReviewed
               ? "Hoàn thành lượt học!"
@@ -213,7 +213,7 @@ export function FlashcardView({
             <span className={styles.lemma} lang="en">
               {currentCard.lemma}
             </span>
-            <span className={styles.ipa} style={{ color: "#ddd8fb" }}>
+            <span className={styles.ipa}>
               {currentCard.ipa || ""}
             </span>
             <span className={styles.badges}>

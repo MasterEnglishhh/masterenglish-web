@@ -1,3 +1,4 @@
+import { Mascot } from "@/components/mascot";
 import { Suspense } from "react";
 import { VocabularyView } from "./vocabulary-view";
 import styles from "./vocabulary.module.css";
@@ -8,11 +9,9 @@ export function VocabularyPage() {
     <main className={`learning-content ${styles.page}`}>
       <Suspense
         fallback={
-          <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <div style={{ fontSize: "28px", color: "var(--indigo)" }}>✳</div>
-            <p style={{ fontSize: "14px", color: "#777", marginTop: "12px" }}>
-              Đang mở không gian từ vựng...
-            </p>
+          <div className="page-loading" role="status">
+            <Mascot expression="thinking" idSuffix="-loading" className="page-loading-mascot" />
+            <p>Đang mở không gian từ vựng...</p>
           </div>
         }
       >

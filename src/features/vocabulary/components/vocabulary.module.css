@@ -1,80 +1,102 @@
+/* Từ vựng, ôn tập (flashcard) và tra từ: kính pastel đồng bộ với landing. Giữ nguyên tên class. */
+
 .page {
-  padding-top: 42px;
+  padding-top: 0;
 }
 .header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 .header h1 {
-  font-size: clamp(34px, 4vw, 50px);
-  font-weight: 650;
-  letter-spacing: -0.055em;
-  line-height: 1.15;
   margin: 12px 0;
+  font-size: clamp(2rem, 4.4vw, 3.25rem);
+  font-weight: 900;
+  line-height: 1.15;
+  text-wrap: balance;
 }
 .header h1 em {
   color: var(--indigo);
-  font-family: Cambria, Georgia, serif;
-  font-weight: 400;
 }
 .header p {
-  max-width: 650px;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.8;
+  max-width: 60ch;
   margin: 0;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 .headerIcon {
-  width: 66px;
-  height: 66px;
   display: grid;
   place-items: center;
-  border: 1px solid #dbd7fb;
-  border-radius: 20px;
-  color: var(--indigo);
-  background: #eeecff;
   flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 22px;
+  background: var(--lavender);
+  color: var(--indigo-deep);
 }
+
+/* Thanh chuyển chế độ dạng viên thuốc */
 .tabs {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 5px;
-  padding: 5px;
-  background: #ebeaf2;
-  border-radius: 14px;
-  margin-bottom: 26px;
+  gap: 4px;
+  margin-bottom: 24px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(222, 219, 253, 0.6);
+}
+.tabs {
+  position: relative;
+}
+.tabIndicator {
+  border-radius: 999px;
+  background: var(--indigo);
+  box-shadow: 0 8px 18px -8px rgba(90, 84, 232, 0.8);
+}
+.tabs[data-slide="on"] .tab[aria-current="page"] {
+  background: transparent;
+  box-shadow: none;
 }
 .tab {
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #686b80;
-  padding: 12px 20px;
-  font-size: 13px;
-  font-weight: 700;
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  transition: background 0.25s, color 0.25s, transform 0.3s var(--spring);
+}
+.tab:hover:not([aria-current="page"]) {
+  background: rgba(255, 255, 255, 0.7);
 }
 .tab[aria-current="page"] {
-  background: white;
-  color: var(--indigo-deep);
-  box-shadow: 0 2px 5px #20223b0b;
+  background: var(--indigo);
+  color: #fff;
+  box-shadow: 0 8px 18px -8px rgba(90, 84, 232, 0.8);
 }
+
+/* Thanh công cụ và ô nhập */
 .toolbar {
   display: grid;
   grid-template-columns: minmax(180px, 1fr) 150px 170px auto;
   align-items: end;
   gap: 14px;
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 20px;
   margin-bottom: 24px;
+  padding: 18px 20px;
+  border: 1px solid var(--glass-line);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--glass-shadow);
 }
 .deckToolbar {
   grid-template-columns: minmax(180px, 1fr) 180px auto;
@@ -86,40 +108,49 @@
 .field {
   display: grid;
   gap: 8px;
-  color: #575d74;
-  font-size: 12px;
-  font-weight: 650;
   min-width: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 800;
 }
 .inputWrap {
   position: relative;
 }
 .inputWrap svg {
   position: absolute;
-  left: 13px;
-  top: 13px;
+  left: 15px;
+  top: 14px;
   color: #8a8ba0;
   pointer-events: none;
 }
 .field input,
 .field select {
   width: 100%;
-  height: 45px;
-  border: 1px solid #dce0e7;
-  border-radius: 9px;
-  background: #fbfbfe;
-  padding: 0 12px;
+  height: 46px;
+  padding: 0 14px;
+  border: 1.5px solid rgba(32, 34, 59, 0.14);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
   font: inherit;
   font-size: 14px;
-  color: var(--ink);
+  font-weight: 600;
   outline-offset: 2px;
 }
+.field input:focus,
+.field select:focus {
+  border-color: var(--indigo);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(90, 84, 232, 0.14);
+}
 .inputWrap input {
-  padding-left: 40px;
+  padding-left: 42px;
 }
 .field input::placeholder {
   color: #9396a4;
 }
+
+/* Nút viên thuốc */
 .primary,
 .secondary,
 .textButton {
@@ -127,78 +158,98 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 43px;
-  border-radius: 9px;
-  padding: 11px 17px;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.4;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.3;
+  transition: transform 0.3s var(--spring), background 0.2s, border-color 0.2s;
+}
+.primary:hover:not(:disabled),
+.secondary:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.primary:active:not(:disabled),
+.secondary:active:not(:disabled) {
+  transform: scale(0.98);
 }
 .primary {
-  background: var(--indigo);
-  color: white;
   border: 1px solid var(--indigo);
+  background: var(--indigo);
+  color: #fff;
+  box-shadow: 0 10px 22px -10px rgba(90, 84, 232, 0.75);
 }
 .primary:hover:not(:disabled) {
-  background: var(--indigo-deep);
+  background: #4b45d6;
 }
 .secondary {
-  background: white;
+  border: 1px solid rgba(32, 34, 59, 0.14);
+  background: rgba(255, 255, 255, 0.85);
   color: var(--ink);
-  border: 1px solid #dedeea;
 }
 .secondary:hover:not(:disabled) {
-  background: #f0edff;
-  border-color: #b8afff;
+  border-color: rgba(90, 84, 232, 0.45);
+  background: #fff;
 }
 .textButton {
-  min-height: 36px;
-  padding: 7px 0;
+  justify-content: flex-start;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
   background: none;
   color: var(--indigo);
-  border: 0;
-  justify-content: flex-start;
+}
+.textButton:hover {
+  text-decoration: underline;
 }
 .primary:disabled,
 .secondary:disabled {
   opacity: 0.5;
 }
+
 .resultBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin: 24px 0 18px;
+  margin: 24px 0 16px;
 }
 .resultBar h2 {
   margin: 0;
-  font-size: 18px;
-  letter-spacing: -0.025em;
+  font-size: 1.25rem;
+  font-weight: 900;
 }
 .resultBar p,
 .muted {
   margin: 0;
-  font-size: 13px;
-  color: var(--muted);
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
   line-height: 1.6;
 }
+
+/* Thẻ từ */
 .wordGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 .wordCard {
-  background: white;
-  border: 1px solid #e0e1e9;
-  border-radius: 16px;
-  padding: 22px;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--glass-line);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.3s var(--spring), box-shadow 0.3s;
+}
+.wordCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--glass-shadow), 0 22px 40px -22px rgba(90, 84, 232, 0.4);
 }
 .wordTop {
   display: flex;
@@ -209,166 +260,173 @@
 .wordTop h2,
 .wordTop h3 {
   margin: 0 0 6px;
-  font-size: 25px;
-  line-height: 1.25;
-  font-weight: 700;
-  letter-spacing: -0.035em;
+  font-size: 1.625rem;
+  font-weight: 900;
+  line-height: 1.2;
   overflow-wrap: anywhere;
 }
 .ipa {
+  color: var(--indigo-deep);
+  font-family: "Segoe UI", "Noto Sans", "DejaVu Sans", Arial, sans-serif;
   font-size: 14px;
-  font-family: "Segoe UI", sans-serif;
-  color: #81839a;
-  font-weight: 400;
+  font-weight: 600;
 }
 .senseList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
   display: grid;
-  gap: 12px;
   flex: 1;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 .senseList li {
   padding-top: 12px;
-  border-top: 1px solid #eeedf4;
+  border-top: 1px solid rgba(32, 34, 59, 0.08);
 }
 .senseList p {
-  font-size: 14px;
-  line-height: 1.65;
   margin: 6px 0 0;
-  color: #44485f;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
 }
 .badges {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 7px;
+  align-items: center;
+  gap: 6px;
 }
 .badge {
-  padding: 4px 8px;
-  background: #f2f1f8;
-  color: #77778d;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 750;
-  line-height: 1.4;
-  letter-spacing: 0.02em;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--lavender);
+  color: var(--indigo-deep);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.6;
 }
 .level {
-  background: #eeebff;
-  color: var(--indigo);
-}
-.level[data-level="A1"],
-.level[data-level="A2"] {
-  background: #e7f5ec;
-  color: #277054;
+  background: var(--lime);
+  color: var(--ink);
 }
 .level[data-level="B2"],
 .level[data-level="C1"],
 .level[data-level="C2"] {
-  background: #fff1df;
-  color: #996426;
+  background: var(--peach);
 }
 .cardFooter {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 8px;
   margin-top: auto;
 }
 .pagination {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
   gap: 16px;
   margin-top: 28px;
-  font-size: 12px;
-  color: #77788f;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 700;
 }
+
+/* Trạng thái rỗng, thông báo, tải */
 .empty {
-  padding: 48px 24px;
-  border: 1px dashed #d9d7e7;
-  background: #faf9ff;
-  border-radius: 16px;
+  padding: 44px 24px;
+  border: 1.5px dashed rgba(90, 84, 232, 0.3);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--text-muted);
   text-align: center;
-  color: var(--muted);
 }
 .empty > svg {
-  color: #a69ce9;
   margin: 0 auto 14px;
+  color: var(--indigo);
 }
 .empty h2 {
-  font-size: 19px;
-  color: var(--ink);
   margin: 0 0 9px;
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 900;
 }
 .empty p {
-  font-size: 14px;
-  line-height: 1.7;
   margin: 0 0 18px;
+  font-weight: 600;
+  line-height: 1.7;
 }
 .notice,
 .error {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
-  border-radius: 12px;
-  padding: 15px 18px;
   margin: 18px 0;
-  font-size: 13px;
-  line-height: 1.7;
+  padding: 14px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
 }
 .notice {
-  background: #f0eefb;
-  color: #64617a;
-  border: 1px solid #e1dcf8;
+  border: 1px solid rgba(90, 84, 232, 0.18);
+  background: rgba(222, 219, 253, 0.55);
+  color: var(--text-muted);
 }
 .error {
-  background: #fff2ef;
-  color: #a23d2e;
-  border: 1px solid #f2d5cf;
+  border: 1px solid rgba(192, 57, 43, 0.25);
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .skeleton {
   height: 220px;
-  background: #ebeaf1;
-  border-radius: 16px;
-  animation: pulse 1.2s ease-in-out infinite alternate;
+  border-radius: 24px;
+  background: linear-gradient(90deg, rgba(32, 34, 59, 0.06), rgba(32, 34, 59, 0.12), rgba(32, 34, 59, 0.06));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
 }
-@keyframes pulse {
+@keyframes shimmer {
   to {
-    opacity: 0.45;
+    background-position: -200% 0;
   }
 }
+
+/* Bộ từ */
 .dueBanner {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 20px;
-  background: var(--ink);
-  color: white;
-  border-radius: 16px;
-  padding: 24px;
   margin-bottom: 24px;
+  padding: 22px 26px;
+  border: 1px solid var(--glass-line);
+  border-radius: 28px;
+  background: linear-gradient(120deg, rgba(222, 219, 253, 0.9), rgba(199, 242, 220, 0.8));
+  box-shadow: var(--glass-shadow);
 }
 .dueBanner h2 {
-  font-size: 21px;
-  letter-spacing: -0.025em;
   margin: 4px 0 6px;
+  font-size: 1.375rem;
+  font-weight: 900;
 }
 .dueBanner p {
-  color: #c9c6e4;
   margin: 0;
-  font-size: 13px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
 }
 .dueBanner .primary {
-  background: var(--lime);
   border-color: var(--lime);
+  background: var(--lime);
   color: var(--ink);
+  box-shadow: 0 10px 22px -12px rgba(120, 150, 30, 0.7);
+}
+.dueBanner .primary:hover:not(:disabled) {
+  background: #cdeb6f;
 }
 .deckGrid {
   display: grid;
@@ -376,127 +434,134 @@
   gap: 20px;
 }
 .deckCard {
-  background: white;
-  border: 1px solid #e2e2e9;
-  border-radius: 16px;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
+  overflow: hidden;
+  border: 1px solid var(--glass-line);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.3s var(--spring), box-shadow 0.3s;
 }
 .deckCard:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px #24233f09;
+  transform: translateY(-4px);
+  box-shadow: var(--glass-shadow), 0 26px 44px -24px rgba(90, 84, 232, 0.45);
 }
 .deckCover {
-  height: 100px;
-  background: #efecff;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 100px;
   padding: 22px;
-  color: #7d6ade;
+  background: linear-gradient(135deg, #dedbfd, #efedff);
+  color: var(--indigo-deep);
 }
 .deckCover[data-tone="green"] {
-  background: #e8f3e5;
-  color: #5f8661;
+  background: linear-gradient(135deg, #c7f2dc, #e6f9ef);
+  color: #277054;
 }
 .deckCover[data-tone="peach"] {
-  background: #fbeddf;
-  color: #b57f4d;
+  background: linear-gradient(135deg, #ffe1cb, #fff0e4);
+  color: #9a5b2a;
 }
 .deckCover > svg {
   width: 42px;
   height: 42px;
-  stroke-width: 1.4;
+  stroke-width: 1.5;
 }
 .deckBody {
-  padding: 22px;
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 14px;
-  flex: 1;
+  padding: 22px;
 }
 .deckBody h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 1.125rem;
+  font-weight: 900;
   line-height: 1.4;
-  letter-spacing: -0.025em;
 }
 .deckBody p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.75;
   flex: 1;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.7;
 }
 .deckBody .secondary {
   justify-content: space-between;
 }
+
+/* Chi tiết từ */
 .detail {
   max-width: 850px;
   margin: 20px auto 0;
 }
 .detailHero {
-  padding: 28px;
-  background: #f0edff;
-  border: 1px solid #e0dafb;
-  border-radius: 18px;
   margin: 20px 0;
+  padding: 28px;
+  border: 1px solid var(--glass-line);
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(222, 219, 253, 0.85), rgba(199, 242, 220, 0.6));
 }
 .detailHero h2 {
-  font-size: 42px;
-  letter-spacing: -0.045em;
   margin: 0 0 9px;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 900;
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
 .senseCard {
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 24px;
   margin: 16px 0;
+  padding: 24px;
+  border: 1px solid var(--glass-line);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--glass-shadow);
 }
 .senseHeading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 15px;
-  margin-top: 12px;
+  margin: 12px 0 15px;
 }
 .senseHeading h3 {
-  font-size: 19px;
   margin: 0;
+  font-size: 1.1875rem;
+  font-weight: 900;
   line-height: 1.5;
 }
 .definition {
-  color: #686d82;
-  font-size: 14px;
-  line-height: 1.75;
   margin-bottom: 16px;
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.7;
 }
 .example {
-  background: #f8f8fc;
-  border-left: 3px solid #cbc3f8;
-  padding: 16px 18px;
   margin: 12px 0 20px;
-  border-radius: 0 9px 9px 0;
+  padding: 16px 18px;
+  border-left: 4px solid var(--lime);
+  border-radius: 0 16px 16px 0;
+  background: rgba(247, 247, 242, 0.9);
 }
 .example p {
-  font-size: 14px;
-  line-height: 1.75;
   margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.7;
 }
 .example p + p {
   margin-top: 7px;
-  color: var(--muted);
-  font-size: 13px;
+  color: var(--text-muted);
+  font-size: 14px;
 }
+
+/* Học bộ thẻ và ôn tập */
 .study {
   max-width: 850px;
   margin: 20px auto;
@@ -509,29 +574,30 @@
   margin: 20px 0 14px;
 }
 .studyHeading h2 {
-  font-size: 18px;
-  line-height: 1.45;
   margin: 0;
-  letter-spacing: -0.025em;
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1.45;
 }
 .counter {
-  color: var(--muted);
-  font-size: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 800;
   white-space: nowrap;
 }
 .progress {
-  height: 5px;
-  background: #e5e1f2;
-  border-radius: 5px;
-  overflow: hidden;
+  height: 10px;
   margin-bottom: 20px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(32, 34, 59, 0.08);
 }
 .progress > span {
   display: block;
-  background: var(--indigo);
   height: 100%;
   border-radius: inherit;
-  transition: width 0.2s;
+  background: linear-gradient(90deg, var(--indigo), #9b95ff);
+  transition: width 0.4s var(--ease);
 }
 .studyTools {
   display: flex;
@@ -541,41 +607,45 @@
   gap: 14px;
   margin: 16px 0;
 }
+
+/* Thẻ lật 3D: hai mặt cố định trong DOM, lật bằng rotateY với lò xo */
 .flipCard {
   width: 100%;
   padding: 0;
   border: 0;
-  border-radius: 20px;
+  border-radius: 28px;
   background: transparent;
-  color: white;
+  color: var(--ink);
   text-align: center;
   perspective: 1400px;
 }
 .flipCardInner {
   display: grid;
   transform-style: preserve-3d;
-  transition: transform 600ms cubic-bezier(0.22, 0.68, 0, 1);
+  transition: transform 700ms var(--spring);
 }
 .flipCard[data-flipped="true"] .flipCardInner {
   transform: rotateY(180deg);
 }
 .cardFace {
   grid-area: 1 / 1;
-  min-width: 0;
-  min-height: 355px;
-  padding: 35px;
-  border-radius: 20px;
-  background: var(--indigo);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  box-shadow: 0 8px 0 #d9d4fa;
+  min-width: 0;
+  min-height: 355px;
+  padding: 35px;
+  border: 1px solid var(--glass-line);
+  border-radius: 28px;
+  background: linear-gradient(160deg, #fff, #efedff);
+  box-shadow: var(--glass-shadow), 0 26px 44px -26px rgba(90, 84, 232, 0.45);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 .cardBack {
-  background: var(--ink);
+  background: linear-gradient(160deg, #5a54e8, #3933a8);
+  color: #fff;
   transform: rotateY(180deg);
 }
 .cardFace[aria-hidden="true"] {
@@ -588,70 +658,84 @@
 .flipCard .badges {
   justify-content: center;
 }
-.flipCard .badge {
-  background: #ffffff20;
-  color: #e6e2ff;
+.cardBack .badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+.cardBack .ipa {
+  color: #d6d1fb;
 }
 .cardEyebrow {
-  font-size: 10px;
+  color: var(--indigo-deep);
+  font-size: 12px;
+  font-weight: 800;
   letter-spacing: 0.15em;
+}
+.cardBack .cardEyebrow {
   color: #d6d1fb;
-  font-weight: 750;
 }
 .lemma {
-  font-size: clamp(40px, 5vw, 68px);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.05em;
   margin-top: auto;
+  font-size: clamp(2.5rem, 5vw, 4.25rem);
+  font-weight: 900;
+  line-height: 1.15;
   overflow-wrap: anywhere;
 }
 .meaning {
-  color: var(--lime);
-  font-size: clamp(25px, 3vw, 38px);
-  font-weight: 650;
-  line-height: 1.35;
-  letter-spacing: -0.025em;
   margin-top: auto;
+  color: var(--lime);
+  font-size: clamp(1.625rem, 3vw, 2.375rem);
+  font-weight: 800;
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
 .cardDefinition {
-  color: #d3d0e5;
-  font-size: 14px;
-  line-height: 1.8;
   max-width: 620px;
+  color: #e6e3ff;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.7;
 }
 .cardExample {
-  font-family: Georgia, serif;
-  font-style: italic;
-  font-size: 19px;
-  line-height: 1.6;
   display: grid;
   gap: 8px;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 1.1875rem;
+  font-style: italic;
+  line-height: 1.6;
 }
 .cardExample small {
-  font:
-    13px/1.7 "Segoe UI",
-    sans-serif;
-  color: #bfc2d5;
+  color: #d6d1fb;
+  font-family: var(--font-sans), "Segoe UI", sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1.6;
 }
 .flipHint {
-  margin-top: auto;
-  padding-top: 10px;
-  font-size: 12px;
-  color: #d3d0ed;
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
 }
+.cardBack .flipHint {
+  color: #d6d1fb;
+}
+
+/* Ba nút đánh giá: Quên (đào), Khó (oải hương), Đã nhớ (xanh chanh) */
 .ratings {
   margin-top: 26px;
 }
 .ratings > p {
-  text-align: center;
-  font-size: 13px;
-  color: var(--muted);
   margin-bottom: 14px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
 }
 .ratingButtons {
   display: grid;
@@ -659,73 +743,86 @@
   gap: 12px;
 }
 .rating {
-  border: 1px solid #dfdfe7;
-  border-radius: 12px;
-  padding: 14px 10px;
-  background: white;
-  font-weight: 700;
-  font-size: 14px;
   display: grid;
-  gap: 5px;
+  gap: 4px;
+  min-height: 64px;
+  padding: 12px 10px;
+  border: 1.5px solid rgba(32, 34, 59, 0.12);
+  border-radius: 22px;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 900;
+  transition: transform 0.3s var(--spring), box-shadow 0.3s;
 }
 .rating small {
-  font-size: 11px;
-  font-weight: 500;
-  color: #898a9c;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
 }
 .rating[data-rating="AGAIN"] {
-  color: #ad4d4d;
+  background: var(--peach);
 }
 .rating[data-rating="HARD"] {
-  color: #ad7638;
+  background: var(--lavender);
 }
 .rating[data-rating="GOOD"] {
-  color: #3e7655;
-  background: #eef6e6;
-  border-color: #d7e7c6;
+  background: var(--lime);
 }
 .rating:disabled {
   opacity: 0.45;
 }
 .rating:hover:not(:disabled) {
-  border-color: currentColor;
+  transform: translateY(-3px);
+  box-shadow: 0 14px 26px -16px rgba(32, 34, 59, 0.5);
 }
+
+/* Hoàn thành lượt học */
 .finished {
+  display: grid;
+  justify-items: center;
+  padding: 36px 24px;
+  border: 1px solid var(--glass-line);
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(222, 219, 253, 0.85), rgba(199, 242, 220, 0.7));
   text-align: center;
-  padding: 40px 24px;
-  border: 1px solid #e3dff6;
-  background: #f0edff;
-  border-radius: 20px;
 }
 .finished > svg {
-  color: var(--indigo);
   margin: 0 auto 16px;
+  color: var(--indigo);
+}
+.finishedMascot {
+  width: 130px;
+  margin-bottom: 6px;
 }
 .finished h2 {
-  font-size: 28px;
-  letter-spacing: -0.03em;
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 900;
 }
 .summary {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
-  gap: 36px;
-  margin: 28px 0;
+  justify-content: center;
+  gap: 18px 36px;
+  margin: 24px 0;
 }
 .summary strong {
   display: block;
-  font-size: 30px;
+  font-size: 1.875rem;
+  font-weight: 900;
 }
 .summary span {
-  font-size: 12px;
-  color: var(--muted);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
 }
 .finishedActions {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
 }
+
 @media (max-width: 1250px) {
   .wordGrid,
   .deckGrid {
@@ -738,18 +835,20 @@
     grid-template-columns: minmax(180px, 1fr) 140px auto;
   }
 }
-@media (max-width: 680px) {
-  .page {
-    padding-top: 28px;
+@media (max-width: 767px) {
+  .toolbar,
+  .wordCard,
+  .deckCard,
+  .senseCard {
+    background: rgba(255, 255, 255, 0.92);
   }
+}
+@media (max-width: 680px) {
   .header {
-    margin-bottom: 22px;
+    margin-bottom: 20px;
   }
   .headerIcon {
     display: none;
-  }
-  .header h1 {
-    font-size: 34px;
   }
   .tabs {
     display: flex;
@@ -759,15 +858,15 @@
   .tab {
     flex: 1;
     justify-content: center;
-    padding: 11px 7px;
-    font-size: 12px;
     gap: 5px;
+    padding: 0 6px;
+    font-size: 13px;
   }
   .toolbar,
   .deckToolbar {
     grid-template-columns: 1fr 1fr;
-    padding: 16px;
     gap: 12px;
+    padding: 16px;
   }
   .toolbar .field:first-child {
     grid-column: 1 / -1;
@@ -791,12 +890,9 @@
   .detailHero {
     padding: 22px;
   }
-  .detailHero h2 {
-    font-size: 35px;
-  }
   .cardFace {
-    padding: 25px 20px;
     min-height: 330px;
+    padding: 25px 20px;
   }
   .studyTools {
     align-items: flex-start;
@@ -805,17 +901,17 @@
     gap: 8px;
   }
   .rating {
-    font-size: 12px;
-    padding: 13px 5px;
+    padding: 12px 5px;
+    font-size: 13px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton {
     animation: none;
   }
-  .deckCard {
-    transition: none;
-  }
+  .deckCard,
+  .wordCard,
+  .rating,
   .flipCardInner {
     transition: none;
   }

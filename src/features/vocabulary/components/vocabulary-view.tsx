@@ -1,23 +1,30 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { useRef } from "react";
 import { BookOpen, Bookmark, LibraryBig, Search } from "lucide-react";
+import { RouteTransition } from "@/components/route-transition";
+import { useSlidingIndicator } from "@/lib/use-sliding-indicator";
 import styles from "./vocabulary.module.css";
 import { useAuthSession } from "@/features/auth";
 import { DeckLibrary } from "./deck-library";
 import { DeckStudy } from "./deck-study";
 import { WordCatalog } from "./word-catalog";
 
+const VIEWS = ["decks", "words", "saved"] as const;
+
 export function VocabularyView() {
   const router = useRouter();
+  const tabsRef = useRef<HTMLElement>(null);
+  const indicatorRef = useRef<HTMLSpanElement>(null);
   const params = useSearchParams();
   const { user } = useAuthSession();
   const deckId = params.get("deck");
   const back = () => router.push("/learn/vocabulary");
-  const view =
-    params.get("view") === "words" || params.get("view") === "saved"
-      ? params.get("view")
-      : "decks";
+  const requestedView = params.get("view");
+  const view: (typeof VIEWS)[number] =
+    requestedView === "words" || requestedView === "saved" ? requestedView : "decks";
+  useSlidingIndicator(tabsRef, indicatorRef, deckId ? "" : view);
   if (deckId)
     return (
       <DeckStudy key={user?.id + ":" + deckId} deckId={deckId} back={back} />
@@ -38,7 +45,8 @@ export function VocabularyView() {
           <BookOpen size={30} aria-hidden="true" />
         </span>
       </header>
-      <nav aria-label="Danh mục từ vựng" className={styles.tabs}>
+      <nav ref={tabsRef} aria-label="Danh mục từ vựng" className={styles.tabs}>
+        <span ref={indicatorRef} className={`slide-indicator ${styles.tabIndicator}`} aria-hidden="true" />
         {[
           ["decks", "Bộ từ"],
           ["words", "Tra từ"],
@@ -61,17 +69,19 @@ export function VocabularyView() {
           </button>
         ))}
       </nav>
-      {view === "words" || view === "saved" ? (
-        <WordCatalog key={user?.id + ":" + params.toString()} mode={view} />
-      ) : (
-        <DeckLibrary
-          key={user?.id}
-          select={(id) =>
-            router.push("/learn/vocabulary?deck=" + encodeURIComponent(id))
-          }
-          review={() => router.push("/learn/review")}
-        />
-      )}
+      <RouteTransition transitionKey={view} order={VIEWS.indexOf(view)}>
+        {view === "words" || view === "saved" ? (
+          <WordCatalog key={user?.id + ":" + params.toString()} mode={view} />
+        ) : (
+          <DeckLibrary
+            key={user?.id}
+            select={(id) =>
+              router.push("/learn/vocabulary?deck=" + encodeURIComponent(id))
+            }
+            review={() => router.push("/learn/review")}
+          />
+        )}
+      </RouteTransition>
     </>
   );
 }

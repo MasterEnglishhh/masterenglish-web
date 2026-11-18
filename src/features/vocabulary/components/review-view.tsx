@@ -8,6 +8,7 @@ import { fetchDueQueue } from "../lib/vocabulary-client";
 import { FlashcardView } from "./flashcard-view";
 import { VocabularyError } from "./vocabulary-status";
 import Link from "next/link";
+import { Mascot } from "@/components/mascot";
 
 export function ReviewView() {
   const params = useSearchParams();
@@ -47,10 +48,13 @@ function ReviewQueue({
   if (!data) return <p role="status">Đang tải các thẻ đến hạn...</p>;
   if (data.cards.length === 0)
     return (
-      <div className="empty-page">
+      <div className="glass-card empty-page">
+        <Mascot expression="sleepy" idSuffix="-review" className="empty-page-mascot" />
         <h2>Không có thẻ đến hạn</h2>
         <p>Bạn có thể học từ mới hoặc quay lại khi đến lịch ôn tiếp theo.</p>
-        <Link href="/learn/vocabulary">Học từ mới</Link>
+        <Link className="btn-primary" href="/learn/vocabulary">
+          Học từ mới
+        </Link>
       </div>
     );
   return (
@@ -65,7 +69,7 @@ function ReviewQueue({
         onReloadQueue={reload}
         onBackToDecks={() => router.push("/learn/vocabulary")}
       />
-      <button className="button button-light" onClick={reload}>
+      <button className="btn-ghost" onClick={reload}>
         Tải lại hàng đợi đến hạn
       </button>
     </>

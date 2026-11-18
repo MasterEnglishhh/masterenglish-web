@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Mascot } from "@/components/mascot";
 import { useEffect, useState } from "react";
 import { useAuthSession } from "@/features/auth";
 import {
@@ -93,17 +94,23 @@ function ProgressContent({ reload }: { reload: () => void }) {
         ))}
       </dl>
       {progress.dueNow > 0 && (
-        <Link className="button button-lime" href="/learn/review">
-          Ôn {progress.dueNow} thẻ đến hạn
-        </Link>
+        <div className="progress-due">
+          <span>Bạn có {progress.dueNow} thẻ đến hạn ôn.</span>
+          <Link className="btn-lime" href="/learn/review">
+            Ôn ngay
+          </Link>
+        </div>
       )}
 
       <h2 className="progress-heading">Lịch sử ôn tập</h2>
       {history.items.length === 0 ? (
-        <div className="empty-page">
+        <div className="glass-card empty-page">
+          <Mascot expression="sleepy" idSuffix="-empty" className="empty-page-mascot" />
           <h2>Chưa có lượt ôn nào</h2>
           <p>Học một bộ thẻ để bắt đầu ghi lại tiến độ.</p>
-          <Link href="/learn/vocabulary">Học từ mới</Link>
+          <Link className="btn-primary" href="/learn/vocabulary">
+            Học từ mới
+          </Link>
         </div>
       ) : (
         <>
