@@ -1,9 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
 import React from "react";
 import { act, create } from "react-test-renderer";
-import ts from "typescript";
+import { loadHook } from "./helpers/load-hook.mjs";
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const card = {
@@ -34,37 +33,20 @@ const success = {
   },
 };
 
-function loadHook(submitReview) {
-  const source = fs.readFileSync(
-    new URL(
-      "../src/features/vocabulary/hooks/use-vocabulary-practice.ts",
-      import.meta.url
-    ),
-    "utf8"
+function loadPractice(submitReview) {
+  return loadHook(
+    "src/features/vocabulary/hooks/use-vocabulary-practice.ts",
+    "useVocabularyPractice",
+    {
+      submitReview,
+      saveWordSense: async () => ({ success: true }),
+      unsaveWordSense: async () => ({ success: true }),
+    }
   );
-  const compiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2022,
-    },
-  }).outputText;
-  const hookModule = { exports: {} };
-  const mocks = {
-    submitReview,
-    saveWordSense: async () => ({ success: true }),
-    unsaveWordSense: async () => ({ success: true }),
-  };
-  const localRequire = (name) => (name === "react" ? React : mocks);
-  new Function("require", "module", "exports", compiled)(
-    localRequire,
-    hookModule,
-    hookModule.exports
-  );
-  return hookModule.exports.useVocabularyPractice;
 }
 
 async function mount(cards, submitReview) {
-  const hook = loadHook(submitReview);
+  const hook = loadPractice(submitReview);
   let current;
   function Harness({ cards }) {
     current = hook({ cards });

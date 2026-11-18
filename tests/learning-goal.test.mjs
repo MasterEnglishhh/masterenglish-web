@@ -1,9 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
 import React from "react";
 import { act, create } from "react-test-renderer";
-import ts from "typescript";
+import { loadHook } from "./helpers/load-hook.mjs";
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const savedGoal = {
@@ -18,32 +17,16 @@ const failure = (message, status = 500) => ({
   error: { message, status },
 });
 
-function loadHook(mocks) {
-  const source = fs.readFileSync(
-    new URL(
-      "../src/features/learning/hooks/use-learning-goal.ts",
-      import.meta.url
-    ),
-    "utf8"
+function loadGoal(mocks) {
+  return loadHook(
+    "src/features/learning/hooks/use-learning-goal.ts",
+    "useLearningGoal",
+    mocks
   );
-  const compiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2022,
-    },
-  }).outputText;
-  const hookModule = { exports: {} };
-  const localRequire = (name) => (name === "react" ? React : mocks);
-  new Function("require", "module", "exports", compiled)(
-    localRequire,
-    hookModule,
-    hookModule.exports
-  );
-  return hookModule.exports.useLearningGoal;
 }
 
 async function mount(mocks) {
-  const hook = loadHook(mocks);
+  const hook = loadGoal(mocks);
   let current;
   function Harness() {
     current = hook();

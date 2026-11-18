@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuthSession } from "@/features/auth/hooks/use-auth-session";
+import { useAuthSession } from "@/features/auth";
 import type { DueQueueResponse } from "../types/vocabulary";
 import { fetchDueQueue } from "../lib/vocabulary-client";
 import { FlashcardView } from "./flashcard-view";
-import { VocabularyError } from "./vocabulary-view";
+import { VocabularyError } from "./vocabulary-status";
 import Link from "next/link";
 
 export function ReviewView() {
