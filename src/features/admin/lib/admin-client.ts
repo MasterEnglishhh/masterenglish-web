@@ -1,4 +1,4 @@
-import { fetchCsrfToken, refreshSession } from "@/features/auth/lib/auth-client";
+import { fetchCsrfToken, refreshSession } from "../../auth/lib/auth-client.ts";
 import type { AdminKPI, RecentActivity } from "../types/admin";
 import type { AdminUser, UserFilterState, UserRole } from "../types/user-management";
 import type { ContentFilterState, ContentItem, ContentRevisionStatus } from "../types/content-ops";
@@ -25,7 +25,7 @@ export interface PageResponse<T> {
 }
 
 export interface AdminRevisionDto {
-  id: string;
+  revisionId: string;
   contentItemId: string;
   status: ContentRevisionStatus;
   versionNo: number;
@@ -248,8 +248,8 @@ export function fetchContentItems(
   if (filter.search && filter.search.trim()) {
     params.set("search", filter.search.trim());
   }
-  if (filter.module && filter.module !== "ALL") {
-    params.set("contentType", filter.module === "VOCABULARY" ? "WORD" : filter.module);
+  if (filter.contentType && filter.contentType !== "ALL") {
+    params.set("contentType", filter.contentType);
   }
   if (filter.status && filter.status !== "ALL") {
     params.set("status", filter.status);

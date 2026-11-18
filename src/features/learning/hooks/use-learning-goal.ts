@@ -1,70 +1,93 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   fetchLearningGoal,
   updateLearningGoal,
-  type LearningGoalDto,
-  type UpdateLearningGoalPayload,
-} from "../lib/goal-client";
+  type LearningGoal,
+} from "@/features/auth/lib/account-client";
+
+export interface LearningGoalInput {
+  targetScore: number;
+  dailyMinutes: number;
+  targetDate: string | null;
+}
 
 export function useLearningGoal() {
-  const [goal, setGoal] = useState<LearningGoalDto | null>(null);
+  const [goal, setGoal] = useState<LearningGoal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Lỗi TẢI (không biết đã có mục tiêu hay chưa) khác lỗi LƯU (hiện trong hộp thoại).
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const loadGoal = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await fetchLearningGoal();
-      if (res.success) {
-        setGoal(res.data);
-      } else {
-        setError(res.error.message);
-      }
-    } catch {
-      setError("Không thể tải thông tin mục tiêu học tập.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const [reloadToken, setReloadToken] = useState(0);
+  const submitting = useRef(false);
 
   useEffect(() => {
-    loadGoal();
-  }, [loadGoal]);
+    let active = true;
+    // Trạng thái đang tải ban đầu là `true`; `refreshGoal` đặt lại trước khi tăng token.
+    void fetchLearningGoal().then((result) => {
+      if (!active) return;
+      if (result.success) {
+        setGoal(result.data);
+        setLoadError(null);
+      } else {
+        setLoadError(result.error.message);
+      }
+      setIsLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [reloadToken]);
 
-  const saveGoal = async (payload: UpdateLearningGoalPayload): Promise<boolean> => {
-    setIsSubmitting(true);
-    setError(null);
-    try {
-      const res = await updateLearningGoal(payload);
-      if (res.success) {
-        setGoal(res.data);
+  const refreshGoal = useCallback(() => {
+    setIsLoading(true);
+    setLoadError(null);
+    setReloadToken((value) => value + 1);
+  }, []);
+
+  const openModal = useCallback(() => {
+    setSaveError(null);
+    setIsModalOpen(true);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setSaveError(null);
+    setIsModalOpen(false);
+  }, []);
+
+  const saveGoal = useCallback(
+    async (input: LearningGoalInput): Promise<boolean> => {
+      if (submitting.current) return false; // chống bấm đúp khi yêu cầu đang bay
+      submitting.current = true;
+      setIsSubmitting(true);
+      setSaveError(null);
+      const result = await updateLearningGoal(input);
+      submitting.current = false;
+      setIsSubmitting(false);
+      if (result.success) {
+        setGoal(result.data);
         setIsModalOpen(false);
         return true;
-      } else {
-        setError(res.error.message);
-        return false;
       }
-    } catch {
-      setError("Không thể cập nhật mục tiêu học tập.");
+      setSaveError(result.error.message);
       return false;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+    []
+  );
 
   return {
     goal,
     isLoading,
+    loadError,
     isSubmitting,
-    error,
+    saveError,
     isModalOpen,
-    setIsModalOpen,
+    openModal,
+    closeModal,
     saveGoal,
-    refreshGoal: loadGoal,
+    refreshGoal,
   };
 }

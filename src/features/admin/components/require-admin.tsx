@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useAuthSession } from "@/features/auth/hooks/use-auth-session";
-import { ArrowIcon } from "@/components/arrow-icon";
 
 export function RequireAdmin({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuthSession();
-  const [demoBypass, setDemoBypass] = useState(false);
 
   if (isLoading) {
     return (
@@ -21,8 +19,9 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
     user?.roles?.some((r) => r === "SYSTEM_ADMIN" || r === "CONTENT_ADMIN")
   );
 
-  // Allow authorized admin or explicit demo view
-  if (hasAdminRole || demoBypass) {
+  // Chỉ tài khoản có vai trò quản trị mới thấy giao diện. Đây là kiểm soát điều hướng
+  // phía client; backend vẫn xác thực và phân quyền mọi API /api/v1/admin/*.
+  if (hasAdminRole) {
     return <>{children}</>;
   }
 
@@ -41,15 +40,6 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <button
-            type="button"
-            className="btn-3d-lime"
-            onClick={() => setDemoBypass(true)}
-            style={{ width: "100%" }}
-          >
-            Trải nghiệm giao diện với quyền Quản trị (Demo) <ArrowIcon />
-          </button>
-
           <Link href="/learn" className="btn-3d-outline" style={{ width: "100%" }}>
             ← Quay về Không gian học tập
           </Link>

@@ -30,6 +30,15 @@ const requestOptions = {
   headers: { Accept: "application/json, application/problem+json" },
 } satisfies RequestInit;
 
+/** `Retry-After` là số giây hoặc ngày giờ HTTP; trả `null` nếu không dùng được. */
+function retryAfterSeconds(header: string | null): number | null {
+  if (!header) return null;
+  const seconds = /^\d+$/.test(header)
+    ? Number(header)
+    : Math.ceil((Date.parse(header) - Date.now()) / 1000);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
+}
+
 async function requestWithAuth<T>(
   path: string,
   options?: RequestInit,
@@ -69,10 +78,10 @@ async function requestWithAuth<T>(
       headers,
     });
 
-    // Handle 401: Refresh session once if not already a retry
-    if (res.status === 401 && !isRetry) {
-      const refreshed = await refreshSession();
-      if (refreshed) {
+    // 401: làm mới phiên đúng một lần rồi thử lại. Nếu làm mới không được, hoặc yêu cầu
+    // thử lại vẫn 401, phiên đã mất: báo hết phiên (không để rơi vào lỗi "dịch vụ gián đoạn").
+    if (res.status === 401) {
+      if (!isRetry && (await refreshSession())) {
         return requestWithAuth<T>(path, options, true);
       }
       return {
@@ -110,6 +119,22 @@ async function requestWithAuth<T>(
           code: problem?.code ?? "ACCESS_DENIED",
           message: "Bạn không có quyền truy cập tính năng học tập này.",
           status: 403,
+        },
+      };
+    }
+
+    // RATE_LIMITED: máy chủ từ chối trước khi xử lý, nên chờ rồi thử lại là an toàn.
+    if (res.status === 429) {
+      const seconds = retryAfterSeconds(res.headers.get("Retry-After"));
+      return {
+        success: false,
+        error: {
+          code: problem?.code ?? "RATE_LIMITED",
+          message: seconds
+            ? `Bạn thao tác quá nhanh. Vui lòng chờ ${seconds} giây rồi thử lại.`
+            : "Bạn thao tác quá nhanh. Vui lòng chờ một lát rồi thử lại.",
+          status: 429,
+          retryable: true,
         },
       };
     }

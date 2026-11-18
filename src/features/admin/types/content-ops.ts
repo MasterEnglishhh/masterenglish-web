@@ -1,13 +1,15 @@
-export type ContentModule = "VOCABULARY" | "GRAMMAR" | "QUESTION_BANK" | "TOEIC";
+// Theo hợp đồng backend: masterenglish-api/docs/admin/CONTRACT.md §2.3.
+// Backend hiện chỉ quản lý nội dung Từ vựng (WORD) và Bộ thẻ (DECK).
+export type ContentModule = "VOCABULARY";
 
-export type ContentType =
-  | "WORD"
-  | "FLASHCARD_DECK"
-  | "GRAMMAR_LESSON"
-  | "QUESTION"
-  | "PRACTICE_SET";
+export type ContentType = "WORD" | "DECK";
 
-export type ContentRevisionStatus = "DRAFT" | "IN_REVIEW" | "APPROVED" | "PUBLISHED" | "ARCHIVED";
+export type ContentRevisionStatus =
+  "DRAFT" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "PUBLISHED" | "ARCHIVED";
+
+/** Giá trị `status` mà `GET /admin/content/items` chấp nhận (không có REJECTED). */
+export type ContentStatusFilter =
+  Exclude<ContentRevisionStatus, "REJECTED"> | "ALL";
 
 export interface ContentItem {
   id: string;
@@ -19,16 +21,16 @@ export interface ContentItem {
   versionNo: number;
   summary: string;
   author: string;
-  reviewer?: string;
+  reviewer?: string | null;
   updatedAt: string;
-  level?: "A1" | "A2" | "B1" | "B2" | "C1" | "TOEIC 500" | "TOEIC 750";
+  level?: string | null;
   latestRevisionId?: string | null;
 }
 
 export interface ContentFilterState {
   search: string;
-  module: ContentModule | "ALL";
-  status: ContentRevisionStatus | "ALL";
+  contentType: ContentType | "ALL";
+  status: ContentStatusFilter;
   page: number;
   pageSize: number;
 }

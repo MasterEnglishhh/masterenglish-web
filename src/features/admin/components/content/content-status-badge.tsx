@@ -8,6 +8,8 @@ export function ContentStatusBadge({ status }: { status: ContentRevisionStatus }
       return <span className="admin-badge badge-review">Đang thẩm định</span>;
     case "APPROVED":
       return <span className="admin-badge badge-role-admin">Đã duyệt</span>;
+    case "REJECTED":
+      return <span className="admin-badge" style={{ background: "#fee2e2", color: "#991b1b" }}>Bị từ chối</span>;
     case "PUBLISHED":
       return <span className="admin-badge badge-published">Đã xuất bản (Live)</span>;
     case "ARCHIVED":

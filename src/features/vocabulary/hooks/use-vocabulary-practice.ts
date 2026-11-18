@@ -151,10 +151,13 @@ export function useVocabularyPractice({
           setError(result.error.message);
           const unknownOutcome =
             result.error.status === 0 || result.error.status >= 500;
+          // 429 bị từ chối trước khi xử lý: kết quả đã rõ, người học chỉ cần chờ rồi chấm lại,
+          // không phải tải lại hàng đợi.
+          const rateLimited = result.error.status === 429;
           setUncertain(unknownOutcome);
           if (!unknownOutcome) {
             pendingRequest.current = null;
-            setRequiresReload(true);
+            if (!rateLimited) setRequiresReload(true);
           }
         }
         setIsPending(false);
