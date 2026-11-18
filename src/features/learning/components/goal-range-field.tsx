@@ -2,19 +2,6 @@
 
 import type { ReactNode, Ref } from "react";
 
-export const labelStyle = {
-  fontSize: 13,
-  fontWeight: 700,
-  color: "var(--ink)",
-} as const;
-export const errorStyle = {
-  display: "block",
-  marginTop: 4,
-  fontSize: 12,
-  fontWeight: 600,
-  color: "#991b1b",
-} as const;
-
 interface GoalRangeFieldProps {
   id: string;
   errorId: string;
@@ -54,16 +41,9 @@ export function GoalRangeField({
   inputRef,
 }: GoalRangeFieldProps) {
   return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          marginBottom: 6,
-        }}
-      >
-        <label htmlFor={id} style={labelStyle}>
+    <div className="goal-field">
+      <div className="goal-field-head">
+        <label htmlFor={id} className="field-label">
           {label}
         </label>
         {display}
@@ -72,6 +52,7 @@ export function GoalRangeField({
         ref={inputRef}
         id={id}
         type="range"
+        className="goal-range"
         min={min}
         max={max}
         step={step}
@@ -80,40 +61,20 @@ export function GoalRangeField({
         aria-invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
         onChange={(event) => onChange(Number(event.target.value))}
-        style={{ width: "100%", accentColor: "var(--indigo)" }}
       />
       {error && (
-        <small id={errorId} role="alert" style={errorStyle}>
+        <small id={errorId} role="alert" className="field-error">
           {error}
         </small>
       )}
-      <div
-        style={{
-          display: "flex",
-          gap: 6,
-          marginTop: 8,
-          flexWrap: "wrap",
-        }}
-      >
-        <span
-          style={{
-            fontSize: 11,
-            color: "var(--muted)",
-            alignSelf: "center",
-            marginRight: 4,
-          }}
-        >
-          {presetsLabel}
-        </span>
+      <div className="goal-presets">
+        <span>{presetsLabel}</span>
         {presets.map((preset) => (
           <button
             key={preset}
             type="button"
             aria-pressed={value === preset}
-            className={
-              value === preset ? "btn-3d-lime btn-sm" : "btn-3d-outline btn-sm"
-            }
-            style={{ padding: "3px 8px", fontSize: 11 }}
+            className={value === preset ? "btn-lime btn-sm" : "btn-ghost btn-sm"}
             onClick={() => onChange(preset)}
           >
             {presetText(preset)}

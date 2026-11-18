@@ -1,38 +1,31 @@
 import Link from "next/link";
 import { ArrowIcon } from "@/components/arrow-icon";
+import { SampleTag } from "@/components/sample-tag";
+import { StatusBadge } from "@/components/status-badge";
 
-/** Bài ngữ pháp minh hoạ (chưa kết nối API). */
+/** Bài ngữ pháp minh họa (chưa kết nối API). */
 export function GrammarPreview() {
   return (
     <main className="learning-content inner-page">
       <div className="page-heading">
-        <span className="section-kicker">
-          NGỮ PHÁP / TỪ CẤU TRÚC ĐẾN CÁCH DÙNG
-        </span>
+        <span className="section-kicker">NGỮ PHÁP / TỪ CẤU TRÚC ĐẾN CÁCH DÙNG</span>
         <h1>
-          Hiểu một cấu trúc.
-          <br />
-          <em>Dùng được trong câu.</em>
+          Hiểu một cấu trúc. <em>Dùng được trong câu.</em>
         </h1>
-        <p>
-          Một trang bài học mẫu để xem cách nội dung và bài luyện có thể nằm
-          cùng một mạch đọc.
-        </p>
+        <p>Một trang bài học mẫu để xem cách nội dung và bài luyện có thể nằm cùng một mạch đọc.</p>
+        <StatusBadge status="soon" />
       </div>
-      <article className="grammar-lesson">
+      <article className="glass-card grammar-lesson">
         <div className="grammar-side">
-          <span>MINI LESSON / 01</span>
+          <SampleTag />
           <div className="grammar-decoration">{`{ }`}</div>
-          <p>Bài học minh họa</p>
+          <p>Bài học minh họa 01</p>
         </div>
         <div className="grammar-body">
-          <div className="grammar-category">
-            NGỮ PHÁP CƠ BẢN <span>↗</span>
-          </div>
+          <span className="grammar-category">NGỮ PHÁP CƠ BẢN</span>
           <h2>Present perfect</h2>
           <p className="grammar-lead">
-            Dùng để nói về trải nghiệm hoặc một việc bắt đầu trong quá khứ và
-            còn liên quan đến hiện tại.
+            Dùng để nói về trải nghiệm hoặc một việc bắt đầu trong quá khứ và còn liên quan đến hiện tại.
           </p>
           <div className="formula">
             <span>CẤU TRÚC</span>
@@ -45,18 +38,15 @@ export function GrammarPreview() {
             </p>
             <small>Tôi đã làm việc ở đây được ba năm.</small>
           </div>
-          <Link className="button button-dark" href="/learn/toeic">
+          <Link className="btn-primary" href="/learn/toeic">
             Thử một câu TOEIC <ArrowIcon />
           </Link>
         </div>
       </article>
-      <div className="info-line">
-        <span>✳</span>
-        <p>
-          Đây là nội dung minh họa. Danh sách chủ điểm, bài học và trạng thái
-          hoàn thành chưa kết nối API.
-        </p>
-      </div>
+      <p className="info-line">
+        <span aria-hidden="true">✳</span>
+        Đây là nội dung minh họa. Danh sách chủ điểm, bài học và trạng thái hoàn thành chưa kết nối API.
+      </p>
     </main>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { Calendar, Clock, Edit3, Target } from "lucide-react";
+import { Mascot } from "@/components/mascot";
+import { useFocusReturn } from "../hooks/use-focus-return";
 import { useLearningGoal } from "../hooks/use-learning-goal";
-import { GoalEditModal } from "./goal-edit-modal";
 import { daysUntil, formatGoalDate, GOAL_LIMITS } from "../lib/goal-validation";
-import { Target, Clock, Calendar, Edit3 } from "lucide-react";
+import { GoalEditModal } from "./goal-edit-modal";
 
 function daysRemainingLabel(days: number | null): string | null {
   if (days === null) return null;
@@ -13,6 +14,7 @@ function daysRemainingLabel(days: number | null): string | null {
   return `còn ${days} ngày`;
 }
 
+/** Thẻ mục tiêu học tập: bốn trạng thái tách bạch là đang tải, lỗi tải, chưa đặt và đã có mục tiêu. */
 export function GoalCard() {
   const {
     goal,
@@ -26,65 +28,19 @@ export function GoalCard() {
     saveGoal,
     refreshGoal,
   } = useLearningGoal();
-
-  // Trả focus về nút đã mở hộp thoại (kể cả khi hộp thoại đóng sau khi lưu thành công).
-  const opener = useRef<HTMLElement | null>(null);
-  const editButton = useRef<HTMLButtonElement>(null);
-  const wasOpen = useRef(false);
-  useEffect(() => {
-    if (wasOpen.current && !isModalOpen) {
-      const target = opener.current?.isConnected
-        ? opener.current
-        : editButton.current;
-      target?.focus();
-    }
-    wasOpen.current = isModalOpen;
-  }, [isModalOpen]);
-
+  const { fallbackRef, remember } = useFocusReturn(isModalOpen);
   const open = () => {
-    opener.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
+    remember();
     openModal();
   };
 
   if (isLoading) {
     return (
-      <aside
-        className="dashboard-aside"
-        style={{ opacity: 0.7 }}
-        role="status"
-        aria-label="Đang tải mục tiêu học tập"
-      >
-        <div className="aside-head">
-          <span className="section-kicker">MỤC TIÊU CỦA BẠN</span>
-        </div>
-        <div
-          style={{
-            height: 60,
-            background: "var(--line)",
-            borderRadius: 12,
-            margin: "20px 0",
-          }}
-        />
-        <div
-          style={{
-            height: 16,
-            width: "80%",
-            background: "var(--line)",
-            borderRadius: 4,
-            marginBottom: 8,
-          }}
-        />
-        <div
-          style={{
-            height: 14,
-            width: "60%",
-            background: "var(--line)",
-            borderRadius: 4,
-          }}
-        />
+      <aside className="glass-card goal-card" role="status" aria-label="Đang tải mục tiêu học tập">
+        <span className="section-kicker">MỤC TIÊU CỦA BẠN</span>
+        <div className="goal-skeleton goal-skeleton-lg" />
+        <div className="goal-skeleton" />
+        <div className="goal-skeleton goal-skeleton-sm" />
       </aside>
     );
   }
@@ -93,19 +49,12 @@ export function GoalCard() {
   // (người học có thể vô tình ghi đè mục tiêu đang có).
   if (loadError) {
     return (
-      <aside className="dashboard-aside">
-        <div className="aside-head">
-          <span className="section-kicker">MỤC TIÊU HỌC TẬP</span>
-        </div>
-        <div role="alert" style={{ margin: "16px 0" }}>
+      <aside className="glass-card goal-card">
+        <span className="section-kicker">MỤC TIÊU HỌC TẬP</span>
+        <div role="alert" className="goal-error">
           <h3>Chưa tải được mục tiêu</h3>
           <p>{loadError}</p>
-          <button
-            type="button"
-            className="btn-3d-outline btn-sm"
-            style={{ width: "100%", marginTop: 12 }}
-            onClick={refreshGoal}
-          >
+          <button type="button" className="btn-ghost btn-sm goal-wide" onClick={refreshGoal}>
             Thử lại
           </button>
         </div>
@@ -115,207 +64,71 @@ export function GoalCard() {
 
   const daysRemaining = goal?.targetDate ? daysUntil(goal.targetDate) : null;
   const remainingLabel = daysRemainingLabel(daysRemaining);
-  const scorePercent = goal
-    ? Math.min(100, Math.round((goal.targetScore / GOAL_LIMITS.maxScore) * 100))
-    : 0;
+  const scorePercent = goal ? Math.min(100, Math.round((goal.targetScore / GOAL_LIMITS.maxScore) * 100)) : 0;
 
   return (
     <>
-      <aside className="dashboard-aside">
-        <div className="aside-head">
+      <aside className="glass-card goal-card">
+        <div className="goal-card-head">
           <span className="section-kicker">MỤC TIÊU HỌC TẬP</span>
           <button
-            ref={editButton}
+            ref={fallbackRef}
             type="button"
+            className="goal-edit-icon"
             onClick={open}
             title="Chỉnh sửa mục tiêu"
-            aria-label={
-              goal ? "Chỉnh sửa mục tiêu học tập" : "Đặt mục tiêu học tập"
-            }
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--indigo)",
-              display: "flex",
-              alignItems: "center",
-              padding: 4,
-            }}
+            aria-label={goal ? "Chỉnh sửa mục tiêu học tập" : "Đặt mục tiêu học tập"}
           >
-            <Edit3 size={15} aria-hidden="true" />
+            <Edit3 size={16} aria-hidden="true" />
           </button>
         </div>
 
         {goal ? (
-          <div>
-            <div style={{ margin: "16px 0 12px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  justifyContent: "space-between",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: "var(--muted)",
-                  }}
-                >
-                  ĐIỂM HƯỚNG TỚI:
-                </span>
-                <span
-                  style={{
-                    fontSize: 26,
-                    fontWeight: 850,
-                    color: "var(--indigo)",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  {goal.targetScore}{" "}
-                  <span
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "var(--ink)",
-                    }}
-                  >
-                    TOEIC
-                  </span>
-                </span>
-              </div>
-
-              {/* Tỷ lệ điểm mục tiêu trên thang 990 (trang trí, không phải tiến độ học). */}
-              <div
-                aria-hidden="true"
-                style={{
-                  height: 8,
-                  width: "100%",
-                  background: "var(--line)",
-                  borderRadius: 99,
-                  overflow: "hidden",
-                  marginTop: 6,
-                }}
-              >
-                <div
-                  style={{
-                    height: "100%",
-                    width: `${scorePercent}%`,
-                    background:
-                      "linear-gradient(90deg, var(--indigo) 0%, #818cf8 100%)",
-                    borderRadius: 99,
-                    transition: "width 0.4s ease",
-                  }}
-                />
-              </div>
+          <>
+            <div className="goal-score">
+              <span>ĐIỂM HƯỚNG TỚI</span>
+              <strong>
+                {goal.targetScore} <small>TOEIC</small>
+              </strong>
             </div>
-
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-                background: "#fafaf7",
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: "1px solid var(--line)",
-                margin: "12px 0 16px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  fontSize: 13,
-                  color: "var(--ink)",
-                  fontWeight: 600,
-                }}
-              >
-                <Clock size={15} color="var(--indigo)" aria-hidden="true" />
+            {/* Tỷ lệ điểm mục tiêu trên thang 990 (trang trí, không phải tiến độ học). */}
+            <div className="goal-meter" aria-hidden="true">
+              <span style={{ width: `${scorePercent}%` }} />
+            </div>
+            <ul className="goal-facts">
+              <li>
+                <Clock size={16} aria-hidden="true" />
                 <span>
                   Cam kết: <strong>{goal.dailyMinutes} phút / ngày</strong>
                 </span>
-              </div>
-
+              </li>
               {goal.targetDate && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    fontSize: 13,
-                    color: "var(--ink)",
-                    fontWeight: 600,
-                  }}
-                >
-                  <Calendar
-                    size={15}
-                    color="var(--indigo)"
-                    aria-hidden="true"
-                  />
+                <li>
+                  <Calendar size={16} aria-hidden="true" />
                   <span>
                     Hạn đích: <strong>{formatGoalDate(goal.targetDate)}</strong>
-                    {remainingLabel && (
-                      <span
-                        style={{
-                          fontSize: 11,
-                          color: "var(--muted)",
-                          marginLeft: 6,
-                        }}
-                      >
-                        ({remainingLabel})
-                      </span>
-                    )}
+                    {remainingLabel && <em className="goal-remaining">({remainingLabel})</em>}
                   </span>
-                </div>
+                </li>
               )}
-            </div>
-
-            <button
-              type="button"
-              className="btn-3d-outline btn-sm"
-              style={{ width: "100%" }}
-              onClick={open}
-            >
+            </ul>
+            <button type="button" className="btn-ghost btn-sm goal-wide" onClick={open}>
               Chỉnh sửa mục tiêu
             </button>
-          </div>
+          </>
         ) : (
-          <div>
-            <div className="empty-orbit" aria-hidden="true">
-              <span>✳</span>
-            </div>
+          <div className="goal-empty">
+            <Mascot expression="thinking" idSuffix="-goal" className="goal-empty-mascot" />
             <h3>Chưa đặt mục tiêu TOEIC</h3>
             <p>
-              Xác định điểm số mong muốn và thời gian ôn luyện mỗi ngày để hệ
-              thống cá nhân hóa lộ trình cho bạn.
+              Xác định điểm số mong muốn và thời gian ôn luyện mỗi ngày để hệ thống cá nhân hóa lộ trình cho bạn.
             </p>
-            <button
-              type="button"
-              className="btn-3d-lime btn-sm"
-              style={{ width: "100%", marginTop: 12 }}
-              onClick={open}
-            >
-              <Target
-                size={14}
-                aria-hidden="true"
-                style={{
-                  display: "inline-block",
-                  marginRight: 6,
-                  verticalAlign: "middle",
-                }}
-              />
-              Đặt mục tiêu ngay ↗
+            <button type="button" className="btn-lime btn-sm goal-wide" onClick={open}>
+              <Target size={14} aria-hidden="true" /> Đặt mục tiêu ngay
             </button>
           </div>
         )}
-
-        <div className="aside-divider" />
-        <span className="aside-caption">MỤC TIÊU HỌC TẬP</span>
       </aside>
-
       <GoalEditModal
         goal={goal}
         isOpen={isModalOpen}

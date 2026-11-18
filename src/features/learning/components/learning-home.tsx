@@ -1,99 +1,93 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowIcon } from "@/components/arrow-icon";
+import { Mascot } from "@/components/mascot";
+import { StatusBadge, type Status } from "@/components/status-badge";
+import { useAuthSession } from "@/features/auth";
 import { GoalCard } from "./goal-card";
 
-/** Trang tổng quan khu học: gợi ý bắt đầu, lối vào từng phần và thẻ mục tiêu. */
+const SHORTCUTS: { href: string; symbol: string; tone: string; title: string; body: string; status: Status }[] = [
+  {
+    href: "/learn/vocabulary",
+    symbol: "Aa",
+    tone: "mint",
+    title: "Xây nền từ vựng",
+    body: "Tra từ, lưu vào sổ tay và ôn đúng lúc sắp quên.",
+    status: "available",
+  },
+  {
+    href: "/learn/grammar",
+    symbol: "{}",
+    tone: "peach",
+    title: "Hiểu rõ ngữ pháp",
+    body: "Cấu trúc, ví dụ và cách dùng đặt cạnh nhau để dễ nhớ.",
+    status: "soon",
+  },
+  {
+    href: "/learn/toeic",
+    symbol: "▷",
+    tone: "lavender",
+    title: "Luyện TOEIC từng Part",
+    body: "Hiện có một câu Part 5 mẫu; các Part khác đang mở dần.",
+    status: "rolling",
+  },
+];
+
+/** Tên gọi thân mật: tên (từ cuối của họ tên tiếng Việt) nếu có, không thì bỏ trống lời chào. */
+function greetingName(user: ReturnType<typeof useAuthSession>["user"]) {
+  if (!user) return "";
+  const full = user.displayName?.trim();
+  return user.firstName || (full ? full.split(/\s+/).pop() : "") || "";
+}
+
+/** Trang tổng quan khu học: lời chào, gợi ý bắt đầu, lối tắt vào từng phần và thẻ mục tiêu. */
 export function LearningHome() {
+  const { user } = useAuthSession();
+  const name = greetingName(user);
+
   return (
     <main className="learning-content">
-      <div className="learning-heading">
-        <div>
-          <span className="section-kicker">TỔNG QUAN / BẮT ĐẦU TỪ ĐÂY</span>
-          <h1>
-            Chào bạn, <em>sẵn sàng học chứ?</em>
-          </h1>
-          <p>
-            Chọn một phần phù hợp với bạn hôm nay. Tiến độ cá nhân sẽ xuất hiện
-            khi tài khoản và dữ liệu học tập được kết nối.
-          </p>
-        </div>
-        <div className="heading-mark" aria-hidden="true">
-          ✳
-        </div>
-      </div>
+      <header className="learning-heading">
+        <span className="section-kicker">TỔNG QUAN / BẮT ĐẦU TỪ ĐÂY</span>
+        <h1>
+          {name ? `Chào ${name}, ` : "Chào bạn, "}
+          <em>sẵn sàng học chứ?</em>
+        </h1>
+        <p>Chọn một phần phù hợp với bạn hôm nay. Mục tiêu và tiến độ cá nhân nằm ngay bên dưới.</p>
+      </header>
 
-      <section className="learning-spotlight">
+      <section className="glass-card learning-spotlight">
         <div className="spotlight-copy">
-          <div className="spotlight-eyebrow">
-            <span className="pulse-dot" /> GỢI Ý KHỞI ĐẦU
-          </div>
+          <span className="spotlight-eyebrow">GỢI Ý KHỞI ĐẦU</span>
           <h2>
-            Mỗi ngày một chút,
-            <br />
-            <i>vững vàng hơn.</i>
+            Mỗi ngày một chút, <em>vững vàng hơn.</em>
           </h2>
-          <p>
-            Bắt đầu bằng một phần ngắn. Bạn có thể học từ mới, xem một cấu trúc
-            hoặc luyện một Part TOEIC.
-          </p>
-          <Link className="button button-lime" href="/learn/vocabulary">
+          <p>Bắt đầu bằng một phần ngắn: học vài từ mới, rồi ôn lại những từ sắp quên.</p>
+          <Link className="btn-lime" href="/learn/vocabulary">
             Khám phá từ vựng <ArrowIcon />
           </Link>
         </div>
-        <div className="spotlight-art" aria-hidden="true">
-          <div className="spotlight-circle outer" />
-          <div className="spotlight-circle inner" />
-          <span className="spotlight-letter">
-            A<span>✳</span>
-          </span>
-          <div className="spotlight-tag">
-            START SMALL
-            <br />
-            <b>GO FURTHER ↗</b>
-          </div>
-        </div>
+        <Mascot expression="happy" idSuffix="-home" className="spotlight-mascot" />
       </section>
 
       <section className="dashboard-body">
-        <div className="dashboard-primary">
-          <div className="dashboard-section-head">
-            <div>
-              <span className="section-kicker">KHÁM PHÁ</span>
-              <h2>Học theo cách của bạn</h2>
-            </div>
-            <span>01 — 03</span>
-          </div>
+        <div>
+          <h2 className="dashboard-title">Học theo cách của bạn</h2>
           <div className="learning-feature-list">
-            <Link href="/learn/vocabulary" className="learning-feature">
-              <div className="feature-symbol symbol-mint">Aa</div>
-              <div>
-                <strong>Xây nền từ vựng</strong>
-                <p>
-                  Khám phá từ và nghĩa trong ngữ cảnh. Thử lật một thẻ học mẫu.
-                </p>
-              </div>
-              <ArrowIcon />
-            </Link>
-            <Link href="/learn/grammar" className="learning-feature">
-              <div className="feature-symbol symbol-peach">{`{}`}</div>
-              <div>
-                <strong>Hiểu rõ ngữ pháp</strong>
-                <p>
-                  Cấu trúc, ví dụ và cách dùng được đặt cạnh nhau để dễ nhớ.
-                </p>
-              </div>
-              <ArrowIcon />
-            </Link>
-            <Link href="/learn/toeic" className="learning-feature">
-              <div className="feature-symbol symbol-lavender">▷</div>
-              <div>
-                <strong>Luyện TOEIC từng Part</strong>
-                <p>
-                  Đi từ Listening đến Reading, tập trung vào từng dạng câu hỏi.
-                </p>
-              </div>
-              <ArrowIcon />
-            </Link>
+            {SHORTCUTS.map((item) => (
+              <Link key={item.href} href={item.href} className="glass-card learning-feature">
+                <span className={`feature-symbol symbol-${item.tone}`} aria-hidden="true">
+                  {item.symbol}
+                </span>
+                <span className="feature-text">
+                  <strong>{item.title}</strong>
+                  <small>{item.body}</small>
+                  <StatusBadge status={item.status} />
+                </span>
+                <ArrowIcon />
+              </Link>
+            ))}
           </div>
         </div>
         <GoalCard />

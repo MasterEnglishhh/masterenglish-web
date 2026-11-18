@@ -6,7 +6,7 @@ import type { LearningGoal } from "../lib/goal-client";
 import { useGoalForm } from "../hooks/use-goal-form";
 import type { LearningGoalInput } from "../hooks/use-learning-goal";
 import { GOAL_LIMITS } from "../lib/goal-validation";
-import { errorStyle, GoalRangeField, labelStyle } from "./goal-range-field";
+import { GoalRangeField } from "./goal-range-field";
 
 interface GoalEditModalProps {
   goal: LearningGoal | null;
@@ -49,7 +49,7 @@ function GoalEditDialog({
       kicker="KẾ HOẠCH HỌC TẬP"
       title={goal ? "Cập nhật Mục tiêu TOEIC" : "Thiết lập Mục tiêu TOEIC"}
       description={
-        <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>
+        <p className="goal-modal-note">
           Đặt mục tiêu điểm số và cam kết thời gian mỗi ngày giúp hệ thống tối
           ưu hóa thuật toán lặp lại ngắt quãng (SRS).
         </p>
@@ -58,40 +58,19 @@ function GoalEditDialog({
       onClose={onClose}
     >
       {serverError && (
-        <div
-          role="alert"
-          style={{
-            background: "#fee2e2",
-            border: "1px solid #f87171",
-            color: "#991b1b",
-            padding: "8px 12px",
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
+        <div role="alert" className="form-alert-error">
           {serverError}
         </div>
       )}
 
-      <form
-        onSubmit={form.submit}
-        noValidate
-        style={{ display: "flex", flexDirection: "column", gap: 16 }}
-      >
+      <form onSubmit={form.submit} noValidate className="goal-form">
         <GoalRangeField
           id="targetScoreInput"
           errorId="targetScoreError"
           label="Điểm TOEIC mục tiêu:"
           display={
-            <span
-              style={{ fontSize: 18, fontWeight: 800, color: "var(--indigo)" }}
-              aria-hidden="true"
-            >
-              {form.targetScore}{" "}
-              <span style={{ fontSize: 12, fontWeight: 600 }}>
-                / {GOAL_LIMITS.maxScore}
-              </span>
+            <span className="goal-field-value goal-field-value-accent" aria-hidden="true">
+              {form.targetScore} <small>/ {GOAL_LIMITS.maxScore}</small>
             </span>
           }
           min={GOAL_LIMITS.minScore}
@@ -111,12 +90,8 @@ function GoalEditDialog({
           errorId="dailyMinutesError"
           label="Thời gian học mỗi ngày:"
           display={
-            <span
-              style={{ fontSize: 16, fontWeight: 750, color: "var(--ink)" }}
-              aria-hidden="true"
-            >
-              {form.dailyMinutes}{" "}
-              <span style={{ fontSize: 12, fontWeight: 600 }}>phút / ngày</span>
+            <span className="goal-field-value" aria-hidden="true">
+              {form.dailyMinutes} <small>phút / ngày</small>
             </span>
           }
           min={GOAL_LIMITS.minMinutes}
@@ -132,19 +107,15 @@ function GoalEditDialog({
         />
 
         {/* Ngày mục tiêu */}
-        <div>
-          <label
-            htmlFor="targetDateInput"
-            style={{ ...labelStyle, display: "block", marginBottom: 6 }}
-          >
+        <div className="goal-field">
+          <label htmlFor="targetDateInput" className="field-label">
             Ngày dự kiến thi / Hoàn thành mục tiêu (Tùy chọn):
           </label>
           <input
             id="targetDateInput"
             type="date"
             min={form.todayStr}
-            className="admin-search-input"
-            style={{ width: "100%" }}
+            className="field-input"
             value={form.targetDate}
             aria-invalid={Boolean(form.errors.targetDate)}
             aria-describedby={
@@ -153,23 +124,16 @@ function GoalEditDialog({
             onChange={(event) => form.setTargetDate(event.target.value)}
           />
           {form.errors.targetDate && (
-            <small id="targetDateError" role="alert" style={errorStyle}>
+            <small id="targetDateError" role="alert" className="field-error">
               {form.errors.targetDate}
             </small>
           )}
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 10,
-            marginTop: 8,
-          }}
-        >
+        <div className="goal-form-actions">
           <button
             type="button"
-            className="btn-3d-outline btn-sm"
+            className="btn-ghost btn-sm"
             disabled={isSubmitting}
             onClick={onClose}
           >
@@ -179,7 +143,7 @@ function GoalEditDialog({
             type="submit"
             disabled={isSubmitting}
             aria-busy={isSubmitting}
-            className="btn-3d-lime btn-sm"
+            className="btn-lime btn-sm"
           >
             {isSubmitting ? "Đang lưu..." : "Lưu mục tiêu"}
           </button>
