@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCountdownClock } from "./use-countdown-clock";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   requestPasswordReset,
@@ -37,10 +38,11 @@ export function useForgotPasswordForm() {
   const [pending, setPending] = useState(false);
   const [sendAt, setSendAt] = useState(0);
   const [verifyAt, setVerifyAt] = useState(0);
-  const [now, setNow] = useState(Date.now);
+  const { remaining, syncNow } = useCountdownClock(
+    !!challenge || !!grant,
+    Math.max(sendAt, verifyAt)
+  );
   const stage = grant ? "password" : challenge ? "otp" : "email";
-  const remaining = (date: number) =>
-    Math.max(0, Math.ceil((date - now) / 1000));
   const sendCooldown = remaining(sendAt);
   const verifyCooldown = remaining(verifyAt);
   const expiresIn = remaining(
@@ -52,20 +54,13 @@ export function useForgotPasswordForm() {
     new TextEncoder().encode(normalized).length <= 72 &&
     !!normalized.trim();
   useEffect(() => {
-    if (!challenge && !grant && sendAt <= Date.now() && verifyAt <= Date.now())
-      return;
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [challenge, grant, sendAt, verifyAt]);
-  useEffect(() => {
     if (stage === "otp") otpRef.current?.focus();
     if (stage === "password") passwordRef.current?.focus();
   }, [stage]);
   function fail(next: AuthError, action: "send" | "verify" | "reset") {
     setError(next);
     if (next.retryAfterSeconds) {
-      const time = Date.now();
-      setNow(time);
+      const time = syncNow();
       if (action === "send") setSendAt(time + next.retryAfterSeconds * 1000);
       else setVerifyAt(time + next.retryAfterSeconds * 1000);
     }
@@ -87,8 +82,7 @@ export function useForgotPasswordForm() {
     try {
       const result = await requestPasswordReset(email);
       if (result.success) {
-        const time = Date.now();
-        setNow(time);
+        const time = syncNow();
         setEmail(email.trim());
         setChallenge(result.data);
         setGrant(null);
@@ -129,7 +123,7 @@ export function useForgotPasswordForm() {
           otp,
         });
         if (result.success) {
-          setNow(Date.now());
+          syncNow();
           setGrant(result.data);
           setOtp("");
         } else {

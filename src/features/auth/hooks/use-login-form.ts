@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useCountdownClock } from "./use-countdown-clock";
 import { useRouter } from "next/navigation";
 import { login } from "../lib/auth-client";
 import { getSafeRedirectUrl } from "../lib/redirect";
@@ -32,28 +33,13 @@ export function useLoginForm(options: UseLoginFormOptions = {}) {
   >({});
   const [status, setStatus] = useState<FormStatus>("idle");
   const [serverError, setServerError] = useState<AuthError | null>(null);
-  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [blockedUntil, setBlockedUntil] = useState(0);
+  const { remaining, syncNow } = useCountdownClock(false, blockedUntil);
+  const cooldownSeconds = remaining(blockedUntil);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-
-  // Rate limit cooldown countdown timer
-  useEffect(() => {
-    if (cooldownSeconds <= 0) return;
-
-    const timer = setInterval(() => {
-      setCooldownSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [cooldownSeconds]);
 
   function togglePasswordVisibility() {
     setIsPasswordVisible((prev) => !prev);
@@ -133,7 +119,7 @@ export function useLoginForm(options: UseLoginFormOptions = {}) {
     }
 
     if (result.error.retryAfterSeconds && result.error.retryAfterSeconds > 0) {
-      setCooldownSeconds(result.error.retryAfterSeconds);
+      setBlockedUntil(syncNow() + result.error.retryAfterSeconds * 1000);
     }
 
     if (result.error.code === "BAD_CREDENTIALS") {

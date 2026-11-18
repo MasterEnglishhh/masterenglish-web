@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCountdownClock } from "./use-countdown-clock";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   registerAccount,
@@ -43,7 +44,10 @@ export function useRegisterForm() {
   const [resendAt, setResendAt] = useState(0);
   const [sendBlockedUntil, setSendBlockedUntil] = useState(0);
   const [verifyBlockedUntil, setVerifyBlockedUntil] = useState(0);
-  const [now, setNow] = useState(Date.now);
+  const { remaining, syncNow } = useCountdownClock(
+    !!challenge,
+    Math.max(sendBlockedUntil, verifyBlockedUntil)
+  );
 
   const normalizedPassword = values.password.normalize("NFC");
   const passwordRules = [
@@ -57,22 +61,9 @@ export function useRegisterForm() {
   ];
 
   useEffect(() => {
-    if (
-      !challenge &&
-      sendBlockedUntil <= Date.now() &&
-      verifyBlockedUntil <= Date.now()
-    )
-      return;
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, [challenge, sendBlockedUntil, verifyBlockedUntil]);
-
-  useEffect(() => {
     if (challenge) otpRef.current?.focus();
   }, [challenge]);
 
-  const remaining = (until: number) =>
-    Math.max(0, Math.ceil((until - now) / 1000));
   const sendCooldown = remaining(sendBlockedUntil);
   const resendCooldown = remaining(Math.max(resendAt, sendBlockedUntil));
   const verifyCooldown = remaining(verifyBlockedUntil);
@@ -89,8 +80,7 @@ export function useRegisterForm() {
   }
 
   function acceptChallenge(next: RegistrationChallenge) {
-    const time = Date.now();
-    setNow(time);
+    const time = syncNow();
     setChallenge(next);
     setResendAt(time + next.resendAfterSeconds * 1000);
     setOtp("");
@@ -154,8 +144,7 @@ export function useRegisterForm() {
             password: result.error.message,
           }));
         if (result.error.retryAfterSeconds) {
-          const time = Date.now();
-          setNow(time);
+          const time = syncNow();
           setSendBlockedUntil(time + result.error.retryAfterSeconds * 1000);
         }
       }
@@ -206,8 +195,7 @@ export function useRegisterForm() {
           otpRef.current?.focus();
         }
         if (result.error.retryAfterSeconds) {
-          const time = Date.now();
-          setNow(time);
+          const time = syncNow();
           setVerifyBlockedUntil(time + result.error.retryAfterSeconds * 1000);
         }
       }
@@ -234,8 +222,7 @@ export function useRegisterForm() {
       } else {
         setServerError(result.error);
         if (result.error.retryAfterSeconds) {
-          const time = Date.now();
-          setNow(time);
+          const time = syncNow();
           setSendBlockedUntil(time + result.error.retryAfterSeconds * 1000);
         }
       }
