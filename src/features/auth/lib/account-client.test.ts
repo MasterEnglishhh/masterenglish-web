@@ -1,10 +1,6 @@
 import { test, mock } from "node:test";
 import assert from "node:assert/strict";
-import {
-  changePassword,
-  fetchLearningGoal,
-  updateProfile,
-} from "./account-client.ts";
+import { changePassword, updateProfile } from "./account-client.ts";
 
 function withFetch(
   handler: (url: string, init?: RequestInit) => Response,
@@ -77,20 +73,15 @@ test("change password surfaces the backend's Vietnamese reason and field errors"
     }
   ));
 
-test("a missing learning goal (404) is an empty state, not an error", () =>
-  withFetch(
-    () => new Response(JSON.stringify({ detail: "Chưa thiết lập" }), { status: 404 }),
-    async () => {
-      const result = await fetchLearningGoal();
-      assert.deepEqual(result, { success: true, data: null });
-    }
-  ));
-
 test("server errors never show raw backend details", () =>
   withFetch(
     () => new Response(JSON.stringify({ detail: "NullPointerException" }), { status: 500 }),
     async () => {
-      const result = await fetchLearningGoal();
+      const result = await updateProfile({
+        firstName: "An",
+        lastName: "Nguyen",
+        phone: "",
+      });
       assert.equal(result.success, false);
       if (result.success) return;
       assert.doesNotMatch(result.error.message, /NullPointer/);

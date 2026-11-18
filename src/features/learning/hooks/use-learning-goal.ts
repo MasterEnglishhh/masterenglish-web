@@ -5,7 +5,7 @@ import {
   fetchLearningGoal,
   updateLearningGoal,
   type LearningGoal,
-} from "@/features/auth/lib/account-client";
+} from "../lib/goal-client";
 
 export interface LearningGoalInput {
   targetScore: number;

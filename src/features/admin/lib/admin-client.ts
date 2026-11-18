@@ -1,8 +1,25 @@
-import { fetchCsrfToken, refreshSession } from "../../auth/lib/auth-client.ts";
+import {
+  requestJson,
+  type HttpOutcome,
+  type PageResponse,
+} from "../../../lib/http.ts";
 import type { AdminKPI, RecentActivity } from "../types/admin";
-import type { AdminUser, UserFilterState, UserRole } from "../types/user-management";
-import type { ContentFilterState, ContentItem, ContentRevisionStatus } from "../types/content-ops";
-import type { AiQuotaMetric, AuditLogEntry, FeatureFlag, StorageQuota } from "../types/system-policy";
+import type {
+  AdminUser,
+  UserFilterState,
+  UserRole,
+} from "../types/user-management";
+import type {
+  ContentFilterState,
+  ContentItem,
+  ContentRevisionStatus,
+} from "../types/content-ops";
+import type {
+  AiQuotaMetric,
+  AuditLogEntry,
+  FeatureFlag,
+  StorageQuota,
+} from "../types/system-policy";
 
 export interface AdminClientError {
   code: string;
@@ -12,17 +29,9 @@ export interface AdminClientError {
 }
 
 export type AdminResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: AdminClientError };
+  { success: true; data: T } | { success: false; error: AdminClientError };
 
-export interface PageResponse<T> {
-  items: T[];
-  page: number;
-  size: number;
-  totalItems: number;
-  totalPages: number;
-  hasNext: boolean;
-}
+export type { PageResponse };
 
 export interface AdminRevisionDto {
   revisionId: string;
@@ -32,17 +41,6 @@ export interface AdminRevisionDto {
   reviewNote?: string | null;
   publishedAt?: string | null;
   updatedAt: string;
-}
-
-export interface ContentSourceDto {
-  id: string;
-  title: string;
-  sourceType: string;
-  sourceUrl?: string | null;
-  author?: string | null;
-  licenseCode?: string | null;
-  status: string;
-  createdAt: string;
 }
 
 export interface CreateWordDraftPayload {
@@ -66,107 +64,53 @@ export interface CreateDeckDraftPayload {
   sourceId?: string;
 }
 
-export interface CreateContentSourcePayload {
-  title: string;
-  sourceType: string;
-  sourceUrl?: string;
-  author?: string;
-  licenseCode?: string;
-  licenseUrl?: string;
-  attribution?: string;
-  permissionNote?: string;
-}
+function toResult<T>(outcome: HttpOutcome<T>): AdminResult<T> {
+  if (outcome.ok) return { success: true, data: outcome.data };
+  const { reason, status, problem } = outcome;
+  const error = (
+    code: string,
+    message: string,
+    retryable?: boolean
+  ): AdminResult<T> => ({
+    success: false,
+    error: {
+      code,
+      message,
+      status,
+      ...(retryable === undefined ? {} : { retryable }),
+    },
+  });
 
-const requestOptions = {
-  credentials: "same-origin",
-  cache: "no-store",
-  headers: { Accept: "application/json, application/problem+json" },
-} satisfies RequestInit;
+  if (reason === "csrf")
+    return error(
+      "CSRF_UNAVAILABLE",
+      "Không thể xác nhận phiên bảo mật. Vui lòng thử lại.",
+      true
+    );
+  if (reason === "session")
+    return error(
+      "UNAUTHENTICATED",
+      "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+    );
+  if (reason === "network")
+    return error(
+      "NETWORK_ERROR",
+      "Lỗi kết nối máy chủ. Vui lòng kiểm tra đường truyền.",
+      true
+    );
+  return error(
+    problem?.code ?? "SERVICE_ERROR",
+    problem?.detail ??
+      problem?.message ??
+      `Yêu cầu không thành công (${status}).`
+  );
+}
 
 async function requestWithAuth<T>(
   path: string,
-  options?: RequestInit,
-  isRetry = false
+  options?: Parameters<typeof requestJson>[1]
 ): Promise<AdminResult<T>> {
-  try {
-    let headers: Record<string, string> = {
-      ...(requestOptions.headers as Record<string, string>),
-      ...((options?.headers as Record<string, string>) ?? {}),
-    };
-
-    const method = options?.method?.toUpperCase() ?? "GET";
-    if (["POST", "PUT", "DELETE", "PATCH"].includes(method)) {
-      const csrf = await fetchCsrfToken();
-      if (!csrf) {
-        return {
-          success: false,
-          error: {
-            code: "CSRF_UNAVAILABLE",
-            message: "Không thể xác nhận phiên bảo mật. Vui lòng thử lại.",
-            status: 403,
-            retryable: true,
-          },
-        };
-      }
-      headers = {
-        ...headers,
-        [csrf.headerName]: csrf.token,
-        "Content-Type": "application/json",
-      };
-    }
-
-    const res = await fetch(path, {
-      ...requestOptions,
-      ...options,
-      headers,
-    });
-
-    if (res.status === 401 && !isRetry) {
-      const refreshed = await refreshSession();
-      if (refreshed) {
-        return requestWithAuth<T>(path, options, true);
-      }
-      return {
-        success: false,
-        error: {
-          code: "UNAUTHENTICATED",
-          message: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-          status: 401,
-        },
-      };
-    }
-
-    if (res.ok) {
-      if (res.status === 204) {
-        return { success: true, data: undefined as unknown as T };
-      }
-      const data = (await res.json()) as T;
-      return { success: true, data };
-    }
-
-    const problem = await res.json().catch(() => null);
-    return {
-      success: false,
-      error: {
-        code: problem?.code ?? "SERVICE_ERROR",
-        message:
-          problem?.detail ??
-          problem?.message ??
-          `Yêu cầu không thành công (${res.status}).`,
-        status: res.status,
-      },
-    };
-  } catch {
-    return {
-      success: false,
-      error: {
-        code: "NETWORK_ERROR",
-        message: "Lỗi kết nối máy chủ. Vui lòng kiểm tra đường truyền.",
-        status: 0,
-        retryable: true,
-      },
-    };
-  }
+  return toResult(await requestJson<T>(path, options));
 }
 
 /* ==================== OVERVIEW APIS ==================== */
@@ -175,8 +119,12 @@ export function fetchAdminKpis(): Promise<AdminResult<AdminKPI[]>> {
   return requestWithAuth<AdminKPI[]>("/api/v1/admin/overview/kpis");
 }
 
-export function fetchRecentActivities(limit = 10): Promise<AdminResult<RecentActivity[]>> {
-  return requestWithAuth<RecentActivity[]>(`/api/v1/admin/overview/activities?limit=${limit}`);
+export function fetchRecentActivities(
+  limit = 10
+): Promise<AdminResult<RecentActivity[]>> {
+  return requestWithAuth<RecentActivity[]>(
+    `/api/v1/admin/overview/activities?limit=${limit}`
+  );
 }
 
 /* ==================== USERS APIS ==================== */
@@ -199,11 +147,9 @@ export function fetchAdminUsers(
   params.set("page", page0.toString());
   params.set("size", (filter.pageSize || 10).toString());
 
-  return requestWithAuth<PageResponse<AdminUser>>(`/api/v1/admin/users?${params.toString()}`);
-}
-
-export function fetchAdminUserDetail(id: string): Promise<AdminResult<AdminUser>> {
-  return requestWithAuth<AdminUser>(`/api/v1/admin/users/${id}`);
+  return requestWithAuth<PageResponse<AdminUser>>(
+    `/api/v1/admin/users?${params.toString()}`
+  );
 }
 
 export function updateAdminUserRoles(
@@ -212,7 +158,7 @@ export function updateAdminUserRoles(
 ): Promise<AdminResult<AdminUser>> {
   return requestWithAuth<AdminUser>(`/api/v1/admin/users/${id}/roles`, {
     method: "PUT",
-    body: JSON.stringify({ roles }),
+    body: { roles },
   });
 }
 
@@ -223,7 +169,7 @@ export function lockAdminUser(
 ): Promise<AdminResult<AdminUser>> {
   return requestWithAuth<AdminUser>(`/api/v1/admin/users/${id}/lock`, {
     method: "POST",
-    body: JSON.stringify({ reason, lockedUntil: lockedUntil || null }),
+    body: { reason, lockedUntil: lockedUntil || null },
   });
 }
 
@@ -233,10 +179,15 @@ export function unlockAdminUser(id: string): Promise<AdminResult<AdminUser>> {
   });
 }
 
-export function revokeAdminUserSessions(id: string): Promise<AdminResult<{ message: string }>> {
-  return requestWithAuth<{ message: string }>(`/api/v1/admin/users/${id}/revoke-sessions`, {
-    method: "POST",
-  });
+export function revokeAdminUserSessions(
+  id: string
+): Promise<AdminResult<{ message: string }>> {
+  return requestWithAuth<{ message: string }>(
+    `/api/v1/admin/users/${id}/revoke-sessions`,
+    {
+      method: "POST",
+    }
+  );
 }
 
 /* ==================== CONTENT OPS APIS ==================== */
@@ -258,7 +209,9 @@ export function fetchContentItems(
   params.set("page", page0.toString());
   params.set("size", (filter.pageSize || 10).toString());
 
-  return requestWithAuth<PageResponse<ContentItem>>(`/api/v1/admin/content/items?${params.toString()}`);
+  return requestWithAuth<PageResponse<ContentItem>>(
+    `/api/v1/admin/content/items?${params.toString()}`
+  );
 }
 
 export function createWordDraft(
@@ -266,7 +219,7 @@ export function createWordDraft(
 ): Promise<AdminResult<ContentItem>> {
   return requestWithAuth<ContentItem>("/api/v1/admin/content/words", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: payload,
   });
 }
 
@@ -275,75 +228,69 @@ export function createDeckDraft(
 ): Promise<AdminResult<ContentItem>> {
   return requestWithAuth<ContentItem>("/api/v1/admin/content/decks", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: payload,
   });
 }
 
 export function submitContentRevision(
   revisionId: string
 ): Promise<AdminResult<AdminRevisionDto>> {
-  return requestWithAuth<AdminRevisionDto>(`/api/v1/admin/content/revisions/${revisionId}/submit`, {
-    method: "POST",
-  });
+  return requestWithAuth<AdminRevisionDto>(
+    `/api/v1/admin/content/revisions/${revisionId}/submit`,
+    {
+      method: "POST",
+    }
+  );
 }
 
 export function approveContentRevision(
   revisionId: string,
   reviewNote?: string
 ): Promise<AdminResult<AdminRevisionDto>> {
-  return requestWithAuth<AdminRevisionDto>(`/api/v1/admin/content/revisions/${revisionId}/approve`, {
-    method: "POST",
-    body: JSON.stringify({ reviewNote: reviewNote || "Approved" }),
-  });
+  return requestWithAuth<AdminRevisionDto>(
+    `/api/v1/admin/content/revisions/${revisionId}/approve`,
+    {
+      method: "POST",
+      body: { reviewNote: reviewNote || "Approved" },
+    }
+  );
 }
 
 export function rejectContentRevision(
   revisionId: string,
   reviewNote: string
 ): Promise<AdminResult<AdminRevisionDto>> {
-  return requestWithAuth<AdminRevisionDto>(`/api/v1/admin/content/revisions/${revisionId}/reject`, {
-    method: "POST",
-    body: JSON.stringify({ reviewNote }),
-  });
+  return requestWithAuth<AdminRevisionDto>(
+    `/api/v1/admin/content/revisions/${revisionId}/reject`,
+    {
+      method: "POST",
+      body: { reviewNote },
+    }
+  );
 }
 
 export function publishContentRevision(
   revisionId: string
 ): Promise<AdminResult<AdminRevisionDto>> {
-  return requestWithAuth<AdminRevisionDto>(`/api/v1/admin/content/revisions/${revisionId}/publish`, {
-    method: "POST",
-  });
+  return requestWithAuth<AdminRevisionDto>(
+    `/api/v1/admin/content/revisions/${revisionId}/publish`,
+    {
+      method: "POST",
+    }
+  );
 }
 
 export function archiveContentItem(
   itemId: string,
   reason = "Lưu trữ nội dung"
 ): Promise<AdminResult<{ message: string }>> {
-  return requestWithAuth<{ message: string }>(`/api/v1/admin/content/items/${itemId}/archive`, {
-    method: "POST",
-    body: JSON.stringify({ reason }),
-  });
-}
-
-export function fetchContentSources(
-  search?: string,
-  page = 0,
-  size = 20
-): Promise<AdminResult<PageResponse<ContentSourceDto>>> {
-  const params = new URLSearchParams();
-  if (search && search.trim()) params.set("search", search.trim());
-  params.set("page", page.toString());
-  params.set("size", size.toString());
-  return requestWithAuth<PageResponse<ContentSourceDto>>(`/api/v1/admin/content/sources?${params.toString()}`);
-}
-
-export function createContentSource(
-  payload: CreateContentSourcePayload
-): Promise<AdminResult<ContentSourceDto>> {
-  return requestWithAuth<ContentSourceDto>("/api/v1/admin/content/sources", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return requestWithAuth<{ message: string }>(
+    `/api/v1/admin/content/items/${itemId}/archive`,
+    {
+      method: "POST",
+      body: { reason },
+    }
+  );
 }
 
 /* ==================== SYSTEM & POLICY APIS ==================== */
@@ -356,10 +303,13 @@ export function updateFeatureFlag(
   key: string,
   enabled: boolean
 ): Promise<AdminResult<FeatureFlag>> {
-  return requestWithAuth<FeatureFlag>(`/api/v1/admin/system/feature-flags/${key}`, {
-    method: "PUT",
-    body: JSON.stringify({ enabled }),
-  });
+  return requestWithAuth<FeatureFlag>(
+    `/api/v1/admin/system/feature-flags/${key}`,
+    {
+      method: "PUT",
+      body: { enabled },
+    }
+  );
 }
 
 export function fetchStorageQuota(): Promise<AdminResult<StorageQuota>> {
@@ -381,5 +331,7 @@ export function fetchAuditLogs(
   if (entityType && entityType !== "ALL") params.set("entityType", entityType);
   params.set("page", page.toString());
   params.set("size", size.toString());
-  return requestWithAuth<PageResponse<AuditLogEntry>>(`/api/v1/admin/system/audit-logs?${params.toString()}`);
+  return requestWithAuth<PageResponse<AuditLogEntry>>(
+    `/api/v1/admin/system/audit-logs?${params.toString()}`
+  );
 }

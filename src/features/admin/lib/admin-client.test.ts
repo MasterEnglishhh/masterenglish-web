@@ -198,3 +198,35 @@ test("a network failure becomes a retryable NETWORK_ERROR", async () => {
     globalThis.fetch = original;
   }
 });
+
+test("a 401 that persists after a successful refresh is reported as an expired session", async () => {
+  const original = globalThis.fetch;
+  let refreshes = 0;
+  let resourceCalls = 0;
+  globalThis.fetch = mock.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes("/users/me")) return new Response(null, { status: 401 });
+    if (url.includes("/auth/csrf"))
+      return new Response(
+        JSON.stringify({ headerName: "X-XSRF-TOKEN", token: "test-csrf" }),
+        { status: 200 }
+      );
+    if (url.includes("/auth/refresh")) {
+      refreshes++;
+      return new Response(null, { status: 204 });
+    }
+    resourceCalls++;
+    return new Response(null, { status: 401 });
+  });
+  try {
+    const result = await fetchStorageQuota();
+    assert.equal(result.success, false);
+    if (result.success) return;
+    assert.equal(result.error.code, "UNAUTHENTICATED");
+    assert.equal(result.error.status, 401);
+    assert.equal(refreshes, 1, "refresh exactly once, never a loop");
+    assert.equal(resourceCalls, 2, "the request is retried only once");
+  } finally {
+    globalThis.fetch = original;
+  }
+});
