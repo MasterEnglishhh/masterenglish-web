@@ -1,305 +1,193 @@
-/*  Luyện TOEIC.  */
-.practice-heading h2 em {
-  font-family:Cambria,"Times New Roman",serif;
-  font-weight:400;
-  letter-spacing:-.03em;
-  color:var(--indigo)
-}
-.button-outline {
-  background:white;
-  color:var(--ink);
-  border-color:var(--line)
-}
-.toeic-band {
-  min-height:138px;
-  background:var(--indigo);
-  border-radius:18px;
-  display:flex;
-  align-items:center;
-  gap:28px;
-  padding:20px 34px;
-  color:white;
-  position:relative;
-  overflow:hidden
-}
-.toeic-band:before {
-  content:"";
-  position:absolute;
-  width:350px;
-  height:350px;
-  border:1px solid #ffffff4b;
-  border-radius:50%;
-  right:-30px;
-  top:-110px
-}
-.band-number {
-  font-size:48px;
-  font-weight:780;
-  letter-spacing:-.08em;
-  color:var(--lime)
-}
-.toeic-band strong {
-  display:block;
-  font-size:20px
-}
-.toeic-band span:not(.band-star) {
-  display:block;
-  color:#d6d4ff;
-  font-size:12px;
-  margin-top:5px
-}
-.band-star {
-  font-size:70px;
-  color:#aaa5f6;
-  position:absolute;
-  right:80px;
-  top:28px
-}
+/* Luyện TOEIC: cấu trúc bài thi, trạng thái từng Part và câu Part 5 mẫu. */
+
 .part-groups {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:25px;
-  margin:32px 0 70px
+  display: grid;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+@media (min-width: 820px) {
+  .part-groups {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 .part-group {
-  border:1px solid #e1e3e1;
-  border-radius:16px;
-  padding:23px 24px;
-  background:#fff
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 22px;
 }
 .part-heading {
-  display:flex;
-  justify-content:space-between;
-  gap:12px;
-  align-items:start;
-  padding-bottom:17px;
-  border-bottom:1px solid #e9eae9
+  display: grid;
+  gap: 4px;
 }
 .part-heading span {
-  font-size:10px;
-  font-weight:800;
-  letter-spacing:.13em;
-  color:var(--indigo)
+  color: var(--indigo-deep);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
 }
 .part-heading strong {
-  font-size:15px
+  font-size: 1.375rem;
+  font-weight: 900;
 }
-.part-pills {
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top:17px
+.part-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.part-pills span {
-  font-size:11px;
-  font-weight:650;
-  color:#63687a;
-  background:#f4f4f5;
-  padding:9px 11px;
-  border-radius:8px
+.part-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.75);
+  font-weight: 700;
+}
+
+.practice-section {
+  display: grid;
+  gap: 18px;
 }
 .practice-heading {
-  display:flex;
-  justify-content:space-between;
-  align-items:end;
-  gap:15px;
-  margin-bottom:24px
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
 }
 .practice-heading h2 {
-  font-size:clamp(27px,3vw,42px);
-  letter-spacing:-.06em;
-  margin:10px 0 0
+  margin: 6px 0 0;
+  font-size: clamp(1.625rem, 3vw, 2.25rem);
+  font-weight: 900;
+  line-height: 1.2;
 }
-.sample-label {
-  font-size:10px;
-  letter-spacing:.11em;
-  font-weight:800;
-  color:#898d9b
+.practice-heading em {
+  color: var(--indigo);
 }
 .practice-panel {
-  display:grid;
-  grid-template-columns:1.35fr .75fr;
-  border:1px solid #e4e5e3;
-  border-radius:20px;
-  overflow:hidden;
-  background:white
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 980px) {
+  .practice-panel {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    align-items: start;
+  }
 }
 .question-panel {
-  padding:34px 38px
+  display: grid;
+  gap: 8px;
+  padding: clamp(20px, 3vw, 32px);
 }
 .question-top {
-  display:flex;
-  justify-content:space-between;
-  font-size:10px;
-  font-weight:800;
-  letter-spacing:.12em;
-  color:var(--indigo)
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
 }
 .question-panel h3 {
-  font-size:clamp(23px,2.5vw,35px);
-  line-height:1.35;
-  letter-spacing:-.035em;
-  margin:34px 0 13px;
-  max-width:580px
+  margin: 8px 0 0;
+  font-size: clamp(1.25rem, 2.4vw, 1.625rem);
+  font-weight: 900;
+  line-height: 1.4;
 }
-.question-panel>p {
-  font-size:12px;
-  color:#8a8e9c
+.question-panel p {
+  margin: 0;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.option .option-key {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--lavender);
+  color: var(--indigo-deep);
+  font-weight: 900;
 }
 .option.selected {
-  background:#efeeff;
-  border-color:var(--indigo)
-}
-.option.correct {
-  border-color:#33a67b;
-  background:#e6f8ee
-}
-.option-key {
-  width:26px;
-  height:26px;
-  border-radius:6px;
-  background:#f1f1f4;
-  display:grid;
-  place-items:center;
-  font-size:11px;
-  font-weight:800
+  border-color: var(--indigo);
+  background: rgba(222, 219, 253, 0.55);
 }
 .option.selected .option-key {
-  background:var(--indigo);
-  color:#fff
+  background: var(--indigo);
+  color: #fff;
+}
+.option.correct {
+  border-color: #8fc01f;
+  background: rgba(217, 245, 134, 0.5);
 }
 .option.correct .option-key {
-  background:#278e6c;
-  color:#fff
+  background: var(--lime);
+  color: var(--ink);
+}
+.option.wrong {
+  border-color: rgba(192, 57, 43, 0.4);
+  background: var(--danger-soft);
+}
+.option.wrong .option-key {
+  background: var(--danger);
+  color: #fff;
 }
 .option-indicator {
-  margin-left:auto;
-  color:var(--indigo);
-  font-weight:800
+  margin-left: auto;
+  font-weight: 900;
 }
 .form-message {
-  color:#aa4c2f!important;
-  font-weight:700!important;
-  margin-bottom:15px
+  color: var(--danger);
+  font-weight: 700;
 }
 .question-actions {
-  display:flex;
-  align-items:center;
-  gap:16px;
-  flex-wrap:wrap
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-top: 8px;
 }
-.question-actions>span {
-  font-size:10px;
-  color:#a0a2ab
-}
-.question-actions .button {
-  min-height:48px
+.question-actions span {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
 }
 .explanation-panel {
-  background:#edeafb;
-  padding:34px 30px;
-  display:flex;
-  flex-direction:column;
-  align-items:start
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: clamp(20px, 3vw, 32px);
+  background-image: linear-gradient(160deg, rgba(222, 219, 253, 0.7), rgba(199, 242, 220, 0.55));
 }
-.explanation-icon {
-  width:56px;
-  height:56px;
-  border-radius:15px;
-  background:var(--indigo);
-  display:grid;
-  place-items:center;
-  color:var(--lime);
-  font-size:35px;
-  margin-bottom:35px
+.explanation-mascot {
+  width: 96px;
 }
 .explanation-panel h3 {
-  font-size:27px;
-  letter-spacing:-.06em;
-  line-height:1.2;
-  margin:18px 0
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 900;
+  line-height: 1.3;
 }
 .explanation-panel p {
-  font-size:13px;
-  line-height:1.8;
-  color:#6f7186
+  margin: 0;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 .explanation-note {
-  border-top:1px solid #d2cfe8;
-  width:100%;
-  margin-top:auto;
-  padding-top:18px;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  color:#8b8da3;
-  font-size:10px;
-  text-transform:uppercase;
-  letter-spacing:.09em;
-  font-weight:700
+  justify-self: start;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
 }
 .explanation-note b {
-  color:var(--ink);
-  font-size:13px;
-  text-transform:none;
-  letter-spacing:0
-}
-@media (max-width:850px) {
-.part-groups {
-    grid-template-columns:1fr
-  }
-.practice-panel {
-    grid-template-columns:1fr
-  }
-.explanation-panel {
-    min-height:260px
-  }
-}
-@media (max-width:600px) {
-.toeic-band {
-    min-height:110px;
-    padding:17px 20px;
-    gap:15px
-  }
-.band-number {
-    font-size:36px
-  }
-.toeic-band strong {
-    font-size:16px
-  }
-.band-star {
-    font-size:50px;
-    right:10px
-  }
-.part-groups {
-    gap:12px;
-    margin:20px 0 55px
-  }
-.part-group {
-    padding:18px
-  }
-.part-heading {
-    display:block
-  }
-.part-heading strong {
-    display:block;
-    margin-top:7px
-  }
-.practice-heading {
-    display:block
-  }
-.sample-label {
-    display:block;
-    margin-top:12px
-  }
-.question-panel {
-    padding:25px 18px
-  }
-.question-panel h3 {
-    font-size:25px;
-    margin-top:25px
-  }
-.explanation-panel {
-    padding:27px 20px
-  }
+  margin-left: 6px;
+  color: var(--indigo);
 }
