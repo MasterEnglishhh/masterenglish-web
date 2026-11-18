@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { learningNavigation } from "../data/navigation";
+import "../styles/learning.css";
 
 export function LearningNav() {
   const pathname = usePathname();

@@ -4,6 +4,7 @@ import { Reveal } from "@/components/reveal";
 import { modules } from "../data/modules";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
+import "../styles/marketing.css";
 
 export function HomePage() {
   return <div className="site-shell">

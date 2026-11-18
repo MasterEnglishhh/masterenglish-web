@@ -122,8 +122,7 @@
 }
 .primary,
 .secondary,
-.textButton,
-.iconButton {
+.textButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -163,19 +162,8 @@
   border: 0;
   justify-content: flex-start;
 }
-.iconButton {
-  height: 40px;
-  min-height: 40px;
-  width: 40px;
-  padding: 8px;
-  border: 1px solid #e3e0ef;
-  background: #f7f5ff;
-  color: var(--indigo);
-  flex: none;
-}
 .primary:disabled,
-.secondary:disabled,
-.iconButton:disabled {
+.secondary:disabled {
   opacity: 0.5;
 }
 .resultBar {

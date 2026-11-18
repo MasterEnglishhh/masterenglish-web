@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { AuthSessionProvider } from "@/features/auth/components/auth-session-provider";
+// globals.css phải đứng trước mọi import feature: thứ tự import CSS là thứ tự cascade,
+// và CSS chung (ui.css) phải nạp trước CSS riêng của từng feature.
 import "./globals.css";
+import { AuthSessionProvider } from "@/features/auth";
 
 export const metadata: Metadata = {
   title: "MasterEnglish — Học có hướng. Tiến bộ có lý do.",

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthSession } from "../hooks/use-auth-session";
+import "../styles/auth.css";
 
 export function AccountMenu() {
   const { user, isLoading, logout } = useAuthSession();

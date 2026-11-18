@@ -6,6 +6,7 @@ import { type ReactNode } from "react";
 import { AdminSidebar } from "./admin-sidebar";
 import { AdminTopbar } from "./admin-topbar";
 import { adminNavItems } from "../data/navigation";
+import "../styles/admin.css";
 
 export function AdminLayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

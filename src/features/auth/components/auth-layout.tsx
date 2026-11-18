@@ -6,6 +6,7 @@ import { Brand } from "@/components/brand";
 import { AuthArt } from "./auth-art";
 import { RegisterArt } from "./register-art";
 import type { AuthMode } from "../types/auth";
+import "../styles/auth.css";
 
 const copy: Record<
   AuthMode,

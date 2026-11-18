@@ -1,0 +1,67 @@
+/*  Từ vựng, ôn tập và kết quả học.  */
+.progress-stats {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin:0 0 24px;
+}
+.progress-stats div {
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:18px;
+}
+.progress-stats dt {
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+}
+.progress-stats dd {
+  margin:6px 0 0;
+  font-size:28px;
+  font-weight:800;
+}
+.progress-heading {
+  margin:40px 0 16px;
+  font-size:24px;
+}
+.progress-history {
+  list-style:none;
+  margin:0 0 20px;
+  padding:0;
+  border-top:1px solid var(--line);
+}
+.progress-history li {
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:4px 16px;
+  align-items:center;
+  padding:14px 0;
+  border-bottom:1px solid var(--line);
+}
+.progress-history li div {
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px 10px;
+  align-items:baseline;
+}
+.progress-history li div span,
+.progress-history small {
+  color:var(--muted);
+  font-size:13px;
+}
+.progress-history small {
+  grid-column:1 / -1;
+}
+.rating-badge {
+  border-radius:999px;
+  padding:4px 10px;
+  font-size:12px;
+  font-weight:700;
+}
+.rating-again { background:var(--peach); }
+.rating-hard { background:var(--lavender); }
+.rating-good { background:var(--mint); }
+@media (max-width:600px) {
+.progress-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
