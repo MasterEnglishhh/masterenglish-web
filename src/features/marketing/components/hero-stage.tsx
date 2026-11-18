@@ -1,6 +1,6 @@
 import { SAMPLE_WORDS } from "../data/content";
-import { Mascot } from "./mascot";
-import { SampleTag } from "./sample-tag";
+import { Mascot } from "@/components/mascot";
+import { SampleTag } from "@/components/sample-tag";
 import { SparkleCanvas } from "./sparkle-canvas";
 import { StarIcon } from "./star-icon";
 
@@ -38,7 +38,7 @@ export function HeroStage() {
           {SAMPLE_WORDS.map((w, i) => (
             <div key={w.lemma} className={`lp-wordcard lp-wordcard-${i}`}>
               <strong>{w.lemma}</strong>
-              <span className="lp-ipa">{w.ipa}</span>
+              <span className="ipa-text">{w.ipa}</span>
               <small>
                 <b>{w.cefr}</b> {w.pos} {w.meaning}
               </small>

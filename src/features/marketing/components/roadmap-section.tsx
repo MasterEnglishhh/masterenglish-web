@@ -1,7 +1,7 @@
 import { Reveal } from "@/components/reveal";
 import { ROADMAP } from "../data/content";
-import { Mascot } from "./mascot";
-import { StatusBadge } from "./status-badge";
+import { Mascot } from "@/components/mascot";
+import { StatusBadge } from "@/components/status-badge";
 
 export function RoadmapSection() {
   return (

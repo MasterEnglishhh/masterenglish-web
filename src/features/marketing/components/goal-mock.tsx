@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { GOAL_LIMITS } from "../data/content";
-import { SampleTag } from "./sample-tag";
+import { SampleTag } from "@/components/sample-tag";
 
 /** Bản mô phỏng form mục tiêu cá nhân, đúng ba trường và giới hạn của form thật. Không lưu gì. */
 export function GoalMock() {

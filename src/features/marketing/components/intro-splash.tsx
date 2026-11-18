@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Mascot } from "./mascot";
+import { Mascot } from "@/components/mascot";
 
 const SEEN_KEY = "me_intro_seen";
 const DURATION_MS = 1200;

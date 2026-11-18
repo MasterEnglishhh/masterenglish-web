@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Mascot, type MascotExpression } from "./mascot";
+import { Mascot, type MascotExpression } from "@/components/mascot";
 
 /**
  * Linh vật nhỏ ở góc màn hình (chỉ màn rộng). Theo dõi khối nằm giữa khung nhìn và đổi biểu cảm theo

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FOOTER_LINKS } from "../data/content";
-import { BrandLogo } from "./brand-logo";
+import { BrandLogo } from "@/components/brand";
 
 export function FooterSection() {
   return (

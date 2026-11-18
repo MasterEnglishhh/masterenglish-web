@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { AccountMenu, useAuthSession } from "@/features/auth";
 import { NAV_LINKS } from "../data/content";
-import { BrandLogo } from "./brand-logo";
+import { BrandLogo } from "@/components/brand";
 import { PrimaryCta } from "./primary-cta";
 
 export function NavbarSection() {
@@ -24,12 +24,7 @@ export function NavbarSection() {
               {l.label}
             </a>
           ))}
-          {user ? (
-            <div className="lp-nav-extra lp-nav-extra-account">
-              <AccountMenu />
-              <PrimaryCta />
-            </div>
-          ) : (
+          {!user && (
             <div className="lp-nav-extra">
               <Link className="lp-nav-login" href="/login" onClick={close}>
                 Đăng nhập
@@ -40,9 +35,7 @@ export function NavbarSection() {
         </nav>
         <div className="lp-nav-actions">
           {user ? (
-            <div className="lp-nav-account">
-              <AccountMenu />
-            </div>
+            <AccountMenu />
           ) : (
             <Link className="lp-nav-login" href="/login">
               Đăng nhập

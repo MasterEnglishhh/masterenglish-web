@@ -1,5 +1,5 @@
 import { CTA_NOTE, FINAL } from "../data/content";
-import { Mascot } from "./mascot";
+import { Mascot } from "@/components/mascot";
 import { PrimaryCta } from "./primary-cta";
 
 const CONFETTI = Array.from({ length: 14 }, (_, i) => i);

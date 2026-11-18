@@ -1,15 +1,9 @@
 // Toàn bộ chữ trên landing nằm ở đây. Quy tắc trung thực: không số liệu người dùng,
 // không đánh giá/lời chứng thực/logo đối tác; mọi giao diện mô phỏng gắn "Ví dụ minh họa".
 
-export const SAMPLE_LABEL = "Ví dụ minh họa";
-export const CTA_NOTE = "Miễn phí hoàn toàn · Đăng ký bằng email";
+import type { Status } from "@/components/status-badge";
 
-export type Status = "available" | "rolling" | "soon";
-export const STATUS_LABEL: Record<Status, string> = {
-  available: "Đã có",
-  rolling: "Đang mở dần",
-  soon: "Sắp ra mắt",
-};
+export const CTA_NOTE = "Miễn phí hoàn toàn · Đăng ký bằng email";
 
 export const NAV_LINKS = [
   { href: "#cach-hoc", label: "Cách học" },

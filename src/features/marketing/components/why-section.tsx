@@ -1,6 +1,6 @@
 import { WHY } from "../data/content";
 import { Reveal } from "@/components/reveal";
-import { StatusBadge } from "./status-badge";
+import { StatusBadge } from "@/components/status-badge";
 
 export function WhySection() {
   return (

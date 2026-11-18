@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { RATINGS, SAMPLE_WORDS } from "../data/content";
-import { SampleTag } from "./sample-tag";
+import { SampleTag } from "@/components/sample-tag";
 
 const FLY_MS = 420;
 const FLY_CLASS = ["is-fly-left", "is-fly-down", "is-fly-right"]; // Quên, Khó, Đã nhớ
@@ -59,7 +59,7 @@ export function FlipCardDemo({ compact = false }: { compact?: boolean }) {
         >
           <span className="lp-flipface lp-flipfront">
             <strong>{word.lemma}</strong>
-            <span className="lp-ipa">{word.ipa}</span>
+            <span className="ipa-text">{word.ipa}</span>
             <small>
               {word.cefr} · {word.pos}
             </small>

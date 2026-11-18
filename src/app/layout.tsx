@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 // và CSS chung (ui.css) phải nạp trước CSS riêng của từng feature.
 import "./globals.css";
 import { AuthSessionProvider } from "@/features/auth";
+import { nunito, serif } from "@/lib/fonts";
 
 export const metadata: Metadata = {
   title: "MasterEnglish — Học có hướng. Tiến bộ có lý do.",
@@ -15,7 +16,12 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="vi" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html
+      lang="vi"
+      className={`${nunito.variable} ${serif.variable}`}
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       <body suppressHydrationWarning>
         <AuthSessionProvider>{children}</AuthSessionProvider>
       </body>

@@ -9,6 +9,13 @@
   --mint:#c7f2dc;
   --peach:#ffe1cb;
   --lavender:#dedbfd;
+  --text-muted:#565a72;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --glass-line:rgba(255,255,255,.8);
+  --glass-shadow:0 1px 0 rgba(255,255,255,.85) inset,0 18px 40px -18px rgba(57,51,168,.22),0 2px 8px rgba(32,34,59,.05);
+  --danger:#c0392b;
+  --danger-soft:#ffe3df;
 }
 * {
   box-sizing:border-box
@@ -20,7 +27,7 @@ body {
   margin:0;
   background:var(--paper);
   color:var(--ink);
-  font-family:"Segoe UI",Inter,Arial,sans-serif;
+  font-family:var(--font-sans),"Segoe UI",Inter,Arial,sans-serif;
   -webkit-font-smoothing:antialiased
 }
 a {
@@ -63,45 +70,48 @@ button:disabled {
 .brand {
   display:inline-flex;
   align-items:center;
-  gap:11px;
+  min-height:44px;
   flex:none;
-  font-size:20px;
-  font-weight:830;
-  letter-spacing:-.075em;
-  line-height:1;
   color:var(--ink)
 }
-.brand>span:last-child>span {
-  color:var(--indigo)
+em {
+  font-family:var(--font-serif),Georgia,"Times New Roman",serif;
+  font-style:italic;
+  font-weight:600
 }
-.brand small {
-  display:block;
-  font-size:8px;
-  letter-spacing:.19em;
-  font-weight:750;
-  margin-top:6px;
-  color:var(--muted)
-}
-.brand-mark {
-  width:42px;
-  height:42px;
-  border-radius:14px;
-  background:var(--indigo);
-  color:white;
-  display:grid;
-  place-items:center;
-  font-size:29px;
-  letter-spacing:-.12em;
+/* Nền pastel dùng chung cho vỏ ứng dụng (đăng nhập, học, quản trị); lớp cố định nên không vẽ lại khi cuộn */
+.app-pastel-bg {
   position:relative;
-  line-height:1;
-  padding-right:5px
+  isolation:isolate;
+  min-height:100vh;
+  background:var(--paper)
 }
-.brand-mark span {
-  position:absolute;
-  font-size:12px;
-  right:4px;
-  top:4px;
-  color:var(--lime)
+.app-pastel-bg::before {
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    radial-gradient(60vmax 50vmax at 8% 6%,rgba(222,219,253,.95),transparent 62%),
+    radial-gradient(55vmax 45vmax at 96% 30%,rgba(199,242,220,.8),transparent 60%),
+    radial-gradient(60vmax 50vmax at 20% 96%,rgba(255,225,203,.85),transparent 62%),
+    var(--paper)
+}
+/* Thẻ kính thích ứng: máy rộng làm mờ nền, máy hẹp dùng nền đặc hơn và tắt blur để giữ 60fps */
+.glass-card {
+  background:rgba(255,255,255,.9);
+  border:1px solid var(--glass-line);
+  border-radius:24px;
+  box-shadow:var(--glass-shadow)
+}
+@media (min-width:768px) {
+.glass-card {
+    background:rgba(255,255,255,.62);
+    border-radius:28px;
+    -webkit-backdrop-filter:blur(12px) saturate(1.2);
+    backdrop-filter:blur(12px) saturate(1.2)
+  }
 }
 
 /* Shared motion */

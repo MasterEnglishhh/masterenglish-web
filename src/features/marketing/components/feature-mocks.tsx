@@ -1,5 +1,5 @@
 import { FEATURES, SAMPLE_WORDS } from "../data/content";
-import { SampleTag } from "./sample-tag";
+import { SampleTag } from "@/components/sample-tag";
 
 /** Sổ tay từ vựng mẫu: đủ năm trường của một từ đã lưu (từ, phiên âm, cấp CEFR, loại từ, nghĩa). */
 export function NotebookMock() {
@@ -11,7 +11,7 @@ export function NotebookMock() {
           <li key={w.lemma}>
             <span className="lp-nb-word">
               <strong>{w.lemma}</strong>
-              <small className="lp-ipa">{w.ipa}</small>
+              <small className="ipa-text">{w.ipa}</small>
             </span>
             <span className="lp-nb-tags">
               <b>{w.cefr}</b>

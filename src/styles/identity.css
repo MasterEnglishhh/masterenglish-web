@@ -1,0 +1,222 @@
+/* Nhận diện dùng chung toàn ứng dụng: logo, nhãn trạng thái, nhãn mô phỏng, linh vật, phiên âm. */
+/* Logo */
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+}
+.brand-logo-word {
+  font-size: 1.375rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.brand-logo-word span {
+  color: var(--indigo);
+}
+.brand-logo.is-mono .brand-logo-word span {
+  color: inherit;
+}
+
+/* Sticker trung thực */
+.sample-tag {
+  display: inline-flex;
+  align-items: center;
+  align-self: start;
+  justify-self: start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1.5px dashed rgba(90, 84, 232, 0.55);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--indigo-deep);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+.status-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  line-height: 1.5;
+  border: 1px solid rgba(32, 34, 59, 0.12);
+}
+.status-badge-available {
+  background: var(--lime);
+}
+.status-badge-rolling {
+  background: var(--peach);
+}
+.status-badge-soon {
+  background: var(--lavender);
+}
+
+/* Linh vật: mọi chuyển động bám vào data-part, nên thay ruột SVG vẫn chạy */
+.mascot {
+  display: block;
+  overflow: visible;
+}
+.mascot [data-part],
+.mascot [data-ear] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.mascot [data-hand] {
+  transform-box: view-box;
+  transition: transform 0.45s var(--spring);
+}
+.mascot [data-hand="l"] {
+  transform-origin: 66px 156px;
+}
+.mascot [data-hand="r"] {
+  transform-origin: 154px 156px;
+}
+.mascot [data-part="body"] {
+  transform-origin: 50% 100%;
+  animation: lp-breathe 3.2s ease-in-out infinite;
+}
+.mascot [data-part="hat"] {
+  transform-origin: 50% 100%;
+  transition: rotate 0.4s var(--spring);
+  animation: lp-hat 2.6s ease-in-out infinite;
+}
+.mascot [data-ear="l"] {
+  transform-origin: 100% 100%;
+}
+.mascot [data-ear="r"] {
+  transform-origin: 0% 100%;
+}
+.mascot:hover [data-ear="l"] {
+  animation: lp-ear 0.5s ease-in-out 2;
+}
+.mascot:hover [data-ear="r"] {
+  animation: lp-ear 0.5s ease-in-out 2 reverse;
+}
+.mascot [data-part="eyes"] {
+  animation: lp-blink 5s infinite;
+}
+.mascot [data-part="pupils"] {
+  transform: translate(calc(var(--mx, 0) * 5px), calc(var(--my, 0) * 4px));
+  transition: translate 0.4s var(--ease);
+}
+.mascot [data-eye-closed],
+.mascot [data-mouth],
+.mascot [data-extra] {
+  display: none;
+}
+.mascot[data-expression="sleepy"] [data-eye-closed] {
+  display: inline;
+}
+.mascot[data-expression="sleepy"] [data-eye-open] {
+  display: none;
+}
+.mascot[data-expression="happy"] [data-mouth="happy"],
+.mascot[data-expression="thinking"] [data-mouth="thinking"],
+.mascot[data-expression="celebrating"] [data-mouth="celebrating"],
+.mascot[data-expression="sleepy"] [data-mouth="sleepy"],
+.mascot[data-expression="thinking"] [data-extra="thinking"],
+.mascot[data-expression="sleepy"] [data-extra="sleepy"],
+.mascot[data-expression="celebrating"] [data-extra="celebrating"] {
+  display: inline;
+}
+.mascot[data-expression="happy"] [data-hand="r"] {
+  animation: lp-wave 1.4s ease-in-out infinite;
+}
+.mascot[data-expression="celebrating"] [data-hand="l"] {
+  transform: rotate(95deg);
+  animation: lp-cheer 0.7s ease-in-out infinite alternate;
+}
+.mascot[data-expression="celebrating"] [data-hand="r"] {
+  transform: rotate(-95deg);
+  animation: lp-cheer 0.7s ease-in-out infinite alternate-reverse;
+}
+.mascot[data-expression="thinking"] [data-hand="r"] {
+  transform: rotate(108deg);
+}
+.mascot[data-expression="thinking"] [data-part="pupils"] {
+  translate: 3px -4px;
+}
+.mascot[data-expression="sleepy"] [data-part="hat"] {
+  rotate: -9deg;
+}
+.mascot[data-expression="sleepy"] [data-part="body"] {
+  animation-duration: 5s;
+}
+.mascot[data-expression="sleepy"] [data-extra="sleepy"] {
+  animation: lp-twinkle 2.4s ease-in-out infinite;
+}
+.mascot[data-expression="celebrating"] [data-extra="celebrating"] {
+  animation: lp-twinkle 1.2s ease-in-out infinite;
+}
+
+/* Phiên âm IPA: Nunito không có ký tự IPA nên chỉ định phông hệ thống có đủ */
+.ipa-text {
+  font-family: "Segoe UI", "Noto Sans", "DejaVu Sans", Arial, sans-serif;
+}
+
+
+/* Hoạt ảnh của linh vật và điểm nhấn */
+@keyframes lp-twinkle {
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7) rotate(20deg);
+  }
+}
+@keyframes lp-bob {
+  50% {
+    translate: 0 -10px;
+  }
+}
+@keyframes lp-breathe {
+  50% {
+    transform: scale(1.03, 0.97);
+  }
+}
+@keyframes lp-hat {
+  50% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+}
+@keyframes lp-ear {
+  50% {
+    transform: rotate(-5deg);
+  }
+}
+@keyframes lp-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes lp-wave {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(-70deg);
+  }
+}
+@keyframes lp-cheer {
+  to {
+    translate: 0 -6px;
+  }
+}
+@keyframes lp-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+
+/* Linh vật nhỏ trong thẻ khích lệ ở thanh bên (khu học tập và quản trị) */
+.side-mascot {
+  width: 64px;
+  margin: -4px 0 4px auto;
+}
