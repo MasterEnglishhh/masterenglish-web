@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { AuthLayout, LoginForm } from "@/features/auth";
+import { LoginForm } from "@/features/auth";
 
 export const metadata: Metadata = {
   title: "Đăng nhập | MasterEnglish",
@@ -9,11 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  return (
-    <Suspense fallback={<div className="auth-shell" />}>
-      <AuthLayout mode="login">
-        <LoginForm />
-      </AuthLayout>
-    </Suspense>
-  );
+  return <LoginForm />;
 }

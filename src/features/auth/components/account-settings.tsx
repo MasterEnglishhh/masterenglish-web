@@ -42,7 +42,7 @@ function ProfileForm({ user }: { user: AuthUser }) {
   }
 
   return (
-    <form className="account-card auth-form" onSubmit={onSubmit} noValidate>
+    <form className="glass-card account-card auth-form" onSubmit={onSubmit} noValidate>
       <h2>Hồ sơ</h2>
       <AuthField id="account-email" name="email" label="Email" type="email" value={user.email} disabled />
       <div className="account-row">
@@ -75,7 +75,7 @@ function PasswordForm() {
   }
 
   return (
-    <form className="account-card auth-form" onSubmit={onSubmit} noValidate>
+    <form className="glass-card account-card auth-form" onSubmit={onSubmit} noValidate>
       <h2>Đổi mật khẩu</h2>
       <p className="account-note">
         Sau khi đổi, mọi thiết bị sẽ bị đăng xuất và bạn cần đăng nhập lại.

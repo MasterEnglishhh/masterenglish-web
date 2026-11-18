@@ -1,129 +1,88 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuthSession } from "../hooks/use-auth-session";
-import "../styles/auth.css";
+import { useId } from "react";
+import { useAccountMenu } from "../hooks/use-account-menu";
+import type { AuthUser } from "../types/auth";
+import "../styles/account-menu.css";
 
+function displayName(user: AuthUser) {
+  return user.displayName || [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+}
+
+function roleOf(user: AuthUser) {
+  if (user.roles.includes("SYSTEM_ADMIN")) return { key: "admin", label: "Quản trị viên" };
+  if (user.roles.includes("CONTENT_ADMIN")) return { key: "content", label: "Giảng viên" };
+  return { key: "learner", label: "Học viên" };
+}
+
+/** Menu tài khoản dạng thả xuống: gọn ở mọi cỡ màn hình, không làm tràn thanh đầu trang. */
 export function AccountMenu() {
-  const { user, isLoading, logout } = useAuthSession();
-  const [isSigningOut, setIsSigningOut] = useState(false);
-  const [logoutError, setLogoutError] = useState(false);
-  const router = useRouter();
+  const { user, isLoading, open, toggle, close, rootRef, triggerRef, isSigningOut, logoutError, handleLogout } =
+    useAccountMenu();
+  const panelId = useId();
 
-  async function handleLogout() {
-    setIsSigningOut(true);
-    setLogoutError(false);
-    const ok = await logout();
-    setIsSigningOut(false);
-    if (ok) {
-      router.replace("/login");
-      router.refresh();
-    } else {
-      setLogoutError(true);
-    }
-  }
-
-  if (isLoading)
-    return (
-      <span className="account-name" role="status">
-        Đang tải tài khoản...
-      </span>
-    );
-  if (!user)
+  // Chiếm chỗ vô hình trong lúc tải phiên để thanh đầu trang không xô lệch.
+  if (isLoading) return <span className="account-trigger is-placeholder" aria-hidden="true" />;
+  if (!user) {
     return (
       <Link className="header-login" href="/login">
         Đăng nhập
       </Link>
     );
-  const name =
-    user.displayName ||
-    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-    user.email;
+  }
 
-  const isAdmin = user.roles.some(
-    (r) => r === "SYSTEM_ADMIN" || r === "CONTENT_ADMIN"
-  );
-
-  const getRoleBadge = () => {
-    if (user.roles.includes("SYSTEM_ADMIN")) {
-      return (
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 750,
-            padding: "2px 8px",
-            borderRadius: 99,
-            background: "#fee2e2",
-            color: "#991b1b",
-            border: "1px solid #fca5a5",
-          }}
-        >
-          Quản trị viên
-        </span>
-      );
-    }
-    if (user.roles.includes("CONTENT_ADMIN")) {
-      return (
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 750,
-            padding: "2px 8px",
-            borderRadius: 99,
-            background: "var(--lime)",
-            color: "var(--ink)",
-            border: "1px solid #bbf7d0",
-          }}
-        >
-          Giảng viên
-        </span>
-      );
-    }
-    return (
-      <span
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          padding: "2px 8px",
-          borderRadius: 99,
-          background: "#f1f1eb",
-          color: "var(--muted)",
-        }}
-      >
-        Học viên
-      </span>
-    );
-  };
+  const name = displayName(user);
+  const role = roleOf(user);
+  const isAdmin = user.roles.some((r) => r === "SYSTEM_ADMIN" || r === "CONTENT_ADMIN");
 
   return (
-    <div className="account-menu">
-      {isAdmin && (
-        <Link
-          href="/admin"
-          className="admin-brand-badge"
-          style={{ textDecoration: "none", marginRight: 4 }}
-        >
-          Quản trị ↗
-        </Link>
-      )}
-      {getRoleBadge()}
-      <Link className="account-name" href="/learn/account" title={user.email}>
-        {name}
-      </Link>
+    <div className="account-menu" ref={rootRef}>
       <button
+        ref={triggerRef}
         type="button"
-        className="account-logout"
-        disabled={isSigningOut}
-        onClick={() => void handleLogout()}
+        className="account-trigger"
+        aria-expanded={open}
+        aria-controls={panelId}
+        aria-label={`Tài khoản của ${name}`}
+        onClick={toggle}
       >
-        {isSigningOut ? "Đang đăng xuất..." : "Đăng xuất"}
-      </button>
-      {logoutError && (
-        <span className="account-error" role="alert">
-          Chưa thể đăng xuất. Vui lòng thử lại.
+        <span className="account-avatar" aria-hidden="true">
+          {name.trim().charAt(0).toUpperCase()}
         </span>
+        <span className="account-trigger-name">{name}</span>
+        <span className="account-caret" aria-hidden="true" />
+      </button>
+
+      {open && (
+        <div className="account-panel glass-card" id={panelId}>
+          <div className="account-panel-head">
+            <strong>{name}</strong>
+            <small>{user.email}</small>
+            <span className={`role-badge role-badge-${role.key}`}>{role.label}</span>
+          </div>
+          <Link className="account-item" href="/learn/account" onClick={() => close()}>
+            Tài khoản của tôi
+          </Link>
+          {isAdmin && (
+            <Link className="account-item" href="/admin" onClick={() => close()}>
+              Cổng quản trị ↗
+            </Link>
+          )}
+          <button
+            type="button"
+            className="account-item account-item-danger"
+            disabled={isSigningOut}
+            onClick={() => void handleLogout()}
+          >
+            {isSigningOut ? "Đang đăng xuất..." : "Đăng xuất"}
+          </button>
+          {logoutError && (
+            <p className="account-error" role="alert">
+              Chưa thể đăng xuất. Vui lòng thử lại.
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

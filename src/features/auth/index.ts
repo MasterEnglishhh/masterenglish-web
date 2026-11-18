@@ -4,7 +4,6 @@ export { RequireAuth } from "./components/require-auth";
 export { AccountMenu } from "./components/account-menu";
 export { AccountSettings } from "./components/account-settings";
 export { AuthLayout } from "./components/auth-layout";
-export { AuthArt } from "./components/auth-art";
 export { AuthField } from "./components/auth-field";
 export { LoginForm } from "./components/login-form";
 export { RegisterForm } from "./components/register-form";

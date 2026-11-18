@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { AuthLayout, RegisterForm } from "@/features/auth";
+import { RegisterForm } from "@/features/auth";
 
 export const metadata: Metadata = {
   title: "Tạo tài khoản | MasterEnglish",
@@ -9,11 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function RegisterPage() {
-  return (
-    <Suspense fallback={<div className="auth-shell" />}>
-      <AuthLayout mode="register">
-        <RegisterForm />
-      </AuthLayout>
-    </Suspense>
-  );
+  return <RegisterForm />;
 }
