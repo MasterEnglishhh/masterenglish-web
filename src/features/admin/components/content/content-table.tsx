@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, Plus, Search } from "lucide-react";
+import { Eye, Plus } from "lucide-react";
+import { Pagination } from "@/components/pagination";
+import { AdminFilterBar } from "../admin-filter-bar";
 import type { ContentFilterState, ContentItem, ContentStatusFilter, ContentType } from "../../types/content-ops";
 import { ContentPreviewModal } from "./content-preview-modal";
 import { ContentStatusBadge } from "./content-status-badge";
@@ -52,37 +54,29 @@ export function ContentTable({
         ))}
       </div>
 
-      <div className="admin-toolbar">
-        <label className="admin-search-box">
-          <Search size={16} aria-hidden="true" />
-          <input
-            type="text"
-            className="admin-search-input"
-            placeholder="Tìm theo tiêu đề hoặc mã..."
-            aria-label="Tìm nội dung theo tiêu đề hoặc mã"
-            value={filters.search}
-            onChange={(e) => onFilterChange({ ...filters, search: e.target.value, page: 1 })}
-          />
-        </label>
-        <div className="admin-filters">
-          <select
-            className="admin-select"
-            aria-label="Lọc theo trạng thái"
-            value={filters.status}
-            onChange={(e) => onFilterChange({ ...filters, status: e.target.value as ContentStatusFilter, page: 1 })}
-          >
-            <option value="ALL">Tất cả trạng thái</option>
-            <option value="DRAFT">Bản nháp (Draft)</option>
-            <option value="IN_REVIEW">Chờ thẩm định (In Review)</option>
-            <option value="APPROVED">Đã phê duyệt (Approved)</option>
-            <option value="PUBLISHED">Đã xuất bản (Published)</option>
-            <option value="ARCHIVED">Đã lưu trữ (Archived)</option>
-          </select>
-          <button type="button" className="btn-lime btn-sm" onClick={() => setIsCreateOpen(true)}>
-            <Plus size={14} aria-hidden="true" /> Soạn nội dung mới
-          </button>
-        </div>
-      </div>
+      <AdminFilterBar
+        search={filters.search}
+        onSearchChange={(search) => onFilterChange({ ...filters, search, page: 1 })}
+        searchLabel="Tìm nội dung theo tiêu đề hoặc mã"
+        placeholder="Tìm theo tiêu đề hoặc mã..."
+      >
+        <select
+          className="admin-select"
+          aria-label="Lọc theo trạng thái"
+          value={filters.status}
+          onChange={(e) => onFilterChange({ ...filters, status: e.target.value as ContentStatusFilter, page: 1 })}
+        >
+          <option value="ALL">Tất cả trạng thái</option>
+          <option value="DRAFT">Bản nháp (Draft)</option>
+          <option value="IN_REVIEW">Chờ thẩm định (In Review)</option>
+          <option value="APPROVED">Đã phê duyệt (Approved)</option>
+          <option value="PUBLISHED">Đã xuất bản (Published)</option>
+          <option value="ARCHIVED">Đã lưu trữ (Archived)</option>
+        </select>
+        <button type="button" className="btn-lime btn-sm" onClick={() => setIsCreateOpen(true)}>
+          <Plus size={14} aria-hidden="true" /> Soạn nội dung mới
+        </button>
+      </AdminFilterBar>
 
       <div className="admin-table-wrap">
         <table className="admin-table">
@@ -137,32 +131,19 @@ export function ContentTable({
             )}
           </tbody>
         </table>
-        <div className="admin-pagination">
-          <span>
-            Hiển thị <strong>{items.length}</strong> / <strong>{totalCount}</strong> mục nội dung
-          </span>
-          <div>
-            <span>
-              Trang <strong>{filters.page}</strong> / <strong>{totalPages}</strong>
-            </span>
-            <button
-              type="button"
-              className="btn-ghost btn-sm"
-              disabled={filters.page <= 1 || isLoading}
-              onClick={() => onFilterChange({ ...filters, page: filters.page - 1 })}
-            >
-              ← Trước
-            </button>
-            <button
-              type="button"
-              className="btn-ghost btn-sm"
-              disabled={filters.page >= totalPages || isLoading}
-              onClick={() => onFilterChange({ ...filters, page: filters.page + 1 })}
-            >
-              Sau →
-            </button>
-          </div>
-        </div>
+        <Pagination
+          className="admin-pagination"
+          label="Phân trang nội dung"
+          page={filters.page}
+          totalPages={totalPages}
+          busy={isLoading}
+          onChange={(page) => onFilterChange({ ...filters, page })}
+          summary={
+            <>
+              Hiển thị <strong>{items.length}</strong> / <strong>{totalCount}</strong> mục nội dung
+            </>
+          }
+        />
       </div>
 
       {previewItem && (

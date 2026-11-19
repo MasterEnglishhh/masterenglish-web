@@ -581,6 +581,17 @@
   gap: 10px;
 }
 
+/* Phân trang dùng chung đặt trong chân bảng: bỏ khoảng cách và căn giữa của bản mặc định */
+.pager.admin-pagination {
+  justify-content: space-between;
+  margin-top: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.pager.admin-pagination .pager-controls {
+  gap: 10px;
+}
+
 /* Danh sách hoạt động, nhật ký, cờ tính năng */
 .admin-list {
   display: grid;

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Key, LogOut, Search, ShieldAlert } from "lucide-react";
+import { Key, LogOut, ShieldAlert } from "lucide-react";
+import { Pagination } from "@/components/pagination";
+import { AdminFilterBar } from "../admin-filter-bar";
 import type { AdminUser, UserFilterState, UserRole, UserStatus } from "../../types/user-management";
 import { UserLockModal } from "./user-lock-modal";
 import { UserRoleModal } from "./user-role-modal";
@@ -47,43 +49,35 @@ export function UserTable({
 
   return (
     <div>
-      <div className="admin-toolbar">
-        <label className="admin-search-box">
-          <Search size={16} aria-hidden="true" />
-          <input
-            type="text"
-            className="admin-search-input"
-            placeholder="Tìm theo tên hoặc email..."
-            aria-label="Tìm người dùng theo tên hoặc email"
-            value={filters.search}
-            onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
-          />
-        </label>
-        <div className="admin-filters">
-          <select
-            className="admin-select"
-            aria-label="Lọc theo vai trò"
-            value={filters.role}
-            onChange={(e) => onFilterChange({ ...filters, role: e.target.value as UserRole | "ALL" })}
-          >
-            <option value="ALL">Tất cả vai trò</option>
-            <option value="SYSTEM_ADMIN">SYSTEM_ADMIN</option>
-            <option value="CONTENT_ADMIN">CONTENT_ADMIN</option>
-            <option value="LEARNER">LEARNER</option>
-          </select>
-          <select
-            className="admin-select"
-            aria-label="Lọc theo trạng thái"
-            value={filters.status}
-            onChange={(e) => onFilterChange({ ...filters, status: e.target.value as UserStatus | "ALL" })}
-          >
-            <option value="ALL">Tất cả trạng thái</option>
-            <option value="ACTIVE">Hoạt động (Active)</option>
-            <option value="LOCKED">Đã khóa (Locked)</option>
-            <option value="PENDING_VERIFICATION">Chờ OTP</option>
-          </select>
-        </div>
-      </div>
+      <AdminFilterBar
+        search={filters.search}
+        onSearchChange={(search) => onFilterChange({ ...filters, search })}
+        searchLabel="Tìm người dùng theo tên hoặc email"
+        placeholder="Tìm theo tên hoặc email..."
+      >
+        <select
+          className="admin-select"
+          aria-label="Lọc theo vai trò"
+          value={filters.role}
+          onChange={(e) => onFilterChange({ ...filters, role: e.target.value as UserRole | "ALL" })}
+        >
+          <option value="ALL">Tất cả vai trò</option>
+          <option value="SYSTEM_ADMIN">SYSTEM_ADMIN</option>
+          <option value="CONTENT_ADMIN">CONTENT_ADMIN</option>
+          <option value="LEARNER">LEARNER</option>
+        </select>
+        <select
+          className="admin-select"
+          aria-label="Lọc theo trạng thái"
+          value={filters.status}
+          onChange={(e) => onFilterChange({ ...filters, status: e.target.value as UserStatus | "ALL" })}
+        >
+          <option value="ALL">Tất cả trạng thái</option>
+          <option value="ACTIVE">Hoạt động (Active)</option>
+          <option value="LOCKED">Đã khóa (Locked)</option>
+          <option value="PENDING_VERIFICATION">Chờ OTP</option>
+        </select>
+      </AdminFilterBar>
 
       <div className="admin-table-wrap">
         <table className="admin-table">
@@ -157,32 +151,19 @@ export function UserTable({
             )}
           </tbody>
         </table>
-        <div className="admin-pagination">
-          <span>
-            Hiển thị <strong>{users.length}</strong> / <strong>{totalCount}</strong> tài khoản
-          </span>
-          <div>
-            <span>
-              Trang <strong>{filters.page}</strong> / <strong>{totalPages}</strong>
-            </span>
-            <button
-              type="button"
-              className="btn-ghost btn-sm"
-              disabled={filters.page <= 1 || isLoading}
-              onClick={() => onFilterChange({ ...filters, page: filters.page - 1 })}
-            >
-              ← Trước
-            </button>
-            <button
-              type="button"
-              className="btn-ghost btn-sm"
-              disabled={filters.page >= totalPages || isLoading}
-              onClick={() => onFilterChange({ ...filters, page: filters.page + 1 })}
-            >
-              Sau →
-            </button>
-          </div>
-        </div>
+        <Pagination
+          className="admin-pagination"
+          label="Phân trang người dùng"
+          page={filters.page}
+          totalPages={totalPages}
+          busy={isLoading}
+          onChange={(page) => onFilterChange({ ...filters, page })}
+          summary={
+            <>
+              Hiển thị <strong>{users.length}</strong> / <strong>{totalCount}</strong> tài khoản
+            </>
+          }
+        />
       </div>
 
       {roleModalUser && (
