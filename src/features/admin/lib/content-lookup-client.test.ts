@@ -1,6 +1,10 @@
 import { test, mock } from "node:test";
 import assert from "node:assert/strict";
-import { createContentSource, searchPublishedSenses } from "./content-lookup-client.ts";
+import {
+  createContentSource,
+  fetchContentSources,
+  searchPublishedSenses,
+} from "./content-lookup-client.ts";
 
 /** Thay `fetch`; trả lời CSRF cố định và ghi lại các yêu cầu còn lại. */
 async function withFetch(handler: (url: string, init?: RequestInit) => Response, run: (urls: string[]) => Promise<void>) {
@@ -68,6 +72,28 @@ test("thêm nguồn mới gửi POST tới đúng đường dẫn quản trị",
       const res = await createContentSource({ title: "N", sourceType: "EXTERNAL", licenseCode: "CC-BY", attribution: "a" });
       assert.deepEqual(urls, ["POST /api/v1/admin/content/sources"]);
       assert.ok(res.success && res.data.id === "src-1");
+    }
+  );
+});
+
+test("fetchContentSources mặc định tải 100 nguồn cho dropdown", async () => {
+  await withFetch(
+    () => json({ items: [], totalItems: 0, totalPages: 1 }),
+    async (urls) => {
+      const res = await fetchContentSources();
+      assert.deepEqual(urls, ["GET /api/v1/admin/content/sources?size=100"]);
+      assert.ok(res.success);
+    }
+  );
+});
+
+test("fetchContentSources phân trang chuyển đổi trang 1-indexed thành 0-indexed và gửi search", async () => {
+  await withFetch(
+    () => json({ items: [], totalItems: 0, totalPages: 1 }),
+    async (urls) => {
+      const res = await fetchContentSources({ search: "Oxford", page: 3, size: 10 });
+      assert.deepEqual(urls, ["GET /api/v1/admin/content/sources?search=Oxford&page=2&size=10"]);
+      assert.ok(res.success);
     }
   );
 });

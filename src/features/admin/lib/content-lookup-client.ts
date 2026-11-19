@@ -5,17 +5,28 @@ export interface ContentSource {
   id: string;
   title: string;
   sourceType: string;
+  sourceUrl?: string | null;
+  author?: string | null;
   licenseCode: string | null;
   status: string;
+  createdAt?: string;
 }
 
 export interface CreateSourcePayload {
   title: string;
-  sourceType: "EXTERNAL";
+  sourceType?: string;
   sourceUrl?: string;
   author?: string;
   licenseCode: string;
+  licenseUrl?: string;
   attribution: string;
+  permissionNote?: string;
+}
+
+export interface FetchContentSourcesParams {
+  search?: string;
+  page?: number;
+  size?: number;
 }
 
 /** Một nghĩa của từ đã xuất bản, đủ thông tin để chọn vào bộ thẻ. */
@@ -32,12 +43,40 @@ interface WordWithSenses {
   senses: { id: string; partOfSpeech: string; cefrLevel: string; meaningVi: string }[];
 }
 
-export function fetchContentSources(): Promise<AdminResult<PageResponse<ContentSource>>> {
-  return requestWithAuth<PageResponse<ContentSource>>("/api/v1/admin/content/sources?size=100");
+export function fetchContentSources(
+  params?: FetchContentSourcesParams
+): Promise<AdminResult<PageResponse<ContentSource>>> {
+  const query = new URLSearchParams();
+  if (params?.search && params.search.trim()) {
+    query.set("search", params.search.trim());
+  }
+  if (params?.page !== undefined) {
+    // Spring Pageable is 0-indexed; Frontend state is 1-indexed
+    const page0 = Math.max(0, (params.page || 1) - 1);
+    query.set("page", page0.toString());
+  }
+  if (params?.size !== undefined) {
+    query.set("size", params.size.toString());
+  } else if (params?.page === undefined && !params?.search) {
+    query.set("size", "100");
+  }
+  const qs = query.toString();
+  return requestWithAuth<PageResponse<ContentSource>>(
+    `/api/v1/admin/content/sources${qs ? `?${qs}` : ""}`
+  );
 }
 
-export function createContentSource(payload: CreateSourcePayload): Promise<AdminResult<ContentSource>> {
-  return requestWithAuth<ContentSource>("/api/v1/admin/content/sources", { method: "POST", body: payload });
+export function createContentSource(
+  payload: CreateSourcePayload
+): Promise<AdminResult<ContentSource>> {
+  const body = {
+    sourceType: "EXTERNAL",
+    ...payload,
+  };
+  return requestWithAuth<ContentSource>("/api/v1/admin/content/sources", {
+    method: "POST",
+    body,
+  });
 }
 
 /** Tìm trong các từ đã xuất bản: bộ thẻ chỉ nhận được nghĩa của từ đã xuất bản. */
