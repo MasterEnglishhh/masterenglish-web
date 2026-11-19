@@ -3,6 +3,8 @@
 import { Dialog } from "@/components/dialog";
 import { useCreateContent } from "../../hooks/use-create-content";
 import { DeckDraftFields } from "./deck-draft-fields";
+import { DeckSensePicker } from "./deck-sense-picker";
+import { SourceSelect } from "./source-select";
 import { WordDraftFields } from "./word-draft-fields";
 
 interface CreateContentModalProps {
@@ -52,8 +54,12 @@ export function CreateContentModal({ onClose, onCreated }: CreateContentModalPro
         {create.contentType === "WORD" ? (
           <WordDraftFields value={create.word} onChange={create.patchWord} />
         ) : (
-          <DeckDraftFields value={create.deck} onChange={create.patchDeck} />
+          <>
+            <DeckDraftFields value={create.deck} onChange={create.patchDeck} />
+            <DeckSensePicker selected={create.deckSenses} onAdd={create.addSense} onRemove={create.removeSense} />
+          </>
         )}
+        <SourceSelect value={create.sourceId} onChange={create.setSourceId} />
         <div className="admin-form-actions">
           <button type="button" className="btn-ghost btn-sm" onClick={onClose}>
             Hủy

@@ -60,6 +60,7 @@ export interface CreateDeckDraftPayload {
   title: string;
   description?: string;
   level?: string;
+  wordSenseIds?: string[];
   changeSummary?: string;
   sourceId?: string;
 }
@@ -106,7 +107,7 @@ function toResult<T>(outcome: HttpOutcome<T>): AdminResult<T> {
   );
 }
 
-async function requestWithAuth<T>(
+export async function requestWithAuth<T>(
   path: string,
   options?: Parameters<typeof requestJson>[1]
 ): Promise<AdminResult<T>> {

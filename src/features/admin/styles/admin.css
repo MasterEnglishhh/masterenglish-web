@@ -997,3 +997,35 @@
   font-size: 14px;
   font-weight: 700;
 }
+
+/* Chọn nguồn và thẻ cho bản thảo nội dung */
+.admin-source-form,
+.admin-sense-picker {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  min-width: 0;
+}
+.admin-sense-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.admin-sense-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.admin-sense-list li span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
