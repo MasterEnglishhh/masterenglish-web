@@ -58,6 +58,15 @@ export function useRegisterForm() {
     if (challenge) otpRef.current?.focus();
   }, [challenge]);
 
+  // Ô OTP bị khóa trong lúc gửi nên chỉ focus được sau khi `pending` về null.
+  const refocusOtp = useRef(false);
+  useEffect(() => {
+    if (!pending && refocusOtp.current) {
+      refocusOtp.current = false;
+      otpRef.current?.focus();
+    }
+  }, [pending]);
+
   const sendCooldown = remaining(sendBlockedUntil);
   const resendCooldown = remaining(Math.max(resendAt, sendBlockedUntil));
   const verifyCooldown = remaining(verifyBlockedUntil);
@@ -165,7 +174,7 @@ export function useRegisterForm() {
             result.error.fieldViolations?.otp ?? result.error.message
           );
           setOtp("");
-          otpRef.current?.focus();
+          refocusOtp.current = true;
         }
         if (result.error.retryAfterSeconds) {
           const time = syncNow();

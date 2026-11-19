@@ -622,6 +622,10 @@ html {
 .route-transition {
   min-width: 0;
 }
+/* Nội dung đang trượt ngang vào không được làm trang rộng ra trong lúc chạy (overflow-x: clip không tạo vùng cuộn nên không ảnh hưởng sticky). */
+:has(> .route-transition[data-axis="x"]) {
+  overflow-x: clip;
+}
 .route-fill {
   flex: 1 1 auto;
 }

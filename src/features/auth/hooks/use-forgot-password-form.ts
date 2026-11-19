@@ -57,6 +57,14 @@ export function useForgotPasswordForm() {
     if (stage === "otp") otpRef.current?.focus();
     if (stage === "password") passwordRef.current?.focus();
   }, [stage]);
+  // Ô OTP bị khóa trong lúc gửi nên chỉ focus được sau khi `pending` về false.
+  const refocusOtp = useRef(false);
+  useEffect(() => {
+    if (!pending && refocusOtp.current) {
+      refocusOtp.current = false;
+      otpRef.current?.focus();
+    }
+  }, [pending]);
   function fail(next: AuthError, action: "send" | "verify" | "reset") {
     setError(next);
     if (next.retryAfterSeconds) {
@@ -126,7 +134,7 @@ export function useForgotPasswordForm() {
         } else {
           fail(result.error, "verify");
           setOtp("");
-          otpRef.current?.focus();
+          refocusOtp.current = true;
         }
       } finally {
         active.current = false;
