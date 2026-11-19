@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuthSession } from "@/features/auth/hooks/use-auth-session";
+import { useAuthSession } from "@/features/auth";
 import type { DueQueueResponse } from "../types/vocabulary";
 import { fetchDueQueue } from "../lib/vocabulary-client";
 import { FlashcardView } from "./flashcard-view";
-import { VocabularyError } from "./vocabulary-view";
+import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
 import Link from "next/link";
 
 export function ReviewView() {
@@ -43,15 +44,22 @@ function ReviewQueue({
       active = false;
     };
   }, [deckId]);
-  if (error) return <VocabularyError message={error} retry={reload} />;
+  if (error) return <ErrorState message={error} onRetry={reload} idSuffix="-review-error" />;
   if (!data) return <p role="status">Đang tải các thẻ đến hạn...</p>;
   if (data.cards.length === 0)
     return (
-      <div className="empty-page">
-        <h2>Không có thẻ đến hạn</h2>
-        <p>Bạn có thể học từ mới hoặc quay lại khi đến lịch ôn tiếp theo.</p>
-        <Link href="/learn/vocabulary">Học từ mới</Link>
-      </div>
+      <EmptyState
+        title="Không có thẻ đến hạn"
+        mascot="sleepy"
+        idSuffix="-review"
+        action={
+          <Link className="btn-primary" href="/learn/vocabulary">
+            Học từ mới
+          </Link>
+        }
+      >
+        Bạn có thể học từ mới hoặc quay lại khi đến lịch ôn tiếp theo.
+      </EmptyState>
     );
   return (
     <>
@@ -65,7 +73,7 @@ function ReviewQueue({
         onReloadQueue={reload}
         onBackToDecks={() => router.push("/learn/vocabulary")}
       />
-      <button className="button button-light" onClick={reload}>
+      <button className="btn-ghost" onClick={reload}>
         Tải lại hàng đợi đến hạn
       </button>
     </>

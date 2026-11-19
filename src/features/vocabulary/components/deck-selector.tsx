@@ -37,7 +37,7 @@ export function DeckSelector({
       {totalDue > 0 && (
         <section className={styles.dueBanner}>
           <div>
-            <span className="section-kicker" style={{ color: "var(--lime)" }}>
+            <span className="section-kicker">
               ĐẾN LÚC ÔN TẬP
             </span>
             <h2>{totalDue} nghĩa từ đang chờ bạn</h2>

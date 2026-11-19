@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { ReviewView } from "@/features/vocabulary/components/review-view";
+import { Mascot } from "@/components/mascot";
+import { ReviewView } from "@/features/vocabulary";
 
 export default function ReviewPage() {
   return (
@@ -20,11 +21,9 @@ export default function ReviewPage() {
 
       <Suspense
         fallback={
-          <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <div style={{ fontSize: "28px", color: "var(--indigo)" }}>✳</div>
-            <p style={{ fontSize: "14px", color: "#777", marginTop: "12px" }}>
-              Đang tải hàng đợi thẻ đến hạn...
-            </p>
+          <div className="page-loading" role="status">
+            <Mascot expression="thinking" idSuffix="-review-loading" className="page-loading-mascot" />
+            <p>Đang tải hàng đợi thẻ đến hạn...</p>
           </div>
         }
       >

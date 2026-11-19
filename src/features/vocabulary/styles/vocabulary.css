@@ -1,0 +1,105 @@
+/* Trang Kết quả: sáu chỉ số tiến độ và lịch sử ôn tập. */
+.progress-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 24px;
+}
+@media (min-width: 700px) {
+  .progress-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+.progress-stats > div {
+  padding: 18px 20px;
+  border: 1px solid var(--glass-line);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg-solid);
+  box-shadow: var(--glass-shadow);
+}
+.progress-stats > div:nth-child(3n + 1) {
+  background: linear-gradient(160deg, rgba(222, 219, 253, 0.9), var(--glass-bg-strong));
+}
+.progress-stats > div:nth-child(3n + 2) {
+  background: linear-gradient(160deg, rgba(199, 242, 220, 0.8), var(--glass-bg-strong));
+}
+.progress-stats > div:nth-child(3n) {
+  background: linear-gradient(160deg, rgba(255, 225, 203, 0.85), var(--glass-bg-strong));
+}
+.progress-stats dt {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.progress-stats dd {
+  margin: 6px 0 0;
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.progress-due {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  background: rgba(217, 245, 134, 0.35);
+  font-weight: 800;
+}
+.progress-heading {
+  margin: 36px 0 16px;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+.progress-history {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+.progress-history li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 16px;
+  padding: 14px 18px;
+  border: 1px solid var(--glass-line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.88);
+}
+.progress-history li div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.progress-history li div span,
+.progress-history small {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+.progress-history small {
+  grid-column: 1 / -1;
+}
+.rating-badge {
+  padding: 3px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 800;
+}
+.rating-again {
+  background: var(--peach);
+}
+.rating-hard {
+  background: var(--lavender);
+}
+.rating-good {
+  background: var(--lime);
+}

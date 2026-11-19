@@ -1,9 +1,11 @@
-import { fetchCsrfToken, refreshSession } from "../../auth/lib/auth-client.ts";
+import { requestJson, type HttpOutcome } from "../../../lib/http.ts";
 import type {
   DeckDetailDto,
   DeckDto,
   DueQueueResponse,
+  LearningProgressResponse,
   PageResponse,
+  ReviewHistoryItemDto,
   ReviewRequest,
   ReviewResponse,
   SavedWordDto,
@@ -22,144 +24,100 @@ export interface VocabularyClientError {
 export type VocabularyResult<T> =
   { success: true; data: T } | { success: false; error: VocabularyClientError };
 
-const requestOptions = {
-  credentials: "same-origin",
-  cache: "no-store",
-  headers: { Accept: "application/json, application/problem+json" },
-} satisfies RequestInit;
+
+function fail<T>(
+  code: string,
+  message: string,
+  status: number,
+  retryable?: boolean
+): VocabularyResult<T> {
+  return {
+    success: false,
+    error: {
+      code,
+      message,
+      status,
+      ...(retryable === undefined ? {} : { retryable }),
+    },
+  };
+}
+
+/** Đổi kết quả vận chuyển thành thông báo tiếng Việt của phân hệ từ vựng. */
+function toResult<T>(outcome: HttpOutcome<T>): VocabularyResult<T> {
+  if (outcome.ok) return { success: true, data: outcome.data };
+  const { reason, status, problem } = outcome;
+
+  if (reason === "csrf")
+    return fail(
+      "CSRF_UNAVAILABLE",
+      "Không thể xác nhận phiên bảo mật. Vui lòng thử lại.",
+      403,
+      true
+    );
+  if (reason === "session")
+    return fail(
+      "UNAUTHENTICATED",
+      "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+      401
+    );
+  if (reason === "network")
+    return fail(
+      "NETWORK_ERROR",
+      "Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.",
+      0,
+      true
+    );
+
+  if (status === 403)
+    return fail(
+      problem?.code ?? "ACCESS_DENIED",
+      "Bạn không có quyền truy cập tính năng học tập này.",
+      403
+    );
+
+  // RATE_LIMITED: máy chủ từ chối trước khi xử lý, nên chờ rồi thử lại là an toàn.
+  if (status === 429) {
+    const seconds = outcome.retryAfterSeconds;
+    return fail(
+      problem?.code ?? "RATE_LIMITED",
+      seconds
+        ? `Bạn thao tác quá nhanh. Vui lòng chờ ${seconds} giây rồi thử lại.`
+        : "Bạn thao tác quá nhanh. Vui lòng chờ một lát rồi thử lại.",
+      429,
+      true
+    );
+  }
+
+  if (status === 409)
+    return fail(
+      problem?.code ?? "CONFLICT",
+      "Tiến độ đã thay đổi hoặc thẻ chưa đến hạn. Tải lại dữ liệu để tiếp tục.",
+      409,
+      true
+    );
+
+  if (status === 404)
+    return fail(
+      problem?.code ?? "RESOURCE_NOT_FOUND",
+      "Nội dung này không còn khả dụng. Hãy tải lại danh sách.",
+      404
+    );
+
+  return fail(
+    problem?.code ?? "SERVICE_ERROR",
+    status === 400
+      ? "Yêu cầu chưa hợp lệ. Hãy tải lại dữ liệu và thử lại."
+      : "Dịch vụ học tập đang gián đoạn. Vui lòng thử lại sau.",
+    status,
+    status >= 500
+  );
+}
 
 async function requestWithAuth<T>(
   path: string,
-  options?: RequestInit,
-  isRetry = false
+  options?: Parameters<typeof requestJson>[1]
 ): Promise<VocabularyResult<T>> {
-  try {
-    let headers: Record<string, string> = {
-      ...(requestOptions.headers as Record<string, string>),
-      ...((options?.headers as Record<string, string>) ?? {}),
-    };
-
-    // Attach CSRF token for mutating requests (POST, PUT, DELETE)
-    const method = options?.method?.toUpperCase() ?? "GET";
-    if (["POST", "PUT", "DELETE"].includes(method)) {
-      const csrf = await fetchCsrfToken();
-      if (!csrf) {
-        return {
-          success: false,
-          error: {
-            code: "CSRF_UNAVAILABLE",
-            message: "Không thể xác nhận phiên bảo mật. Vui lòng thử lại.",
-            status: 403,
-            retryable: true,
-          },
-        };
-      }
-      headers = {
-        ...headers,
-        [csrf.headerName]: csrf.token,
-        "Content-Type": "application/json",
-      };
-    }
-
-    const res = await fetch(path, {
-      ...requestOptions,
-      ...options,
-      headers,
-    });
-
-    // Handle 401: Refresh session once if not already a retry
-    if (res.status === 401 && !isRetry) {
-      const refreshed = await refreshSession();
-      if (refreshed) {
-        return requestWithAuth<T>(path, options, true);
-      }
-      return {
-        success: false,
-        error: {
-          code: "UNAUTHENTICATED",
-          message: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-          status: 401,
-        },
-      };
-    }
-
-    // Success responses
-    if (res.ok) {
-      if (res.status === 204) {
-        return { success: true, data: undefined as unknown as T };
-      }
-      const data = (await res.json()) as T;
-      return { success: true, data };
-    }
-
-    // Parse ProblemDetail or generic error
-    let problem: { code?: string; detail?: string; title?: string } | null =
-      null;
-    try {
-      problem = await res.json();
-    } catch {
-      // Non-JSON response
-    }
-
-    if (res.status === 403) {
-      return {
-        success: false,
-        error: {
-          code: problem?.code ?? "ACCESS_DENIED",
-          message: "Bạn không có quyền truy cập tính năng học tập này.",
-          status: 403,
-        },
-      };
-    }
-
-    if (res.status === 409) {
-      return {
-        success: false,
-        error: {
-          code: problem?.code ?? "CONFLICT",
-          message:
-            "Tiến độ đã thay đổi hoặc thẻ chưa đến hạn. Tải lại dữ liệu để tiếp tục.",
-          status: 409,
-          retryable: true,
-        },
-      };
-    }
-
-    if (res.status === 404) {
-      return {
-        success: false,
-        error: {
-          code: problem?.code ?? "RESOURCE_NOT_FOUND",
-          message: "Nội dung này không còn khả dụng. Hãy tải lại danh sách.",
-          status: 404,
-        },
-      };
-    }
-
-    return {
-      success: false,
-      error: {
-        code: problem?.code ?? "SERVICE_ERROR",
-        message:
-          res.status === 400
-            ? "Yêu cầu chưa hợp lệ. Hãy tải lại dữ liệu và thử lại."
-            : "Dịch vụ học tập đang gián đoạn. Vui lòng thử lại sau.",
-        status: res.status,
-        retryable: res.status >= 500,
-      },
-    };
-  } catch {
-    return {
-      success: false,
-      error: {
-        code: "NETWORK_ERROR",
-        message:
-          "Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.",
-        status: 0,
-        retryable: true,
-      },
-    };
-  }
+  return toResult(await requestJson<T>(path, options));
 }
 
 export function fetchWords(params?: {
@@ -302,7 +260,7 @@ export function submitReview(
   return requestWithAuth<ReviewResponse>("/api/v1/vocabulary/reviews", {
     method: "POST",
     signal,
-    body: JSON.stringify(payload),
+    body: payload,
   });
 }
 
@@ -323,4 +281,25 @@ export function fetchPronunciationTicket(
     });
   }
   return requestWithAuth<{ url: string }>(`${audioUrl}/ticket`, { signal });
+}
+
+export function fetchReviewHistory(params?: {
+  page?: number;
+  size?: number;
+}): Promise<VocabularyResult<PageResponse<ReviewHistoryItemDto>>> {
+  const query = new URLSearchParams();
+  if (params?.page != null) query.set("page", String(params.page));
+  if (params?.size != null) query.set("size", String(params.size));
+  const qs = query.toString();
+  return requestWithAuth<PageResponse<ReviewHistoryItemDto>>(
+    `/api/v1/vocabulary/reviews/history${qs ? `?${qs}` : ""}`
+  );
+}
+
+export function fetchLearningProgress(): Promise<
+  VocabularyResult<LearningProgressResponse>
+> {
+  return requestWithAuth<LearningProgressResponse>(
+    "/api/v1/vocabulary/progress"
+  );
 }

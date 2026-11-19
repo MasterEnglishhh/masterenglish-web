@@ -1,17 +1,3 @@
-export type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
-export type PartOfSpeech =
-  | "NOUN"
-  | "VERB"
-  | "ADJECTIVE"
-  | "ADVERB"
-  | "PRONOUN"
-  | "PREPOSITION"
-  | "CONJUNCTION"
-  | "DETERMINER"
-  | "INTERJECTION"
-  | "NUMERAL"
-  | "PHRASE";
-
 export type RatingType = "AGAIN" | "HARD" | "GOOD";
 
 export interface ExampleDto {
@@ -131,18 +117,32 @@ export interface ReviewResponse {
   progressVersion: number;
 }
 
-export interface PageResponse<T> {
-  items: T[];
-  page: number;
-  size: number;
-  totalItems: number;
-  totalPages: number;
-  hasNext: boolean;
-}
+export type { PageResponse } from "../../../lib/http.ts";
 
 export interface SessionSummary {
   totalReviewed: number;
   againCount: number;
   hardCount: number;
   goodCount: number;
+}
+
+export interface ReviewHistoryItemDto {
+  reviewId: string;
+  wordSenseId: string;
+  wordId: string;
+  lemma: string | null;
+  meaningVi: string | null;
+  rating: RatingType;
+  reviewedAt: string;
+  previousDueAt: string | null;
+  nextDueAt: string;
+}
+
+export interface LearningProgressResponse {
+  studiedSenses: number;
+  masteredSenses: number;
+  dueNow: number;
+  savedSenses: number;
+  totalReviews: number;
+  reviewsLast7Days: number;
 }

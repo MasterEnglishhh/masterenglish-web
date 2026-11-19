@@ -13,91 +13,21 @@ import type {
   AuthActionResult,
 } from "../types/auth";
 
-interface CsrfPayload {
-  headerName: string;
-  token: string;
-}
+import {
+  fetchCsrfToken,
+  postAuth,
+  refreshSession,
+  requestOptions,
+  waitForRefresh,
+  withAuthLock,
+} from "../../../lib/session.ts";
+import { retryAfterSeconds } from "../../../lib/http.ts";
 
-const requestOptions = {
-  credentials: "same-origin",
-  cache: "no-store",
-  headers: { Accept: "application/json, application/problem+json" },
-} satisfies RequestInit;
+// Giữ API cũ: các client khác và `auth/index.ts` vẫn import từ file này.
+export { fetchCsrfToken, refreshSession };
 
-let csrfRequest: Promise<CsrfPayload | null> | null = null;
-let refreshRequest: Promise<boolean> | null = null;
 let profileRequest: Promise<AuthUser | null> | null = null;
 
-function readCsrfCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const cookie = document.cookie
-    .split(";")
-    .map((part) => part.trim())
-    .find((part) => part.startsWith("XSRF-TOKEN="));
-  return cookie
-    ? decodeURIComponent(cookie.slice("XSRF-TOKEN=".length)) || null
-    : null;
-}
-
-async function withAuthLock<T>(operation: () => Promise<T>): Promise<T> {
-  if (typeof navigator !== "undefined" && navigator.locks) {
-    return await navigator.locks.request("masterenglish-auth", operation);
-  }
-  return operation();
-}
-
-export function fetchCsrfToken(): Promise<CsrfPayload | null> {
-  if (!csrfRequest) {
-    csrfRequest = (async () => {
-      try {
-        const res = await fetch("/api/v1/auth/csrf", requestOptions);
-        if (!res.ok) return null;
-        const data = (await res.json()) as Partial<CsrfPayload>;
-        if (
-          typeof data.headerName === "string" &&
-          typeof data.token === "string" &&
-          data.token
-        ) {
-          // A response may set the cookie more than once while renewing CSRF.
-          // Use the final browser cookie, which the next request will send.
-          return {
-            headerName: data.headerName,
-            token: readCsrfCookie() ?? data.token,
-          };
-        }
-      } catch {
-        // Never submit credentials with a missing or stale CSRF token.
-      }
-      return null;
-    })().finally(() => {
-      csrfRequest = null;
-    });
-  }
-  return csrfRequest;
-}
-
-async function postAuth(path: string, body?: object): Promise<Response> {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const csrf = await fetchCsrfToken();
-    if (!csrf)
-      throw new Error(
-        "Không thể kết nối đến máy chủ bảo mật. Vui lòng thử lại."
-      );
-    const res = await fetch(`/api/v1/auth/${path}`, {
-      ...requestOptions,
-      method: "POST",
-      headers: {
-        ...requestOptions.headers,
-        "Content-Type": "application/json",
-        [csrf.headerName]: csrf.token,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    // CSRF rejection occurs before the controller; bootstrap once and retry.
-    if (res.status !== 403 || attempt === 1) return res;
-  }
-  throw new Error("Không thể xác nhận phiên bảo mật.");
-}
 
 function isAuthUser(data: unknown): data is AuthUser {
   if (!data || typeof data !== "object") return false;
@@ -159,21 +89,13 @@ export async function login(
       };
     }
     if (res.status === 429) {
-      const retryHeader = res.headers.get("Retry-After");
-      const seconds =
-        retryHeader && /^\d+$/.test(retryHeader)
-          ? Number(retryHeader)
-          : retryHeader
-            ? Math.ceil((Date.parse(retryHeader) - Date.now()) / 1000)
-            : NaN;
-      const retryAfterSeconds =
-        Number.isFinite(seconds) && seconds > 0 ? seconds : 60;
+      const seconds = retryAfterSeconds(res.headers.get("Retry-After")) ?? 60;
       return {
         success: false,
         error: {
           code: "RATE_LIMITED",
-          message: `Bạn đã thử đăng nhập quá nhiều lần. Vui lòng chờ ${retryAfterSeconds} giây trước khi thử lại.`,
-          retryAfterSeconds,
+          message: `Bạn đã thử đăng nhập quá nhiều lần. Vui lòng chờ ${seconds} giây trước khi thử lại.`,
+          retryAfterSeconds: seconds,
           status: 429,
         },
       };
@@ -223,29 +145,6 @@ export async function login(
   }
 }
 
-/** Single flight prevents rotating the same refresh token twice in one tab. */
-export function refreshSession(): Promise<boolean> {
-  if (!refreshRequest) {
-    refreshRequest = withAuthLock(async () => {
-      // Another tab may have rotated the shared cookies while we waited.
-      if (typeof navigator !== "undefined" && navigator.locks) {
-        const profile = await fetch("/api/v1/users/me", requestOptions);
-        if (profile.ok) return true;
-        if (profile.status !== 401)
-          throw new Error("Không thể kiểm tra phiên đăng nhập.");
-      }
-      const res = await postAuth("refresh");
-      if (res.status === 401) return false;
-      if (!res.ok)
-        throw new Error("Không thể làm mới phiên đăng nhập. Vui lòng thử lại.");
-      return true;
-    }).finally(() => {
-      refreshRequest = null;
-    });
-  }
-  return refreshRequest;
-}
-
 /** Null means unauthenticated; service/network failures remain distinguishable. */
 export function getCurrentUser(): Promise<AuthUser | null> {
   if (!profileRequest) {
@@ -273,7 +172,7 @@ export async function logout(): Promise<boolean> {
   try {
     // Revoke the latest rotated token, and prevent refresh from restoring cookies.
     await profileRequest?.catch(() => null);
-    await refreshRequest?.catch(() => false);
+    await waitForRefresh();
     const res = await withAuthLock(() => postAuth("logout"));
     return res.ok;
   } catch {

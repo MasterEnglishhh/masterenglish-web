@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useCountdownClock } from "./use-countdown-clock";
 import { useRouter } from "next/navigation";
 import { login } from "../lib/auth-client";
+import { EMAIL_PATTERN } from "../lib/form-validation";
 import { getSafeRedirectUrl } from "../lib/redirect";
 import { useAuthSession } from "./use-auth-session";
 import type { AuthError, FormStatus, LoginCredentials } from "../types/auth";
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export interface UseLoginFormOptions {
   redirectTo?: string | null;
@@ -32,28 +32,13 @@ export function useLoginForm(options: UseLoginFormOptions = {}) {
   >({});
   const [status, setStatus] = useState<FormStatus>("idle");
   const [serverError, setServerError] = useState<AuthError | null>(null);
-  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [blockedUntil, setBlockedUntil] = useState(0);
+  const { remaining, syncNow } = useCountdownClock(false, blockedUntil);
+  const cooldownSeconds = remaining(blockedUntil);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-
-  // Rate limit cooldown countdown timer
-  useEffect(() => {
-    if (cooldownSeconds <= 0) return;
-
-    const timer = setInterval(() => {
-      setCooldownSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [cooldownSeconds]);
 
   function togglePasswordVisibility() {
     setIsPasswordVisible((prev) => !prev);
@@ -81,7 +66,7 @@ export function useLoginForm(options: UseLoginFormOptions = {}) {
     const trimmedEmail = data.email.trim();
     if (!trimmedEmail) {
       newErrors.email = "Vui lòng nhập email của bạn.";
-    } else if (!EMAIL_REGEX.test(trimmedEmail)) {
+    } else if (!EMAIL_PATTERN.test(trimmedEmail)) {
       newErrors.email = "Email chưa đúng định dạng (ví dụ: ban@example.com).";
     }
 
@@ -117,6 +102,8 @@ export function useLoginForm(options: UseLoginFormOptions = {}) {
     if (result.success) {
       setStatus("success");
       acceptLogin(result.user);
+      // Trang đăng nhập cũ còn nằm ẩn trong DOM sau khi chuyển trang: không để mật khẩu ở lại trong ô nhập.
+      setValues((prev) => ({ ...prev, password: "" }));
       // Safe navigation to requested route or default learning hub
       router.replace(safeRedirect);
       return;
@@ -133,7 +120,7 @@ export function useLoginForm(options: UseLoginFormOptions = {}) {
     }
 
     if (result.error.retryAfterSeconds && result.error.retryAfterSeconds > 0) {
-      setCooldownSeconds(result.error.retryAfterSeconds);
+      setBlockedUntil(syncNow() + result.error.retryAfterSeconds * 1000);
     }
 
     if (result.error.code === "BAD_CREDENTIALS") {

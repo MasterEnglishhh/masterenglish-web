@@ -1,11 +1,14 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCountdownClock } from "./use-countdown-clock";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   requestPasswordReset,
   verifyPasswordResetOtp,
   resetPassword,
 } from "../lib/auth-client";
+import { isValidEmail } from "../lib/form-validation";
+import { checkPassword } from "../lib/password-rules";
 import { getSafeRedirectUrl } from "../lib/redirect";
 import { useAuthSession } from "./use-auth-session";
 import type {
@@ -37,45 +40,42 @@ export function useForgotPasswordForm() {
   const [pending, setPending] = useState(false);
   const [sendAt, setSendAt] = useState(0);
   const [verifyAt, setVerifyAt] = useState(0);
-  const [now, setNow] = useState(Date.now);
+  const { remaining, syncNow } = useCountdownClock(
+    !!challenge || !!grant,
+    Math.max(sendAt, verifyAt)
+  );
   const stage = grant ? "password" : challenge ? "otp" : "email";
-  const remaining = (date: number) =>
-    Math.max(0, Math.ceil((date - now) / 1000));
   const sendCooldown = remaining(sendAt);
   const verifyCooldown = remaining(verifyAt);
   const expiresIn = remaining(
     Date.parse(grant?.expiresAt ?? challenge?.expiresAt ?? "")
   );
-  const normalized = password.normalize("NFC");
-  const passwordValid =
-    [...normalized].length >= 15 &&
-    new TextEncoder().encode(normalized).length <= 72 &&
-    !!normalized.trim();
-  useEffect(() => {
-    if (!challenge && !grant && sendAt <= Date.now() && verifyAt <= Date.now())
-      return;
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [challenge, grant, sendAt, verifyAt]);
+  const passwordCheck = checkPassword(password);
+  const normalized = passwordCheck.normalized;
+  const passwordValid = passwordCheck.valid;
   useEffect(() => {
     if (stage === "otp") otpRef.current?.focus();
     if (stage === "password") passwordRef.current?.focus();
   }, [stage]);
+  // Ô OTP bị khóa trong lúc gửi nên chỉ focus được sau khi `pending` về false.
+  const refocusOtp = useRef(false);
+  useEffect(() => {
+    if (!pending && refocusOtp.current) {
+      refocusOtp.current = false;
+      otpRef.current?.focus();
+    }
+  }, [pending]);
   function fail(next: AuthError, action: "send" | "verify" | "reset") {
     setError(next);
     if (next.retryAfterSeconds) {
-      const time = Date.now();
-      setNow(time);
+      const time = syncNow();
       if (action === "send") setSendAt(time + next.retryAfterSeconds * 1000);
       else setVerifyAt(time + next.retryAfterSeconds * 1000);
     }
   }
   async function send() {
     if (active.current || sendCooldown) return;
-    if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
-      email.trim().length > 254
-    ) {
+    if (!isValidEmail(email)) {
       setFieldError("Vui lòng nhập email hợp lệ.");
       emailRef.current?.focus();
       return;
@@ -87,8 +87,7 @@ export function useForgotPasswordForm() {
     try {
       const result = await requestPasswordReset(email);
       if (result.success) {
-        const time = Date.now();
-        setNow(time);
+        const time = syncNow();
         setEmail(email.trim());
         setChallenge(result.data);
         setGrant(null);
@@ -129,13 +128,13 @@ export function useForgotPasswordForm() {
           otp,
         });
         if (result.success) {
-          setNow(Date.now());
+          syncNow();
           setGrant(result.data);
           setOtp("");
         } else {
           fail(result.error, "verify");
           setOtp("");
-          otpRef.current?.focus();
+          refocusOtp.current = true;
         }
       } finally {
         active.current = false;
@@ -210,6 +209,7 @@ export function useForgotPasswordForm() {
     verifyCooldown,
     expiresIn,
     passwordValid,
+    passwordRules: passwordCheck.rules,
     submit,
     send,
     restart,

@@ -3,6 +3,7 @@ import { KeyRound, MailCheck } from "lucide-react";
 import { ArrowIcon } from "@/components/arrow-icon";
 import { useForgotPasswordForm } from "../hooks/use-forgot-password-form";
 import { AuthField } from "./auth-field";
+import { PasswordChecklist } from "./password-checklist";
 
 export function ForgotPasswordForm() {
   const {
@@ -22,7 +23,7 @@ export function ForgotPasswordForm() {
     sendCooldown,
     verifyCooldown,
     expiresIn,
-    passwordValid,
+    passwordRules,
     submit,
     send,
     restart,
@@ -162,11 +163,9 @@ export function ForgotPasswordForm() {
             isPasswordVisible={confirmationVisible}
             onTogglePassword={toggleConfirmation}
           />
-          <small className="reset-password-status">
-            {password && passwordValid
-              ? "✓ Mật khẩu đáp ứng yêu cầu độ dài."
-              : "Ký tự có dấu và emoji có thể chiếm nhiều byte."}
-          </small>
+          <PasswordChecklist rules={passwordRules}>
+            Ký tự có dấu và emoji có thể chiếm nhiều byte.
+          </PasswordChecklist>
         </>
       )}
       {stage !== "email" && (

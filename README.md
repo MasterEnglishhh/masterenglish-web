@@ -1,37 +1,40 @@
 # MasterEnglish Web
 
-Nền tảng giao diện Next.js 16.4.3 và React 19.3. Trang chủ ở `/`; không gian học ở `/learn` với các trang Từ vựng (`/learn/vocabulary`), Ôn tập (`/learn/review`), Ngữ pháp (`/learn/grammar`), Luyện TOEIC (`/learn/toeic`), Kết quả (`/learn/results`) và AI Tutor (`/learn/ai-tutor`). Các trang tài khoản gồm `/login`, `/register` và `/forgot-password` (hỗ trợ tự động chuyển hướng từ các route tiếng Việt cũ).
+Nền tảng giao diện Next.js 16.4.6 và React 19.3. Trang chủ ở `/`; không gian học ở `/learn` với các trang Từ vựng (`/learn/vocabulary`), Ôn tập (`/learn/review`), Ngữ pháp (`/learn/grammar`), Luyện TOEIC (`/learn/toeic`), Kết quả (`/learn/results`) và AI Tutor (`/learn/ai-tutor`). Các trang tài khoản gồm `/login`, `/register` và `/forgot-password` (hỗ trợ tự động chuyển hướng từ các route tiếng Việt cũ).
 
 ## Cấu trúc mã nguồn
 
 ```text
 src/
-  app/                         Đường dẫn, layout và metadata của Next.js
-  components/                  Thành phần dùng chung: logo, biểu tượng, hiệu ứng
-  features/
-    auth/components/           Giao diện tài khoản
-    auth/hooks/                Trạng thái và kiểm tra biểu mẫu tài khoản
-    auth/types/                Kiểu của luồng tài khoản
-    learning/components/       Điều hướng và bài học mẫu
-    learning/data/             Dữ liệu minh họa cho không gian học
-    learning/hooks/            Luồng lật thẻ và làm câu TOEIC mẫu
-    learning/types/            Kiểu thẻ từ, câu TOEIC và điều hướng
-    marketing/components/      Trang chủ, header và footer
-    marketing/data/            Danh mục trên trang chủ
-    marketing/types/           Kiểu danh mục trang chủ
-  styles/                      CSS nền, trang chủ, học tập, tài khoản, responsive
-public/                        Tài nguyên tĩnh được phục vụ trực tiếp
-demo/                          Bản mẫu HTML độc lập
-docs/                          Tài liệu thiết kế và kế hoạch
+  app/                    Đường dẫn, layout, metadata. Mỏng: chỉ ghép trang, không state hay gọi API
+  components/             UI dùng chung, không biết nghiệp vụ: logo, biểu tượng, Dialog, dòng trạng thái
+  lib/                    Hạ tầng dùng chung: http (CSRF, làm mới phiên), session, user-result
+  styles/                 CSS dùng chung: base.css, ui.css, dialog.css
+  features/<tên>/         admin, auth, learning, marketing, toeic, vocabulary
+    components/           Giao diện
+    hooks/                Trạng thái và hành động (gọi client API)
+    lib/                  Client API và logic thuần, kèm test cạnh file
+    types/ data/          Kiểu dữ liệu và dữ liệu minh họa
+    styles/<tên>.css      CSS riêng của feature
+    index.ts              Cổng công khai: phần mà app/ và feature khác được dùng
+tests/                    Test tích hợp; tests/helpers/load-hook.mjs nạp hook để thử
+public/                   Tài nguyên tĩnh được phục vụ trực tiếp
+docs/                     Hợp đồng API quản trị và hướng dẫn Cloudflare Pages
 ```
 
-Giữ `src/app` gọn cho các file định tuyến. Thành phần dùng ở nhiều khu vực đặt trong `src/components`; giao diện, hook, dữ liệu và type của từng khu vực đặt trong `src/features`. Hook xử lý trạng thái và hành động của biểu mẫu hoặc bài học mẫu; component hiển thị giao diện. Các mảng dữ liệu minh họa dùng `satisfies` để được kiểm tra type mà vẫn giữ literal type. Type dùng chung toàn ứng dụng chỉ cần thêm khi nhiều tính năng thực sự cùng sử dụng. `src/app/globals.css` nạp Tailwind; các lớp giao diện nằm trong `src/styles` và được nhập theo thứ tự từ `src/app/layout.tsx`. Alias `@/` trỏ tới `src/`.
+**Quy tắc phụ thuộc** (ESLint ép bằng `import/no-restricted-paths`): `app → features → components / lib`. `app/` chỉ import từ `@/features/<tên>` (file `index.ts`). Một feature chỉ dùng chính nó và `@/features/auth`; không import chéo feature khác. `components/` và `lib/` không import `features/` hay `app/`. File mà `node --test` chạy trực tiếp (client API và thứ chúng import) dùng đường dẫn tương đối kèm đuôi `.ts`, vì Node không hiểu alias `@/`. `max-lines` cảnh báo khi file vượt 350 dòng code (không tính dòng trống và comment): tách theo việc (hook giữ trạng thái và hành động, component hiển thị), không tách chỉ để ngắn hơn.
+
+**CSS:** `src/app/globals.css` nạp Tailwind (chỉ quét `src/`), rồi `base.css`, `ui.css`, `dialog.css`. CSS riêng của feature nằm trong `features/<tên>/styles/` và được import ở component gốc của feature đó. Thứ tự import CSS là thứ tự cascade, nên `globals.css` phải đứng trước mọi import feature trong `app/layout.tsx`. Alias `@/` trỏ tới `src/`.
+
+Các mảng dữ liệu minh họa dùng `satisfies` để được kiểm tra type mà vẫn giữ literal type. Type dùng chung toàn ứng dụng chỉ cần thêm khi nhiều tính năng thực sự cùng sử dụng.
 
 Thẻ từ có hai mặt cố định trong DOM và chuyển giữa hai mặt bằng `rotateY` từ trái sang phải. Nút vẫn dùng được bằng bàn phím; CSS tắt chuyển động khi hệ điều hành bật giảm hiệu ứng.
 
 Cách chia theo tính năng tham khảo [Bulletproof React](https://github.com/alan2207/bulletproof-react/blob/master/docs/project-structure.md); ranh giới server/client và cách tổ chức route theo tài liệu [Next.js](https://nextjs.org/docs/app/getting-started/project-structure) và [React custom hooks](https://react.dev/learn/reusing-logic-with-custom-hooks).
 
-Chạy local bằng `npm run dev`, mở `http://127.0.0.1:3000`. Chạy `npm run lint`, `npm run test` và `npm run build` trước khi tích hợp thay đổi. Cần đặt `BACKEND_URL` trong `.env.local` để cấu hình rewrite `/api/*` cho biểu mẫu đăng nhập.
+Chạy local bằng `npm run dev`, mở `http://127.0.0.1:3000`. Chạy `npm run lint`, `npm run test` và `npm run build` trước khi tích hợp thay đổi. Kiểm tra giao diện bằng trình duyệt thật (4 bề rộng, tràn ngang, giảm chuyển động) bằng `npm run test:e2e`: dùng Microsoft Edge có sẵn, hoặc `npx playwright install chromium` rồi đặt `E2E_CHANNEL=chromium`; bài kiểm tra này chưa nằm trong CI. Cần đặt `BACKEND_URL` trong `.env.local` để cấu hình rewrite `/api/*` cho biểu mẫu đăng nhập.
+
+Phong cách giao diện của toàn ứng dụng (token, chữ, kính, nút, trạng thái, chuyển động, linh vật, luật trung thực, bẫy đã gặp) được ghi ở [docs/UI_STYLE_GUIDE.md](docs/UI_STYLE_GUIDE.md); đọc trước khi sửa giao diện.
 
 **Trạng thái bản xem trước:** nội dung thẻ từ, bài ngữ pháp và câu TOEIC là dữ liệu minh họa. Lật thẻ, đánh giá ghi nhớ và xem lời giải chỉ thay đổi trong phiên trình duyệt; không lưu tiến độ hay kết quả. Các trang Ôn tập, Kết quả và AI Tutor hiển thị trạng thái chờ dữ liệu. Đăng ký kèm OTP, quên/đặt lại mật khẩu, đăng nhập, khôi phục phiên và đăng xuất đã nối API thật. Phân quyền Learner/Content Admin/System Admin, media thật và các luồng học tập có lưu dữ liệu sẽ được nối với backend ở giai đoạn tiếp theo.
 

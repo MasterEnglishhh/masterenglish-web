@@ -1,9 +1,10 @@
 "use client";
 
-import { Check, Mail, ShieldCheck } from "lucide-react";
+import { Mail, ShieldCheck } from "lucide-react";
 import { ArrowIcon } from "@/components/arrow-icon";
 import { useRegisterForm } from "../hooks/use-register-form";
 import { AuthField } from "./auth-field";
+import { PasswordChecklist } from "./password-checklist";
 import { RegistrationOtpForm } from "./registration-otp-form";
 
 export function RegisterForm() {
@@ -23,7 +24,6 @@ export function RegisterForm() {
     pending,
     sendCooldown,
   } = form;
-  const fulfilledRules = passwordRules.filter((rule) => rule.met).length;
 
   if (form.challenge) return <RegistrationOtpForm form={form} />;
 
@@ -100,29 +100,10 @@ export function RegisterForm() {
             isPasswordVisible={showPassword}
             onTogglePassword={togglePassword}
           />
-          <div className={`register-password-guide rules-${fulfilledRules}`}>
-            <div className="register-password-meter" aria-hidden="true">
-              <span />
-              <span />
-            </div>
-            <ul aria-label="Yêu cầu mật khẩu">
-              {passwordRules.map((rule) => (
-                <li key={rule.label} className={rule.met ? "is-met" : ""}>
-                  <Check size={13} aria-hidden="true" />
-                  <span>
-                    {rule.label}
-                    <span className="sr-only">
-                      {rule.met ? ": đã đạt" : ": chưa đạt"}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <p className="register-password-tip">
-              Có thể dùng một cụm từ dài, dễ nhớ. Ký tự có dấu và emoji có thể
-              chiếm nhiều byte.
-            </p>
-          </div>
+          <PasswordChecklist rules={passwordRules}>
+            Có thể dùng một cụm từ dài, dễ nhớ. Ký tự có dấu và emoji có thể
+            chiếm nhiều byte.
+          </PasswordChecklist>
         </div>
 
         <AuthField

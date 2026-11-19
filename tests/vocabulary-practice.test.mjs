@@ -1,9 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
 import React from "react";
 import { act, create } from "react-test-renderer";
-import ts from "typescript";
+import { loadHook } from "./helpers/load-hook.mjs";
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const card = {
@@ -34,37 +33,20 @@ const success = {
   },
 };
 
-function loadHook(submitReview) {
-  const source = fs.readFileSync(
-    new URL(
-      "../src/features/vocabulary/hooks/use-vocabulary-practice.ts",
-      import.meta.url
-    ),
-    "utf8"
+function loadPractice(submitReview) {
+  return loadHook(
+    "src/features/vocabulary/hooks/use-vocabulary-practice.ts",
+    "useVocabularyPractice",
+    {
+      submitReview,
+      saveWordSense: async () => ({ success: true }),
+      unsaveWordSense: async () => ({ success: true }),
+    }
   );
-  const compiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2022,
-    },
-  }).outputText;
-  const hookModule = { exports: {} };
-  const mocks = {
-    submitReview,
-    saveWordSense: async () => ({ success: true }),
-    unsaveWordSense: async () => ({ success: true }),
-  };
-  const localRequire = (name) => (name === "react" ? React : mocks);
-  new Function("require", "module", "exports", compiled)(
-    localRequire,
-    hookModule,
-    hookModule.exports
-  );
-  return hookModule.exports.useVocabularyPractice;
 }
 
 async function mount(cards, submitReview) {
-  const hook = loadHook(submitReview);
+  const hook = loadPractice(submitReview);
   let current;
   function Harness({ cards }) {
     current = hook({ cards });
@@ -236,6 +218,51 @@ test("retry preserves the confirmed rating even after the user flips back to the
     await act(async () => fixture.current().retry());
     assert.deepEqual(requests[1], requests[0]);
     assert.equal(fixture.current().summary.totalReviewed, 1);
+  } finally {
+    await fixture.close();
+  }
+});
+
+test("a rate-limited review can be rated again without reloading the queue", async () => {
+  const requests = [];
+  let calls = 0;
+  const fixture = await mount([card], async (body) => {
+    requests.push(body);
+    return ++calls === 1
+      ? {
+          success: false,
+          error: {
+            status: 429,
+            code: "RATE_LIMITED",
+            message: "Bạn thao tác quá nhanh.",
+          },
+        }
+      : success;
+  });
+  try {
+    await act(async () => fixture.current().flip());
+    await act(async () => fixture.current().rate("GOOD"));
+    assert.equal(fixture.current().error, "Bạn thao tác quá nhanh.");
+    assert.equal(
+      fixture.current().requiresReload,
+      false,
+      "429 is not a stale-data conflict"
+    );
+    assert.equal(
+      fixture.current().uncertain,
+      false,
+      "the server did not process it"
+    );
+    assert.equal(fixture.current().canRate, true);
+
+    await act(async () => fixture.current().rate("GOOD"));
+    assert.equal(requests.length, 2);
+    assert.equal(fixture.current().summary.totalReviewed, 1);
+    assert.equal(
+      requests[1].expectedProgressVersion,
+      null,
+      "nothing was committed, so the original progress version still applies"
+    );
   } finally {
     await fixture.close();
   }

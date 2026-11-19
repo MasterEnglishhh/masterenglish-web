@@ -1,0 +1,158 @@
+/* Menu tài khoản thả xuống (dùng ở thanh đầu của landing, khu học tập và quản trị). */
+.account-menu {
+  position: relative;
+}
+.account-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  max-width: 220px;
+  padding: 4px 12px 4px 4px;
+  border: 1px solid var(--glass-line);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font-weight: 800;
+  transition: transform var(--dur-base) var(--spring), background var(--dur-fast);
+}
+.account-trigger:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+.account-trigger.is-placeholder {
+  visibility: hidden;
+  width: 44px;
+  padding: 0;
+}
+.account-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--indigo);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+}
+.account-trigger-name {
+  display: none;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+@media (min-width: 640px) {
+  .account-trigger-name {
+    display: block;
+  }
+}
+.account-caret {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border: solid var(--ink);
+  border-width: 0 2px 2px 0;
+  rotate: 45deg;
+  translate: 0 -2px;
+  transition: rotate 0.25s var(--spring);
+}
+.account-trigger[aria-expanded="true"] .account-caret {
+  rotate: 225deg;
+  translate: 0 2px;
+}
+.account-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  z-index: 60;
+  display: grid;
+  gap: 2px;
+  width: min(280px, calc(100vw - 32px));
+  padding: 10px;
+  background: #fff;
+  animation: account-panel-in 0.22s var(--ease);
+}
+.account-panel-head {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px 12px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.account-panel-head strong {
+  overflow-wrap: anywhere;
+}
+.account-panel-head small {
+  color: var(--text-muted);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.account-item {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.account-item:hover {
+  background: var(--lavender);
+}
+.account-item-danger {
+  color: var(--danger);
+}
+.account-item-danger:hover {
+  background: var(--danger-soft);
+}
+.account-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.account-error {
+  margin: 4px 10px 0;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 700;
+}
+.role-badge {
+  justify-self: start;
+  margin-top: 6px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 800;
+}
+.role-badge-admin {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.role-badge-content {
+  background: var(--lime);
+  color: var(--ink);
+}
+.role-badge-learner {
+  background: var(--lavender);
+  color: var(--indigo-deep);
+}
+@keyframes account-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .account-panel {
+    animation: none;
+  }
+}
