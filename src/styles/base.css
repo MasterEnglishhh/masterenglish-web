@@ -16,6 +16,27 @@
   --glass-shadow:0 1px 0 rgba(255,255,255,.85) inset,0 18px 40px -18px rgba(57,51,168,.22),0 2px 8px rgba(32,34,59,.05);
   --danger:#c0392b;
   --danger-soft:#ffe3df;
+  --border-subtle:rgba(32,34,59,.14);
+  --indigo-hover:#4b45d6;
+  --indigo-soft:#9b95ff;
+  --indigo-glow:rgba(90,84,232,.8);
+  --indigo-wash:rgba(90,84,232,.14);
+  --lavender-line:#d6d1fb;
+  --lavender-wash:#efedff;
+  --success:#277054;
+  --glass-bg:rgba(255,255,255,.75);
+  --glass-bg-strong:rgba(255,255,255,.85);
+  --glass-bg-solid:rgba(255,255,255,.9);
+  --radius-xl:28px;
+  --radius-lg:24px;
+  --radius-md:20px;
+  --radius-sm:16px;
+  --radius-pill:999px;
+  --dur-fast:.2s;
+  --dur-base:.3s;
+  --z-sticky:30;
+  --z-splash:9999;
+  --z-cursor:10000;
 }
 * {
   box-sizing:border-box
@@ -100,15 +121,15 @@ em {
 }
 /* Thẻ kính thích ứng: máy rộng làm mờ nền, máy hẹp dùng nền đặc hơn và tắt blur để giữ 60fps */
 .glass-card {
-  background:rgba(255,255,255,.9);
+  background:var(--glass-bg-solid);
   border:1px solid var(--glass-line);
-  border-radius:24px;
+  border-radius:var(--radius-lg);
   box-shadow:var(--glass-shadow)
 }
 @media (min-width:768px) {
 .glass-card {
     background:rgba(255,255,255,.62);
-    border-radius:28px;
+    border-radius:var(--radius-xl);
     -webkit-backdrop-filter:blur(12px) saturate(1.2);
     backdrop-filter:blur(12px) saturate(1.2)
   }

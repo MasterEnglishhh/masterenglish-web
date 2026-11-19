@@ -5,8 +5,8 @@
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-line: rgba(255, 255, 255, 0.75);
-  --glass-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) inset, 0 18px 40px -18px rgba(57, 51, 168, 0.22),
+  --glass-line: var(--glass-bg);
+  --glass-shadow: 0 1px 0 var(--glass-bg-strong) inset, 0 18px 40px -18px rgba(57, 51, 168, 0.22),
     0 2px 8px rgba(32, 34, 59, 0.05);
   position: relative;
   isolation: isolate;
@@ -106,7 +106,7 @@
 .lp-glass {
   background: rgba(255, 255, 255, 0.88);
   border: 1px solid var(--glass-line);
-  border-radius: 28px;
+  border-radius: var(--radius-xl);
   box-shadow: var(--glass-shadow);
 }
 
@@ -121,7 +121,7 @@
 
 .lp-tilt {
   transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform 0.5s var(--spring), box-shadow 0.3s;
+  transition: transform 0.5s var(--spring), box-shadow var(--dur-base);
   will-change: transform;
 }
 
@@ -138,19 +138,19 @@
   gap: 10px;
   min-height: 52px;
   padding: 0 26px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 1rem;
   font-weight: 800;
   line-height: 1;
   white-space: nowrap;
-  transition: transform 0.3s var(--spring), box-shadow 0.3s, background 0.2s;
+  transition: transform var(--dur-base) var(--spring), box-shadow var(--dur-base), background var(--dur-fast);
 }
 
 .lp-btn svg {
   width: 18px;
   height: 18px;
   flex: none;
-  transition: transform 0.3s var(--spring);
+  transition: transform var(--dur-base) var(--spring);
 }
 
 .lp-btn:hover svg {
@@ -166,7 +166,7 @@
 
 .lp-btn-primary:hover {
   transform: translateY(-3px) scale(1.03);
-  background: #4b45d6;
+  background: var(--indigo-hover);
 }
 
 .lp-btn-primary:active {
@@ -175,7 +175,7 @@
 
 .lp-btn-ghost {
   background: rgba(255, 255, 255, 0.7);
-  border: 1.5px solid rgba(32, 34, 59, 0.14);
+  border: 1.5px solid var(--border-subtle);
 }
 
 .lp-btn-ghost:hover {
@@ -213,7 +213,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 8px 10px 8px 16px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow);
@@ -243,7 +243,7 @@
   flex-direction: column;
   gap: 2px;
   padding: 10px;
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   background: #fff;
   border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow);
@@ -258,9 +258,9 @@
   align-items: center;
   min-height: 44px;
   padding: 0 16px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-weight: 700;
-  transition: background 0.2s;
+  transition: background var(--dur-fast);
 }
 
 .lp-nav-links > a:hover {
@@ -276,7 +276,7 @@
 .lp-nav-extra .lp-nav-login {
   display: flex;
   justify-content: center;
-  border: 1.5px solid rgba(32, 34, 59, 0.14);
+  border: 1.5px solid var(--border-subtle);
 }
 
 .lp-nav-extra .lp-btn {
@@ -294,7 +294,7 @@
   align-items: center;
   min-height: 44px;
   padding: 0 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-weight: 800;
 }
 
@@ -322,7 +322,7 @@
   height: 2.5px;
   border-radius: 2px;
   background: var(--ink);
-  transition: transform 0.3s var(--spring);
+  transition: transform var(--dur-base) var(--spring);
 }
 
 .lp-nav-toggle[aria-expanded="true"] span:first-child {
@@ -408,11 +408,11 @@
 }
 
 .lp-hero-copy > :nth-child(3) {
-  animation-delay: 0.2s;
+  animation-delay: var(--dur-fast);
 }
 
 .lp-hero-copy > :nth-child(4) {
-  animation-delay: 0.3s;
+  animation-delay: var(--dur-base);
 }
 
 
@@ -508,7 +508,7 @@
 .lp-star-1 {
   width: 16px;
   height: 16px;
-  color: #9b95ff;
+  color: var(--indigo-soft);
 }
 
 .lp-star-2 {
@@ -524,7 +524,7 @@
   display: grid;
   gap: 1px;
   padding: 12px 16px;
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.78);
   border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow);
@@ -697,7 +697,7 @@
   display: inline-block;
   margin-bottom: 14px;
   padding: 4px 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #fff;
   font-size: 0.875rem;
   font-weight: 800;
@@ -763,7 +763,7 @@
   flex: none;
   width: 48px;
   height: 48px;
-  border-radius: 16px;
+  border-radius: var(--radius-sm);
   background: var(--indigo);
   color: #fff;
   font-weight: 900;
@@ -792,7 +792,7 @@
   gap: 14px;
   justify-items: center;
   padding: 18px;
-  border-radius: 28px;
+  border-radius: var(--radius-xl);
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid var(--glass-line);
 }
@@ -817,7 +817,7 @@
   inset: 0;
   padding: 0;
   border: 0;
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   background: none;
   color: inherit;
   font: inherit;
@@ -860,9 +860,9 @@
   place-content: center;
   gap: 6px;
   padding: 18px;
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   background: #fff;
-  border: 1px solid rgba(90, 84, 232, 0.14);
+  border: 1px solid var(--indigo-wash);
   box-shadow: var(--glass-shadow);
   text-align: center;
   backface-visibility: hidden;
@@ -882,7 +882,7 @@
 .lp-flipface small {
   justify-self: center;
   padding: 2px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--lime);
   font-size: 0.8125rem;
   font-weight: 800;
@@ -890,7 +890,7 @@
 
 .lp-flipback {
   transform: rotateY(180deg);
-  background: linear-gradient(160deg, #fff, #efedff);
+  background: linear-gradient(160deg, #fff, var(--lavender-wash));
 }
 
 .lp-flipback strong {
@@ -918,10 +918,10 @@
   min-height: 46px;
   padding: 0 8px;
   border: 1.5px solid rgba(32, 34, 59, 0.12);
-  border-radius: 16px;
+  border-radius: var(--radius-sm);
   color: var(--ink);
   font-weight: 800;
-  transition: transform 0.25s var(--spring), opacity 0.2s;
+  transition: transform 0.25s var(--spring), opacity var(--dur-fast);
 }
 
 .lp-rate-0 {
@@ -1019,9 +1019,9 @@
   gap: 2px 12px;
   align-items: center;
   padding: 10px 14px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.75);
-  transition: transform 0.25s var(--spring), background 0.2s;
+  border-radius: var(--radius-sm);
+  background: var(--glass-bg);
+  transition: transform 0.25s var(--spring), background var(--dur-fast);
 }
 
 .lp-notebook li:hover {
@@ -1086,7 +1086,7 @@
 .lp-goalmock input[type="date"] {
   min-height: 46px;
   padding: 0 14px;
-  border: 1.5px solid rgba(32, 34, 59, 0.14);
+  border: 1.5px solid var(--border-subtle);
   border-radius: 14px;
   background: #fff;
   color: var(--ink);
@@ -1103,8 +1103,8 @@
 
 .lp-progressmock dl > div {
   padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.75);
+  border-radius: var(--radius-sm);
+  background: var(--glass-bg);
 }
 
 .lp-progressmock dl > div:nth-child(3n + 1) {
@@ -1208,7 +1208,7 @@
   height: 28px;
   border-radius: 50%;
   background: var(--lavender);
-  transition: transform 0.35s var(--spring), background 0.2s;
+  transition: transform 0.35s var(--spring), background var(--dur-fast);
 }
 
 .lp-faq-item summary i::before,
@@ -1303,7 +1303,7 @@
 }
 
 .lp-confetti-4 {
-  background: #9b95ff;
+  background: var(--indigo-soft);
 }
 
 
@@ -1422,7 +1422,7 @@
 .lp-splash {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: var(--z-cursor);
   display: grid;
   place-content: center;
   justify-items: center;
@@ -1458,8 +1458,8 @@
   bottom: 24px;
   min-height: 44px;
   padding: 0 22px;
-  border: 1.5px solid rgba(32, 34, 59, 0.14);
-  border-radius: 999px 999px 999px 6px;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-pill) 999px 999px 6px;
   background: #fff;
   color: var(--ink);
   font-weight: 900;
@@ -1479,7 +1479,7 @@
     position: fixed;
     left: 0;
     top: 0;
-    z-index: 9999;
+    z-index: var(--z-splash);
     display: block;
     width: 0;
     height: 0;
@@ -1497,7 +1497,7 @@
     border: 2px solid var(--indigo);
     background: rgba(90, 84, 232, 0.1);
     opacity: 0;
-    transition: opacity 0.2s, transform 0.35s var(--spring), background 0.2s;
+    transition: opacity var(--dur-fast), transform 0.35s var(--spring), background var(--dur-fast);
   }
 
   .lp-cursor.is-on::after {

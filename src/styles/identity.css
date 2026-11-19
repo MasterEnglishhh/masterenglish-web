@@ -26,7 +26,7 @@
   align-self: start;
   justify-self: start;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1.5px dashed rgba(90, 84, 232, 0.55);
   background: rgba(255, 255, 255, 0.8);
   color: var(--indigo-deep);
@@ -37,7 +37,7 @@
 .status-badge {
   display: inline-block;
   padding: 3px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.8125rem;
   font-weight: 800;
   line-height: 1.5;

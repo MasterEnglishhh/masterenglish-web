@@ -14,18 +14,18 @@
 .progress-stats > div {
   padding: 18px 20px;
   border: 1px solid var(--glass-line);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg-solid);
   box-shadow: var(--glass-shadow);
 }
 .progress-stats > div:nth-child(3n + 1) {
-  background: linear-gradient(160deg, rgba(222, 219, 253, 0.9), rgba(255, 255, 255, 0.85));
+  background: linear-gradient(160deg, rgba(222, 219, 253, 0.9), var(--glass-bg-strong));
 }
 .progress-stats > div:nth-child(3n + 2) {
-  background: linear-gradient(160deg, rgba(199, 242, 220, 0.8), rgba(255, 255, 255, 0.85));
+  background: linear-gradient(160deg, rgba(199, 242, 220, 0.8), var(--glass-bg-strong));
 }
 .progress-stats > div:nth-child(3n) {
-  background: linear-gradient(160deg, rgba(255, 225, 203, 0.85), rgba(255, 255, 255, 0.85));
+  background: linear-gradient(160deg, rgba(255, 225, 203, 0.85), var(--glass-bg-strong));
 }
 .progress-stats dt {
   color: var(--text-muted);
@@ -47,7 +47,7 @@
   gap: 12px;
   margin: 0 0 24px;
   padding: 16px 20px;
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   background: rgba(217, 245, 134, 0.35);
   font-weight: 800;
 }
@@ -70,7 +70,7 @@
   gap: 4px 16px;
   padding: 14px 18px;
   border: 1px solid var(--glass-line);
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.88);
 }
 .progress-history li div {
@@ -90,7 +90,7 @@
 }
 .rating-badge {
   padding: 3px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 800;
 }

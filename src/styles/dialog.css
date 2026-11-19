@@ -31,7 +31,7 @@
   padding: 28px;
   overflow-y: auto;
   border: 1px solid var(--glass-line);
-  border-radius: 28px;
+  border-radius: var(--radius-xl);
   background:
     radial-gradient(60% 40% at 0% 0%, rgba(222, 219, 253, 0.7), transparent 70%),
     radial-gradient(50% 40% at 100% 0%, rgba(199, 242, 220, 0.55), transparent 70%), #fff;
