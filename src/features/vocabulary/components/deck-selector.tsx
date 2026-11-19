@@ -16,6 +16,7 @@ export interface DeckSelectorProps {
   totalDue?: number;
   onSelectDeck: (id: string) => void;
   onOpenReview: () => void;
+  onViewDetail?: (deck: DeckDto) => void;
 }
 function topic(title: string) {
   const value = title.toLowerCase();
@@ -31,6 +32,7 @@ export function DeckSelector({
   totalDue = 0,
   onSelectDeck,
   onOpenReview,
+  onViewDetail,
 }: DeckSelectorProps) {
   return (
     <>
@@ -71,14 +73,26 @@ export function DeckSelector({
                 <p>
                   {deck.description || "Học nghĩa của từ qua ví dụ và phát âm."}
                 </p>
-                <button
-                  type="button"
-                  className={styles.secondary}
-                  onClick={() => onSelectDeck(deck.id)}
-                >
-                  Bắt đầu học
-                  <ArrowRight size={17} />
-                </button>
+                <div className={styles.deckActions}>
+                  {onViewDetail && (
+                    <button
+                      type="button"
+                      className={styles.secondary}
+                      onClick={() => onViewDetail(deck)}
+                      aria-label={`Xem chi tiết bộ từ ${deck.title}`}
+                    >
+                      Xem chi tiết
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={onViewDetail ? styles.primary : styles.secondary}
+                    onClick={() => onSelectDeck(deck.id)}
+                  >
+                    Bắt đầu học
+                    <ArrowRight size={17} />
+                  </button>
+                </div>
               </div>
             </article>
           );

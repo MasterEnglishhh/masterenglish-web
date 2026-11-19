@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { useDeckLibrary, type DeckFilter } from "../hooks/use-deck-library";
 import { DeckSelector } from "./deck-selector";
+import { DeckDetailModal } from "./deck-detail-modal";
+import type { DeckDto } from "../types/vocabulary";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { Pagination } from "@/components/pagination";
@@ -85,6 +87,7 @@ function DeckLibraryPage({
   retry: () => void;
   changePage: (page: number) => void;
 }) {
+  const [selectedDeck, setSelectedDeck] = useState<DeckDto | null>(null);
   const { data, error } = useDeckLibrary(filter, page);
   if (error) return <ErrorState message={error} onRetry={retry} idSuffix="-decks-error" />;
   if (!data) return <VocabularyLoading />;
@@ -107,6 +110,18 @@ function DeckLibraryPage({
           totalDue={data.due}
           onSelectDeck={select}
           onOpenReview={review}
+          onViewDetail={(deck) => setSelectedDeck(deck)}
+        />
+      )}
+      {selectedDeck && (
+        <DeckDetailModal
+          deckId={selectedDeck.id}
+          initialDeck={selectedDeck}
+          onClose={() => setSelectedDeck(null)}
+          onStartStudy={(id) => {
+            setSelectedDeck(null);
+            select(id);
+          }}
         />
       )}
       <Pagination

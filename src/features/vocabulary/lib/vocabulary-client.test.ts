@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   fetchDecks,
   fetchDeckCards,
+  fetchDeckDetail,
+  fetchDeckWords,
   fetchSavedSenseIds,
   saveWordSense,
   unsaveWordSense,
@@ -156,6 +158,100 @@ test("vocabulary client fetchDeckCards returns deck cards", async () => {
     if (res.success) {
       assert.equal(res.data.items.length, 1);
       assert.equal(res.data.items[0].lemma, "approach");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("vocabulary client fetchDeckDetail returns deck details", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = mock.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes("/api/v1/vocabulary/decks/deck-detail-1")) {
+      return new Response(
+        JSON.stringify({
+          id: "deck-detail-1",
+          title: "Daily Communication",
+          description: "Essential communication vocabulary",
+          level: "B2",
+          cardCount: 25,
+          publishedRevisionId: "rev-uuid-1",
+          createdAt: "2026-11-19T00:00:00Z",
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    return new Response(null, { status: 404 });
+  });
+
+  try {
+    const res = await fetchDeckDetail("deck-detail-1");
+    assert.equal(res.success, true);
+    if (res.success) {
+      assert.equal(res.data.id, "deck-detail-1");
+      assert.equal(res.data.title, "Daily Communication");
+      assert.equal(res.data.level, "B2");
+      assert.equal(res.data.cardCount, 25);
+      assert.equal(res.data.publishedRevisionId, "rev-uuid-1");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("vocabulary client fetchDeckWords aliases fetchDeckCards and queries deck words", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = mock.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes("/api/v1/vocabulary/decks/deck-2/words?page=0&size=5")) {
+      return new Response(
+        JSON.stringify({
+          items: [
+            {
+              deckId: "deck-2",
+              deckRevisionId: "rev-2",
+              position: 1,
+              wordSenseId: "sense-2",
+              wordId: "word-2",
+              wordRevisionId: "wrev-2",
+              lemma: "negotiate",
+              ipa: "/nɪˈɡəʊʃieɪt/",
+              partOfSpeech: "VERB",
+              cefrLevel: "B2",
+              meaningVi: "đàm phán",
+              definitionEn: "to try to reach an agreement",
+              examples: [],
+              audioUrl: null,
+              isSaved: false,
+              progress: {
+                repetitions: 2,
+                intervalDays: 4,
+                easeFactor: 2.5,
+                dueAt: "2026-11-20T00:00:00Z",
+                version: 1,
+              },
+            },
+          ],
+          page: 0,
+          size: 5,
+          totalItems: 1,
+          totalPages: 1,
+          hasNext: false,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    return new Response(null, { status: 404 });
+  });
+
+  try {
+    const res = await fetchDeckWords("deck-2", { page: 0, size: 5 });
+    assert.equal(res.success, true);
+    if (res.success) {
+      assert.equal(res.data.items.length, 1);
+      assert.equal(res.data.items[0].lemma, "negotiate");
+      assert.equal(res.data.items[0].progress?.repetitions, 2);
     }
   } finally {
     globalThis.fetch = originalFetch;

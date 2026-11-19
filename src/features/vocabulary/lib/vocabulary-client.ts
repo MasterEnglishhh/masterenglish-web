@@ -209,6 +209,8 @@ export function fetchDeckCards(
   );
 }
 
+export const fetchDeckWords = fetchDeckCards;
+
 
 export function fetchSavedWords(params?: {
   cefrLevel?: string;
