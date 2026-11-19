@@ -9,7 +9,7 @@ import "../styles/learning.css";
 
 /**
  * Khung của khu học tập: thanh bên kính (màn rộng), thanh đầu kèm menu tài khoản, thanh điều hướng
- * cuộn ngang (màn hẹp) và chân trang. Bọc ngoài bởi RequireAuth ở app/learn/layout.tsx.
+ * cuộn ngang (màn hẹp) và chân trang.
  */
 export function LearningShell({ children }: { children: React.ReactNode }) {
   return (

@@ -1,10 +1,11 @@
 import { afterEach, test } from "node:test";
 import assert from "node:assert/strict";
 import { act, loadHook, mountHook } from "./helpers/load-hook.mjs";
+import { getRoleHome, getSafeRedirectUrl } from "../src/features/auth/lib/redirect.ts";
 
 const useCountdownClock = loadHook("src/features/auth/hooks/use-countdown-clock.ts", "useCountdownClock");
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const user = { id: "u1", email: "an@example.com" };
+const user = { id: "u1", email: "an@example.com", roles: ["LEARNER"] };
 const submit = { preventDefault() {} };
 
 // Đóng mọi hook đã gắn để đồng hồ đếm lùi không giữ tiến trình sống khi một test lỗi.
@@ -21,9 +22,10 @@ async function setup({ result = { success: true, user }, redirectTo } = {}) {
   const router = { replace: (url) => replaced.push(url) };
   const mocks = {
     useRouter: () => router,
-    useAuthSession: () => ({ user: null, acceptLogin: (value) => accepted.push(value) }),
+    useAuthSession: () => ({ user: accepted.at(-1) ?? null, acceptLogin: (value) => accepted.push(value) }),
     useCountdownClock,
-    getSafeRedirectUrl: (value, fallback) => value ?? fallback,
+    getRoleHome,
+    getSafeRedirectUrl,
     EMAIL_PATTERN,
     login: async (credentials) => {
       calls.push(credentials);

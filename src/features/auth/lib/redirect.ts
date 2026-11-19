@@ -1,3 +1,8 @@
+export function getRoleHome(roles: string[]): string {
+  if (roles.includes("SYSTEM_ADMIN") || roles.includes("CONTENT_ADMIN")) return "/admin";
+  return roles.includes("LEARNER") ? "/learn" : "/";
+}
+
 /**
  * Validates and sanitizes a redirect target to prevent open redirect vulnerabilities.
  * Ensures the target is a relative internal path starting with a single '/'

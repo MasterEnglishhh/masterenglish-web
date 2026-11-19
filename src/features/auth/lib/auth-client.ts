@@ -36,7 +36,9 @@ function isAuthUser(data: unknown): data is AuthUser {
     typeof user.id === "string" &&
     !!user.id &&
     typeof user.email === "string" &&
-    !!user.email
+    !!user.email &&
+    Array.isArray(user.roles) &&
+    user.roles.every((role) => typeof role === "string")
   );
 }
 

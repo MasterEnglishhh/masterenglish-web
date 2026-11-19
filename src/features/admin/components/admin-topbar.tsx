@@ -8,6 +8,7 @@ function sectionLabel(pathname: string) {
   if (pathname.includes("/users")) return "TÀI KHOẢN & PHÂN QUYỀN";
   if (pathname.includes("/content")) return "QUẢN TRỊ NỘI DUNG";
   if (pathname.includes("/system")) return "CHÍNH SÁCH & NHẬT KÝ";
+  if (pathname === "/admin/account") return "TÀI KHOẢN CÁ NHÂN";
   return "TỔNG QUAN";
 }
 

@@ -1,5 +1,10 @@
+import { RequireAuth } from "@/features/auth";
 import { VocabularyPage } from "@/features/vocabulary";
 
 export default function Page() {
-  return <VocabularyPage />;
+  return (
+    <RequireAuth>
+      <VocabularyPage />
+    </RequireAuth>
+  );
 }

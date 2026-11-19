@@ -35,6 +35,7 @@ export function AccountMenu() {
   const name = displayName(user);
   const role = roleOf(user);
   const isAdmin = user.roles.some((r) => r === "SYSTEM_ADMIN" || r === "CONTENT_ADMIN");
+  const accountHref = isAdmin && !user.roles.includes("LEARNER") ? "/admin/account" : "/learn/account";
 
   return (
     <div className="account-menu" ref={rootRef}>
@@ -61,7 +62,7 @@ export function AccountMenu() {
             <small>{user.email}</small>
             <span className={`role-badge role-badge-${role.key}`}>{role.label}</span>
           </div>
-          <Link className="account-item" href="/learn/account" onClick={() => close()}>
+          <Link className="account-item" href={accountHref} onClick={() => close()}>
             Tài khoản của tôi
           </Link>
           {isAdmin && (

@@ -9,7 +9,7 @@ export function WhySection() {
         <Reveal>
           <span className="lp-kicker">{WHY.kicker}</span>
           <h2 id="lp-why-title">
-            Bài thi chỉ đo <em>hai kỹ năng.</em>
+            TOEIC <em>Listening &amp; Reading</em>
           </h2>
           <p className="lp-body">{WHY.body}</p>
         </Reveal>

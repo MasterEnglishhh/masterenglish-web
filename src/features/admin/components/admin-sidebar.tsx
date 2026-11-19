@@ -8,7 +8,7 @@ import { Brand } from "@/components/brand";
 import { Mascot } from "@/components/mascot";
 import { useAuthSession } from "@/features/auth";
 import { useSlidingIndicator } from "@/lib/use-sliding-indicator";
-import { adminNavItems } from "../data/navigation";
+import { getAdminNavItems } from "../data/navigation";
 
 const iconMap = { LayoutDashboard, Users, BookOpenCheck, Sliders };
 
@@ -21,9 +21,7 @@ export function AdminSidebar() {
   const indicatorRef = useRef<HTMLSpanElement>(null);
   useSlidingIndicator(navRef, indicatorRef, pathname);
 
-  const navItems = adminNavItems.filter((item) =>
-    item.href === "/admin/users" || item.href === "/admin/system" ? isSystemAdmin : true
-  );
+  const navItems = getAdminNavItems(isSystemAdmin);
 
   return (
     <aside className="admin-sidebar glass-card" aria-label="Điều hướng quản trị">
@@ -66,9 +64,11 @@ export function AdminSidebar() {
               : "Soạn từ vựng, bộ thẻ và duyệt nội dung chờ xuất bản."}
           </p>
         </div>
-        <Link href="/learn" className="admin-back-link">
-          <ArrowLeft size={14} aria-hidden="true" /> Khu vực học tập
-        </Link>
+        {user?.roles.includes("LEARNER") && (
+          <Link href="/learn" className="admin-back-link">
+            <ArrowLeft size={14} aria-hidden="true" /> Khu vực học tập
+          </Link>
+        )}
         <Link href="/" className="admin-back-link">
           <ArrowLeft size={14} aria-hidden="true" /> Trang chủ
         </Link>
