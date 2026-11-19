@@ -299,19 +299,6 @@ export function fetchFeatureFlags(): Promise<AdminResult<FeatureFlag[]>> {
   return requestWithAuth<FeatureFlag[]>("/api/v1/admin/system/feature-flags");
 }
 
-export function updateFeatureFlag(
-  key: string,
-  enabled: boolean
-): Promise<AdminResult<FeatureFlag>> {
-  return requestWithAuth<FeatureFlag>(
-    `/api/v1/admin/system/feature-flags/${key}`,
-    {
-      method: "PUT",
-      body: { enabled },
-    }
-  );
-}
-
 export function fetchStorageQuota(): Promise<AdminResult<StorageQuota>> {
   return requestWithAuth<StorageQuota>("/api/v1/admin/system/quotas/storage");
 }

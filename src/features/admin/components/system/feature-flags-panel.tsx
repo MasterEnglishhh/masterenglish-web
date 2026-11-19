@@ -5,10 +5,9 @@ import type { FeatureFlag } from "../../types/system-policy";
 
 interface FeatureFlagsPanelProps {
   flags: FeatureFlag[];
-  onToggle: (key: string) => void;
 }
 
-export function FeatureFlagsPanel({ flags, onToggle }: FeatureFlagsPanelProps) {
+export function FeatureFlagsPanel({ flags }: FeatureFlagsPanelProps) {
   return (
     <div className="admin-card" style={{ marginBottom: 32 }}>
       <div style={{ marginBottom: 20 }}>
@@ -17,7 +16,7 @@ export function FeatureFlagsPanel({ flags, onToggle }: FeatureFlagsPanelProps) {
           Cờ tính năng hệ thống <em>(Feature Flags)</em>
         </h2>
         <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--muted)" }}>
-          Bật/tắt các phân hệ động theo thời gian thực mà không cần deploy lại backend.
+          Chưa hỗ trợ điều khiển tính năng; trạng thái lưu chưa phản ánh hoạt động thực tế.
         </p>
       </div>
 
@@ -62,14 +61,15 @@ export function FeatureFlagsPanel({ flags, onToggle }: FeatureFlagsPanelProps) {
 
             <button
               type="button"
-              onClick={() => onToggle(flag.key)}
+              disabled
               style={{
                 width: 54,
                 height: 30,
                 borderRadius: 20,
                 background: flag.enabled ? "var(--indigo)" : "#d1d5db",
                 border: "none",
-                cursor: "pointer",
+                cursor: "not-allowed",
+                opacity: 0.65,
                 position: "relative",
                 transition: "background 0.2s",
                 display: "flex",
@@ -77,8 +77,8 @@ export function FeatureFlagsPanel({ flags, onToggle }: FeatureFlagsPanelProps) {
                 padding: 3,
                 flexShrink: 0,
               }}
-              title={flag.enabled ? "Bấm để tắt" : "Bấm để bật"}
-              aria-label={`Bật/tắt ${flag.name}`}
+              title="Chưa hỗ trợ điều khiển tính năng; trạng thái lưu chưa phản ánh hoạt động thực tế"
+              aria-label={`Trạng thái ${flag.name}: ${flag.enabled ? "Bật" : "Tắt"}`}
             >
               <span
                 style={{

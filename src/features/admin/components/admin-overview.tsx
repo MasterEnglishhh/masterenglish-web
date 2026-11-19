@@ -28,8 +28,8 @@ export function AdminOverview() {
             Bảng điều khiển <em>Quản trị & Vận hành</em>
           </h1>
           <p className="admin-description">
-            Theo dõi lưu lượng người học, tiến độ thẩm định nội dung từ vựng -
-            ngữ pháp - đề thi TOEIC và sức khỏe hạ tầng thời gian thực.
+            Theo dõi tổng quan người học, tiến độ thẩm định nội dung từ vựng -
+            ngữ pháp - đề thi TOEIC và định mức lưu trữ hệ thống.
           </p>
         </div>
         <button
