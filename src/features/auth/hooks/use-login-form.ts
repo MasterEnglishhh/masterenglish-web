@@ -102,6 +102,8 @@ export function useLoginForm(options: UseLoginFormOptions = {}) {
     if (result.success) {
       setStatus("success");
       acceptLogin(result.user);
+      // Trang đăng nhập cũ còn nằm ẩn trong DOM sau khi chuyển trang: không để mật khẩu ở lại trong ô nhập.
+      setValues((prev) => ({ ...prev, password: "" }));
       // Safe navigation to requested route or default learning hub
       router.replace(safeRedirect);
       return;

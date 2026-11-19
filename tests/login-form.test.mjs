@@ -70,6 +70,15 @@ test("đăng nhập thành công: nhận phiên rồi chuyển tới đích đã
   assert.equal(fixture.current().status, "success");
 });
 
+test("đăng nhập thành công: xóa mật khẩu khỏi form vì trang đăng nhập còn nằm ẩn trong DOM", async () => {
+  const { fixture, type, send } = await setup();
+  await type("email", "an@example.com");
+  await type("password", "mat-khau-dung");
+  await send();
+  assert.equal(fixture.current().values.password, "");
+  assert.equal(fixture.current().values.email, "an@example.com");
+});
+
 test("không có redirect thì về /learn", async () => {
   const { replaced, type, send } = await setup();
   await type("email", "an@example.com");

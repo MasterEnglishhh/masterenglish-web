@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { mockSession } from "./helpers";
 
 const viewports = [
   { width: 1440, height: 900 },
@@ -92,6 +93,8 @@ test.describe("khi người dùng bật giảm chuyển động", () => {
 
   test("trang chủ không còn hoạt ảnh lặp vô hạn đang chạy", async ({ page }) => {
     await skipIntro(page);
+    // Giả phiên: khi có backend thật chạy phía sau, các lệnh thăm dò phiên không kết thúc và networkidle không bao giờ tới.
+    await mockSession(page, null);
     await page.goto("/");
     await page.waitForLoadState("networkidle");
     const running = await page.evaluate(() =>
