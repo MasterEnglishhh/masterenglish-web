@@ -7,6 +7,8 @@ import {
   verifyPasswordResetOtp,
   resetPassword,
 } from "../lib/auth-client";
+import { isValidEmail } from "../lib/form-validation";
+import { checkPassword } from "../lib/password-rules";
 import { getSafeRedirectUrl } from "../lib/redirect";
 import { useAuthSession } from "./use-auth-session";
 import type {
@@ -48,11 +50,9 @@ export function useForgotPasswordForm() {
   const expiresIn = remaining(
     Date.parse(grant?.expiresAt ?? challenge?.expiresAt ?? "")
   );
-  const normalized = password.normalize("NFC");
-  const passwordValid =
-    [...normalized].length >= 15 &&
-    new TextEncoder().encode(normalized).length <= 72 &&
-    !!normalized.trim();
+  const passwordCheck = checkPassword(password);
+  const normalized = passwordCheck.normalized;
+  const passwordValid = passwordCheck.valid;
   useEffect(() => {
     if (stage === "otp") otpRef.current?.focus();
     if (stage === "password") passwordRef.current?.focus();
@@ -67,10 +67,7 @@ export function useForgotPasswordForm() {
   }
   async function send() {
     if (active.current || sendCooldown) return;
-    if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
-      email.trim().length > 254
-    ) {
+    if (!isValidEmail(email)) {
       setFieldError("Vui lòng nhập email hợp lệ.");
       emailRef.current?.focus();
       return;
@@ -204,6 +201,7 @@ export function useForgotPasswordForm() {
     verifyCooldown,
     expiresIn,
     passwordValid,
+    passwordRules: passwordCheck.rules,
     submit,
     send,
     restart,

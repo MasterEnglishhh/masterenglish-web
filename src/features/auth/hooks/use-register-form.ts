@@ -8,13 +8,16 @@ import {
   resendRegistrationOtp,
   verifyRegistrationOtp,
 } from "../lib/auth-client";
+import { checkPassword } from "../lib/password-rules";
+import {
+  validateRegisterValues,
+  type RegisterErrors,
+  type RegisterField,
+  type RegisterValues,
+} from "../lib/form-validation";
 import { getSafeRedirectUrl } from "../lib/redirect";
 import type { AuthError, RegistrationChallenge } from "../types/auth";
 
-type RegisterField =
-  "lastName" | "firstName" | "email" | "password" | "confirmPassword";
-type RegisterValues = Record<RegisterField, string>;
-type RegisterErrors = Partial<Record<RegisterField, string>>;
 type PendingAction = "register" | "verify" | "resend" | null;
 
 export function useRegisterForm() {
@@ -49,16 +52,7 @@ export function useRegisterForm() {
     Math.max(sendBlockedUntil, verifyBlockedUntil)
   );
 
-  const normalizedPassword = values.password.normalize("NFC");
-  const passwordRules = [
-    { label: "Từ 15 ký tự", met: [...normalizedPassword].length >= 15 },
-    {
-      label: "Tối đa 72 byte UTF-8",
-      met:
-        !!values.password &&
-        new TextEncoder().encode(normalizedPassword).length <= 72,
-    },
-  ];
+  const passwordRules = checkPassword(values.password).rules;
 
   useEffect(() => {
     if (challenge) otpRef.current?.focus();
@@ -91,28 +85,7 @@ export function useRegisterForm() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting.current || sendCooldown) return;
-    const nextErrors: RegisterErrors = {};
-    for (const field of ["lastName", "firstName"] as const) {
-      if (!values[field].trim())
-        nextErrors[field] =
-          field === "lastName"
-            ? "Vui lòng nhập họ và tên đệm."
-            : "Vui lòng nhập tên của bạn.";
-      else if (values[field].trim().length > 30)
-        nextErrors[field] = "Vui lòng dùng tối đa 30 ký tự.";
-    }
-    if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim()) ||
-      values.email.trim().length > 254
-    )
-      nextErrors.email = "Vui lòng nhập địa chỉ email hợp lệ.";
-    if (!passwordRules.every((rule) => rule.met) || !normalizedPassword.trim())
-      nextErrors.password =
-        "Mật khẩu cần từ 15 ký tự và không quá 72 byte UTF-8.";
-    if (!values.confirmPassword)
-      nextErrors.confirmPassword = "Vui lòng nhập lại mật khẩu.";
-    else if (values.confirmPassword.normalize("NFC") !== normalizedPassword)
-      nextErrors.confirmPassword = "Mật khẩu nhập lại chưa khớp.";
+    const nextErrors = validateRegisterValues(values);
     setErrors(nextErrors);
     const firstInvalid = Object.keys(nextErrors)[0] as
       RegisterField | undefined;

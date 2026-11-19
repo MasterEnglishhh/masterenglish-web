@@ -4,11 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { useCountdownClock } from "./use-countdown-clock";
 import { useRouter } from "next/navigation";
 import { login } from "../lib/auth-client";
+import { EMAIL_PATTERN } from "../lib/form-validation";
 import { getSafeRedirectUrl } from "../lib/redirect";
 import { useAuthSession } from "./use-auth-session";
 import type { AuthError, FormStatus, LoginCredentials } from "../types/auth";
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export interface UseLoginFormOptions {
   redirectTo?: string | null;
@@ -67,7 +66,7 @@ export function useLoginForm(options: UseLoginFormOptions = {}) {
     const trimmedEmail = data.email.trim();
     if (!trimmedEmail) {
       newErrors.email = "Vui lòng nhập email của bạn.";
-    } else if (!EMAIL_REGEX.test(trimmedEmail)) {
+    } else if (!EMAIL_PATTERN.test(trimmedEmail)) {
       newErrors.email = "Email chưa đúng định dạng (ví dụ: ban@example.com).";
     }
 

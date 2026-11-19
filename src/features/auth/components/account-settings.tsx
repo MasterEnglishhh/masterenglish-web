@@ -4,6 +4,8 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { fieldError, StatusLine, type SaveStatus } from "@/components/save-status";
 import { useAuthSession } from "../hooks/use-auth-session";
 import { AuthField } from "./auth-field";
+import { PasswordChecklist } from "./password-checklist";
+import { checkPassword } from "../lib/password-rules";
 import { changePassword, updateProfile } from "../lib/account-client";
 import type { AuthUser } from "../types/auth";
 import "../styles/auth.css";
@@ -63,6 +65,7 @@ function PasswordForm() {
   const [newPassword, setNewPassword] = useState("");
   const [visible, setVisible] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const passwordRules = checkPassword(newPassword).rules;
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -81,7 +84,8 @@ function PasswordForm() {
         Sau khi đổi, mọi thiết bị sẽ bị đăng xuất và bạn cần đăng nhập lại.
       </p>
       <AuthField id="account-current-password" name="currentPassword" label="Mật khẩu hiện tại" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} autoComplete="current-password" required showPasswordToggle isPasswordVisible={visible} onTogglePassword={() => setVisible((v) => !v)} error={fieldError(status, "currentPassword")} />
-      <AuthField id="account-new-password" name="newPassword" label="Mật khẩu mới" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" required minLength={15} showPasswordToggle isPasswordVisible={visible} onTogglePassword={() => setVisible((v) => !v)} helperText="Ít nhất 15 ký tự." error={fieldError(status, "newPassword")} />
+      <AuthField id="account-new-password" name="newPassword" label="Mật khẩu mới" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" required minLength={15} showPasswordToggle isPasswordVisible={visible} onTogglePassword={() => setVisible((v) => !v)} error={fieldError(status, "newPassword")} />
+      <PasswordChecklist rules={passwordRules} />
       <StatusLine status={status} />
       <button className="button button-dark auth-submit" type="submit" disabled={status.kind === "saving" || !currentPassword || !newPassword} aria-busy={status.kind === "saving"}>
         {status.kind === "saving" ? "Đang đổi mật khẩu..." : "Đổi mật khẩu"}
