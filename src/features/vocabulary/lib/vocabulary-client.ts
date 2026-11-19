@@ -8,6 +8,7 @@ import type {
   ReviewHistoryItemDto,
   ReviewRequest,
   ReviewResponse,
+  SavedSenseIdsResponse,
   SavedWordDto,
   WordDetailDto,
   WordListDto,
@@ -150,12 +151,17 @@ export function fetchWordDetail(
   return requestWithAuth<WordDetailDto>(`/api/v1/vocabulary/words/${wordId}`);
 }
 
-export function fetchSavedSenseIds(
+export async function fetchSavedSenseIds(
   wordId: string
 ): Promise<VocabularyResult<string[]>> {
-  return requestWithAuth<string[]>(
+  const result = await requestWithAuth<SavedSenseIdsResponse>(
     `/api/v1/vocabulary/words/${wordId}/saved-senses`
   );
+  if (!result.success) return { success: false, error: result.error };
+  return {
+    success: true,
+    data: result.data.savedSenseIds,
+  };
 }
 
 export function fetchDecks(params?: {
@@ -202,6 +208,7 @@ export function fetchDeckCards(
     `/api/v1/vocabulary/decks/${deckId}/words${qs ? `?${qs}` : ""}`
   );
 }
+
 
 export function fetchSavedWords(params?: {
   cefrLevel?: string;

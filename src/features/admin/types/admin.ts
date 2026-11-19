@@ -10,9 +10,9 @@ export interface AdminKPI {
   id: string;
   title: string;
   value: string;
-  subValue?: string;
-  changePercent?: number;
-  trendText?: string;
+  subValue?: string | null;
+  changePercent?: number | null;
+  trendText?: string | null;
   trendDirection?: "up" | "down" | "neutral";
   iconName: "users" | "book-open" | "database" | "shield-check" | "cpu" | "sparkles";
 }

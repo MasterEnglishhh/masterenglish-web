@@ -10,7 +10,7 @@ export interface Problem {
   detail?: string;
   message?: string;
   title?: string;
-  errors?: { field: string }[];
+  errors?: { field: string; message?: string }[];
 }
 
 export interface PageResponse<T> {

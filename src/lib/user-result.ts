@@ -8,6 +8,7 @@ export interface UserError {
   message: string;
   status: number;
   fieldErrors?: Record<string, string>;
+  retryAfterSeconds?: number;
 }
 
 export type UserResult<T> =
@@ -34,18 +35,31 @@ export function toUserResult<T>(
     );
 
   const fieldErrors: Record<string, string> = {};
-  for (const violation of problem?.errors ?? [])
-    if (fieldLabels[violation.field])
-      fieldErrors[violation.field] = fieldLabels[violation.field];
+  for (const violation of problem?.errors ?? []) {
+    const label = violation.message || fieldLabels[violation.field];
+    if (label) fieldErrors[violation.field] = label;
+  }
+
+  let message =
+    status < 500 && problem?.detail
+      ? problem.detail
+      : "Dịch vụ đang gián đoạn. Vui lòng thử lại sau.";
+
+  if (status === 429) {
+    const seconds = outcome.retryAfterSeconds;
+    message =
+      problem?.detail ||
+      (seconds
+        ? `Bạn thao tác quá nhanh. Vui lòng chờ ${seconds} giây trước khi thử lại.`
+        : "Bạn thao tác quá nhanh. Vui lòng chờ một lát rồi thử lại.");
+  }
+
   return {
     success: false,
     error: {
       status,
-      // Backend details are user-facing Vietnamese; 5xx details are not.
-      message:
-        status < 500 && problem?.detail
-          ? problem.detail
-          : "Dịch vụ đang gián đoạn. Vui lòng thử lại sau.",
+      message,
+      ...(outcome.retryAfterSeconds ? { retryAfterSeconds: outcome.retryAfterSeconds } : {}),
       ...(Object.keys(fieldErrors).length ? { fieldErrors } : {}),
     },
   };

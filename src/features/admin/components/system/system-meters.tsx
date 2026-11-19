@@ -6,17 +6,12 @@ interface SystemMetersProps {
   ai: AiQuotaMetric | AiQuotaMetric[];
 }
 
-const EMPTY_AI: AiQuotaMetric = {
-  provider: "Anthropic",
-  model: "claude-3-5-haiku",
-  dailyTokenUsage: 0,
-  dailyTokenLimit: 1000000,
-  percentUsed: 0,
-  resetHours: 24,
-};
-
 export function SystemMeters({ storage, ai }: SystemMetersProps) {
-  const aiMetric = Array.isArray(ai) ? ai[0] || EMPTY_AI : ai;
+  const aiMetric = Array.isArray(ai)
+    ? ai.length > 0
+      ? ai[0]
+      : null
+    : ai || null;
 
   return (
     <div className="meter-grid">
@@ -58,20 +53,28 @@ export function SystemMeters({ storage, ai }: SystemMetersProps) {
               <h3>Hạn ngạch AI Token hằng ngày</h3>
             </div>
           </div>
-          <span className="meter-percent">{aiMetric.percentUsed}%</span>
+          {aiMetric && <span className="meter-percent">{aiMetric.percentUsed}%</span>}
         </div>
-        <div className="meter-bar is-ai" role="img" aria-label={`Đã dùng ${aiMetric.percentUsed}% hạn ngạch`}>
-          <span style={{ width: `${aiMetric.percentUsed}%` }} />
-        </div>
-        <div className="meter-line">
-          <span>
-            Đã tiêu thụ: <strong>{(aiMetric.dailyTokenUsage / 1000000).toFixed(2)}M tokens</strong>
-          </span>
-          <span>Hạn mức: {(aiMetric.dailyTokenLimit / 1000000).toFixed(0)}M tokens/ngày</span>
-        </div>
-        <p className="meter-note">
-          Mô hình: {aiMetric.model} · Đặt lại sau: {aiMetric.resetHours} giờ
-        </p>
+        {aiMetric ? (
+          <>
+            <div className="meter-bar is-ai" role="img" aria-label={`Đã dùng ${aiMetric.percentUsed}% hạn ngạch`}>
+              <span style={{ width: `${aiMetric.percentUsed}%` }} />
+            </div>
+            <div className="meter-line">
+              <span>
+                Đã tiêu thụ: <strong>{(aiMetric.dailyTokenUsage / 1000000).toFixed(2)}M tokens</strong>
+              </span>
+              <span>Hạn mức: {(aiMetric.dailyTokenLimit / 1000000).toFixed(0)}M tokens/ngày</span>
+            </div>
+            <p className="meter-note">
+              Mô hình: {aiMetric.model} · Đặt lại sau: {aiMetric.resetHours} giờ
+            </p>
+          </>
+        ) : (
+          <p className="meter-note" style={{ marginTop: 12 }}>
+            Chưa có dữ liệu sử dụng AI
+          </p>
+        )}
       </section>
     </div>
   );

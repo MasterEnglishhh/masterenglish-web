@@ -4,12 +4,12 @@ import {
   approveContentRevision,
   fetchAiQuotaMetrics,
   fetchAdminUsers,
+  fetchAuditLogs,
   fetchContentItems,
   fetchStorageQuota,
   lockAdminUser,
   rejectContentRevision,
   updateAdminUserRoles,
-  updateFeatureFlag,
 } from "./admin-client.ts";
 
 interface Call {
@@ -121,7 +121,6 @@ test("mutations send the CSRF header and the body shapes from the admin contract
       await lockAdminUser("u1", "Vi phạm điều khoản");
       await rejectContentRevision("r1", "Cần thêm ví dụ");
       await approveContentRevision("r1", "Đạt chuẩn");
-      await updateFeatureFlag("ai_tutor_chat", false);
 
       assert.deepEqual(
         calls.map((c) => `${c.method} ${c.url}`),
@@ -130,7 +129,6 @@ test("mutations send the CSRF header and the body shapes from the admin contract
           "POST /api/v1/admin/users/u1/lock",
           "POST /api/v1/admin/content/revisions/r1/reject",
           "POST /api/v1/admin/content/revisions/r1/approve",
-          "PUT /api/v1/admin/system/feature-flags/ai_tutor_chat",
         ]
       );
       for (const call of calls)
@@ -142,7 +140,6 @@ test("mutations send the CSRF header and the body shapes from the admin contract
       });
       assert.deepEqual(calls[2].body, { reviewNote: "Cần thêm ví dụ" });
       assert.deepEqual(calls[3].body, { reviewNote: "Đạt chuẩn" });
-      assert.deepEqual(calls[4].body, { enabled: false });
     }
   ));
 
@@ -154,6 +151,35 @@ test("quota endpoints use the /quotas/* paths from the contract", () =>
       await fetchAiQuotaMetrics();
       assert.equal(calls[0].url, "/api/v1/admin/system/quotas/storage");
       assert.equal(calls[1].url, "/api/v1/admin/system/quotas/ai");
+    }
+  ));
+
+test("audit log fetch omits ALL entityType, sets specific entityType, and trims search", () =>
+  withFetch(
+    () =>
+      ok({
+        items: [],
+        page: 0,
+        size: 10,
+        totalItems: 0,
+        totalPages: 0,
+        hasNext: false,
+      }),
+    async (calls) => {
+      await fetchAuditLogs("  hành động  ", "ALL", 0, 10);
+      await fetchAuditLogs("", "WORD", 1, 20);
+
+      const first = new URL(calls[0].url, "http://localhost").searchParams;
+      assert.equal(first.get("search"), "hành động");
+      assert.equal(first.get("entityType"), null);
+      assert.equal(first.get("page"), "0");
+      assert.equal(first.get("size"), "10");
+
+      const second = new URL(calls[1].url, "http://localhost").searchParams;
+      assert.equal(second.get("search"), null);
+      assert.equal(second.get("entityType"), "WORD");
+      assert.equal(second.get("page"), "1");
+      assert.equal(second.get("size"), "20");
     }
   ));
 

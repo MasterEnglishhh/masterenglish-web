@@ -5,10 +5,9 @@ import type { FeatureFlag } from "../../types/system-policy";
 
 interface FeatureFlagsPanelProps {
   flags: FeatureFlag[];
-  onToggle: (key: string) => void;
 }
 
-export function FeatureFlagsPanel({ flags, onToggle }: FeatureFlagsPanelProps) {
+export function FeatureFlagsPanel({ flags }: FeatureFlagsPanelProps) {
   return (
     <section className="glass-card admin-card">
       <div className="admin-card-head">
@@ -17,7 +16,9 @@ export function FeatureFlagsPanel({ flags, onToggle }: FeatureFlagsPanelProps) {
           <h2>
             Cờ tính năng hệ thống <em>(Feature Flags)</em>
           </h2>
-          <p className="admin-card-note">Bật/tắt các tính năng theo thời gian thực mà không cần deploy lại backend.</p>
+          <p className="admin-card-note">
+            Chưa hỗ trợ điều khiển tính năng; trạng thái lưu chưa phản ánh hoạt động thực tế.
+          </p>
         </div>
       </div>
       <div className="admin-list">
@@ -35,11 +36,11 @@ export function FeatureFlagsPanel({ flags, onToggle }: FeatureFlagsPanelProps) {
             </div>
             <button
               type="button"
+              disabled
               className="flag-switch"
-              onClick={() => onToggle(flag.key)}
-              aria-pressed={flag.enabled}
-              title={flag.enabled ? "Bấm để tắt" : "Bấm để bật"}
-              aria-label={`Bật/tắt ${flag.name}`}
+              style={{ cursor: "not-allowed", opacity: 0.65 }}
+              title="Chưa hỗ trợ điều khiển tính năng; trạng thái lưu chưa phản ánh hoạt động thực tế"
+              aria-label={`Trạng thái ${flag.name}: ${flag.enabled ? "Bật" : "Tắt"}`}
             >
               <span className="flag-switch-track">
                 <span className="flag-switch-thumb">

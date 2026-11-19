@@ -30,7 +30,7 @@ export function KpiCard({ kpi }: { kpi: AdminKPI }) {
       <div className="admin-kpi-value">{kpi.value}</div>
 
       <div className="admin-kpi-footer">
-        {kpi.changePercent !== undefined && (
+        {kpi.changePercent != null && (
           <span
             className={`admin-kpi-trend ${
               kpi.trendDirection === "up" ? "positive" : "neutral"
@@ -40,7 +40,7 @@ export function KpiCard({ kpi }: { kpi: AdminKPI }) {
             {kpi.trendText}
           </span>
         )}
-        {kpi.subValue && !kpi.changePercent && (
+        {kpi.subValue && kpi.changePercent == null && (
           <span>{kpi.subValue}</span>
         )}
       </div>

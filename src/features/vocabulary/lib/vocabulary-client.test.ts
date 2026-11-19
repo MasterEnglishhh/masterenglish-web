@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   fetchDecks,
   fetchDeckCards,
+  fetchSavedSenseIds,
   saveWordSense,
   unsaveWordSense,
   fetchDueQueue,
@@ -457,6 +458,30 @@ test("a 401 that persists after a successful refresh is reported as an expired s
     assert.match(result.error.message, /đăng nhập lại/);
     assert.equal(refreshes, 1, "refresh exactly once, never a loop");
     assert.equal(resourceCalls, 2, "the request is retried only once");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("fetchSavedSenseIds unwraps savedSenseIds object from backend", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = mock.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes("/api/v1/vocabulary/words/word-1/saved-senses")) {
+      return new Response(
+        JSON.stringify({
+          savedSenseIds: ["sense-1", "sense-2"],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    return new Response(null, { status: 404 });
+  });
+  try {
+    const result = await fetchSavedSenseIds("word-1");
+    assert.equal(result.success, true);
+    if (!result.success) return;
+    assert.deepEqual(result.data, ["sense-1", "sense-2"]);
   } finally {
     globalThis.fetch = originalFetch;
   }

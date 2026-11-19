@@ -90,6 +90,10 @@ export interface SavedWordDto {
   savedAt: string;
 }
 
+export interface SavedSenseIdsResponse {
+  savedSenseIds: string[];
+}
+
 export interface DueQueueResponse {
   totalDue: number;
   cards: WordSenseCardDto[];

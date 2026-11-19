@@ -26,12 +26,21 @@ export interface AiQuotaMetric {
   resetHours: number;
 }
 
+export type AuditEntityType =
+  | "USER"
+  | "WORD"
+  | "DECK"
+  | "CONTENT_REVISION"
+  | "FEATURE_FLAG";
+
+export type AuditEntityFilter = "ALL" | AuditEntityType;
+
 export interface AuditLogEntry {
   id: string;
   actorEmail: string;
   action: string;
-  entityType: "USER" | "ROLE" | "CONTENT" | "FEATURE_FLAG" | "SESSION";
-  entityId: string;
+  entityType: AuditEntityType;
+  entityId: string | null;
   details: string;
   ipAddress: string;
   timestamp: string;

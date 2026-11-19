@@ -18,7 +18,6 @@ export function AdminSystem() {
     setLogSearch,
     selectedEntity,
     setSelectedEntity,
-    toggleFeatureFlag,
   } = useAdminSystem();
 
   return (
@@ -30,9 +29,8 @@ export function AdminSystem() {
             Cấu hình Hệ thống & <em>Sổ cái Kiểm toán</em>
           </h1>
           <p className="admin-description">
-            Điều chỉnh cờ tính năng động, giám sát định mức lưu trữ Cloudflare
-            R2, hạn ngạch token trí tuệ nhân tạo (AI) và theo dõi nhật ký kiểm
-            toán bất biến.
+            Xem trạng thái cờ tính năng, giám sát định mức lưu trữ Cloudflare
+            R2 và theo dõi nhật ký kiểm toán bất biến.
           </p>
         </div>
 
@@ -43,7 +41,7 @@ export function AdminSystem() {
         )}
         <SystemMeters storage={storageQuota} ai={aiQuota} />
 
-        <FeatureFlagsPanel flags={flags} onToggle={toggleFeatureFlag} />
+        <FeatureFlagsPanel flags={flags} />
 
         <AuditLogsTable
           logs={auditLogs}

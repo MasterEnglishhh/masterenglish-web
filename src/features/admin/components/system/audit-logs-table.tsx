@@ -35,7 +35,7 @@ export function AuditLogsTable({
             Sổ cái kiểm toán hệ thống <em>(Audit Ledger)</em>
           </h2>
           <p className="admin-card-note">
-            Lưu trữ bất biến hành vi quản trị, phân quyền, đăng nhập và thay đổi dữ liệu phục vụ bảo mật.
+            Lưu trữ bất biến hành vi quản trị, phân quyền, đăng nhập và thay đổi dữ liệu phục vụ bảo mật. Thao tác vai trò và phiên được lưu dưới đối tượng Người dùng (USER).
           </p>
         </div>
       </div>
@@ -59,10 +59,10 @@ export function AuditLogsTable({
         >
           <option value="ALL">Tất cả đối tượng tác động</option>
           <option value="USER">Người dùng (USER)</option>
-          <option value="ROLE">Vai trò (ROLE)</option>
-          <option value="CONTENT">Nội dung (CONTENT)</option>
+          <option value="WORD">Từ vựng (WORD)</option>
+          <option value="DECK">Bộ thẻ (DECK)</option>
+          <option value="CONTENT_REVISION">Phiên bản nội dung (CONTENT_REVISION)</option>
           <option value="FEATURE_FLAG">Cờ tính năng (FEATURE_FLAG)</option>
-          <option value="SESSION">Phiên làm việc (SESSION)</option>
         </select>
       </div>
       <div className="admin-table-wrap">
@@ -101,7 +101,7 @@ export function AuditLogsTable({
                     <code className="admin-badge admin-code">{log.action}</code>
                   </td>
                   <td className="cell-name">
-                    {log.entityType}: {log.entityId}
+                    {log.entityType}{log.entityId ? `: ${log.entityId}` : ""}
                   </td>
                   <td className="cell-sub">{log.details}</td>
                   <td className="cell-sub admin-code">{log.ipAddress}</td>

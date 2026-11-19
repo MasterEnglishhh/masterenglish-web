@@ -6,7 +6,6 @@ import {
   fetchAuditLogs,
   fetchFeatureFlags,
   fetchStorageQuota,
-  updateFeatureFlag,
 } from "../lib/admin-client";
 import type {
   AiQuotaMetric,
@@ -58,34 +57,6 @@ export function useAdminSystem() {
     return () => clearTimeout(timer);
   }, [loadSystemData]);
 
-  const toggleFeatureFlag = async (flagKey: string) => {
-    const targetFlag = flags.find((f) => f.key === flagKey);
-    if (!targetFlag) return;
-    const nextState = !targetFlag.enabled;
-    setError(null);
-
-    // Optimistic UI update
-    setFlags((prev) =>
-      prev.map((f) => (f.key === flagKey ? { ...f, enabled: nextState } : f))
-    );
-
-    const res = await updateFeatureFlag(flagKey, nextState);
-    if (!res.success) {
-      // Revert if error
-      setFlags((prev) =>
-        prev.map((f) => (f.key === flagKey ? { ...f, enabled: !nextState } : f))
-      );
-      setError(`Không thể đổi trạng thái cờ: ${res.error.message}`);
-    } else {
-      // Reload audit logs to reflect the new update
-      const logsRes = await fetchAuditLogs(logSearch, selectedEntity, 0, 50);
-      if (logsRes.success) {
-        setAuditLogs(logsRes.data.items);
-        setTotalLogs(logsRes.data.totalItems);
-      }
-    }
-  };
-
   return {
     flags,
     storageQuota: storageQuota || {
@@ -106,7 +77,6 @@ export function useAdminSystem() {
     setSelectedEntity,
     isLoading,
     error,
-    toggleFeatureFlag,
     refreshSystem: loadSystemData,
   };
 }
