@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { learner, mockSession } from "./helpers";
+import { admin, learner, mockSession } from "./helpers";
 
 /** Ghi lại mọi lần khối trượt bị ghi style, kèm transition đang áp dụng ở thời điểm đó. */
 async function recordIndicator(page: import("@playwright/test").Page) {
@@ -56,7 +56,7 @@ test.describe("đăng nhập ↔ đăng ký ↔ quên mật khẩu", () => {
           let frames = 0;
           const tick = () => {
             out.push(Math.round(new DOMMatrix(getComputedStyle(indicator).transform).m41));
-            if (++frames < 120) requestAnimationFrame(tick);
+            if (++frames < 360) requestAnimationFrame(tick); // tối đa ~6s: dev server có thể biên dịch route lần đầu
             else resolve(out);
           };
           requestAnimationFrame(tick);
@@ -166,6 +166,78 @@ test.describe("khu học tập và từ vựng", () => {
       return r.left >= -1 && r.right <= window.innerWidth + 1;
     });
     expect(inView).toBe(true);
+  });
+});
+
+/** Ghi độ tràn ngang lớn nhất của trang trong lúc đang chạy một thao tác chuyển trang/tab. */
+async function maxOverflowDuring(page: import("@playwright/test").Page, action: () => Promise<void>) {
+  await page.evaluate(() => {
+    const w = window as unknown as { __maxOverflow: number; __sampling: boolean };
+    w.__maxOverflow = -Infinity;
+    w.__sampling = true;
+    const tick = () => {
+      w.__maxOverflow = Math.max(w.__maxOverflow, document.documentElement.scrollWidth - window.innerWidth);
+      if (w.__sampling) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await action();
+  await page.waitForTimeout(700); // đủ cho animation 0,26s kết thúc
+  return page.evaluate(() => {
+    const w = window as unknown as { __maxOverflow: number; __sampling: boolean };
+    w.__sampling = false;
+    return w.__maxOverflow;
+  });
+}
+
+test.describe("không tràn ngang giữa lúc chuyển động ở 360px", () => {
+  test.use({ viewport: { width: 360, height: 800 } });
+
+  test("khu học: chuyển mục", async ({ page }) => {
+    await mockSession(page, learner);
+    await page.goto("/learn");
+    const nav = page.locator(".mobile-learning-nav .learning-nav");
+    await expect(nav).toHaveAttribute("data-slide", "on");
+    const max = await maxOverflowDuring(page, async () => {
+      await nav.getByRole("link", { name: "Luyện TOEIC" }).click();
+      await expect(page).toHaveURL(/toeic$/);
+    });
+    expect(max).toBeLessThanOrEqual(0);
+  });
+
+  test("đăng nhập sang đăng ký", async ({ page }) => {
+    await mockSession(page, null);
+    await page.goto("/login");
+    const max = await maxOverflowDuring(page, async () => {
+      await page.getByRole("link", { name: "Tạo tài khoản" }).click();
+      await expect(page).toHaveURL(/register$/);
+    });
+    expect(max).toBeLessThanOrEqual(0);
+  });
+
+  test("tab từ vựng", async ({ page }) => {
+    await mockSession(page, learner);
+    await page.route("**/api/v1/vocabulary/**", (route) =>
+      route.fulfill({ json: { items: [], page: 0, size: 12, totalItems: 0, totalPages: 0, hasNext: false, totalDue: 0, cards: [] } })
+    );
+    await page.goto("/learn/vocabulary");
+    const tabs = page.getByRole("navigation", { name: "Danh mục từ vựng" });
+    const max = await maxOverflowDuring(page, async () => {
+      await tabs.getByRole("button", { name: "Tra từ" }).click();
+      await expect(page).toHaveURL(/view=words/);
+    });
+    expect(max).toBeLessThanOrEqual(0);
+  });
+
+  test("quản trị: chuyển mục", async ({ page }) => {
+    await mockSession(page, admin);
+    await page.goto("/admin");
+    const nav = page.getByRole("navigation", { name: "Điều hướng quản trị" });
+    const max = await maxOverflowDuring(page, async () => {
+      await nav.getByRole("link", { name: "Người dùng & Quyền" }).click();
+      await expect(page).toHaveURL(/users$/);
+    });
+    expect(max).toBeLessThanOrEqual(0);
   });
 });
 

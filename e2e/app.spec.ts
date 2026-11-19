@@ -69,6 +69,32 @@ test("quản trị viên hệ thống thấy đủ bốn mục điều hướng"
   expect(await overflow(page)).toBeLessThanOrEqual(0);
 });
 
+for (const { width, height } of viewports) {
+  test(`quản trị ở ${width}px: tổng quan, người dùng và nội dung không tràn ngang`, async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await mockSession(page, admin);
+    await page.route("**/api/v1/admin/users**", (route) =>
+      route.fulfill({
+        json: {
+          items: [{ id: "x1", displayName: "Người dùng một", email: "mot@example.com", roles: ["LEARNER"], status: "ACTIVE", activeSessionsCount: 1, lastLoginAt: null }],
+          page: 0, size: 10, totalItems: 1, totalPages: 1, hasNext: false,
+        },
+      })
+    );
+    await page.route("**/api/v1/admin/content**", (route) =>
+      route.fulfill({ json: { items: [], page: 0, size: 10, totalItems: 0, totalPages: 0, hasNext: false } })
+    );
+    await page.setViewportSize({ width, height });
+    for (const path of ["/admin", "/admin/users", "/admin/content"]) {
+      await page.goto(path);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      expect(await overflow(page), `${path} tràn ngang`).toBeLessThanOrEqual(0);
+    }
+    expect(errors).toEqual([]);
+  });
+}
+
 test("đăng nhập: thanh chuyển tab và liên kết đăng ký giữ tham số redirect", async ({ page }) => {
   await mockSession(page, null);
   await page.goto("/login?redirect=%2Flearn%2Fvocabulary");
