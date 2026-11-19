@@ -15,7 +15,6 @@ type Status = SaveStatus;
 /** `children` là chỗ cho các thẻ của phân hệ khác (vd. mục tiêu học) trong cùng bố cục. */
 export function AccountSettings({ children }: { children?: ReactNode }) {
   const { user } = useAuthSession();
-  // RequireAuth in the learning layout renders this only for a signed-in user.
   if (!user) return null;
   return (
     <div className="account-settings">

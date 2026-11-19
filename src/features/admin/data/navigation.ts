@@ -26,3 +26,9 @@ export const adminNavItems: NavItem[] = [
     iconName: "Sliders",
   },
 ];
+
+export function getAdminNavItems(isSystemAdmin: boolean) {
+  return isSystemAdmin
+    ? adminNavItems
+    : adminNavItems.filter(({ href }) => href !== "/admin/users" && href !== "/admin/system");
+}

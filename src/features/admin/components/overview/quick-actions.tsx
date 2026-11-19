@@ -44,9 +44,11 @@ export function QuickActions() {
             <Link href="/admin/content" className="btn-primary">
               <Layers size={16} aria-hidden="true" /> Thẩm định nội dung chờ duyệt
             </Link>
-            <Link href="/learn/vocabulary" className="btn-ghost">
-              <BookOpen size={16} aria-hidden="true" /> Xem từ điển góc nhìn học viên
-            </Link>
+            {user?.roles.includes("LEARNER") && (
+              <Link href="/learn/vocabulary" className="btn-ghost">
+                <BookOpen size={16} aria-hidden="true" /> Xem từ điển góc nhìn học viên
+              </Link>
+            )}
           </>
         )}
       </div>

@@ -1,5 +1,10 @@
+import { RequireAuth } from "@/features/auth";
 import { LearningHome } from "@/features/learning";
 
 export default function LearningHomePage() {
-  return <LearningHome />;
+  return (
+    <RequireAuth>
+      <LearningHome />
+    </RequireAuth>
+  );
 }

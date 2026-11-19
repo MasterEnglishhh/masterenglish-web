@@ -1,5 +1,10 @@
+import { RequireAuth } from "@/features/auth";
 import { ToeicHome } from "@/features/toeic";
 
 export default function ToeicPage() {
-  return <ToeicHome />;
+  return (
+    <RequireAuth>
+      <ToeicHome />
+    </RequireAuth>
+  );
 }

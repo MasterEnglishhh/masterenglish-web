@@ -17,8 +17,8 @@ export const HERO = {
 };
 
 export const WHY = {
-  kicker: "01 / VÌ SAO NGHE VÀ ĐỌC",
-  body: "TOEIC Listening & Reading chỉ đo Nghe và Đọc. Vì vậy MasterEnglish đi thẳng vào hai kỹ năng này, thay vì học dàn trải mọi thứ.",
+  kicker: "01 / GIỚI THIỆU",
+  body: "Bài thi đánh giá khả năng nghe và đọc hiểu tiếng Anh.",
   marquee: ["NGHE", "ĐỌC", "NHỚ"],
   pillars: [
     { name: "Nghe", note: "Luyện nghe Part 1–4.", status: "soon" as Status },
@@ -127,7 +127,6 @@ export const FAQ = {
     { q: "Có luyện phát âm hay luyện nói không?", a: "Chưa. MasterEnglish tập trung vào Nghe và Đọc. Hiện chỉ có phát âm mẫu của từng từ vựng để bạn nghe cách đọc; chưa có chấm điểm phát âm hay luyện nói." },
     { q: "Dùng được trên điện thoại không?", a: "Được. Trang chạy trên trình duyệt của điện thoại, máy tính bảng và máy tính, không cần cài ứng dụng." },
     { q: "Nội dung TOEIC đã đủ chưa?", a: "Chưa đủ. Hiện có từ vựng, ôn tập ngắt quãng và một câu Part 5 mẫu. Luyện nghe Part 1–4 và luyện đọc Part 5–7 đầy đủ sẽ được mở dần." },
-    { q: "Dữ liệu của tôi có an toàn không?", a: "Khi đăng ký, bạn xác nhận email bằng mã OTP. Phiên đăng nhập nằm trong cookie HttpOnly nên mã chạy trên trình duyệt không đọc được." },
   ],
 };
 

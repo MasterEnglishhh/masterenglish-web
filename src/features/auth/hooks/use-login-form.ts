@@ -5,7 +5,7 @@ import { useCountdownClock } from "./use-countdown-clock";
 import { useRouter } from "next/navigation";
 import { login } from "../lib/auth-client";
 import { EMAIL_PATTERN } from "../lib/form-validation";
-import { getSafeRedirectUrl } from "../lib/redirect";
+import { getRoleHome, getSafeRedirectUrl } from "../lib/redirect";
 import { useAuthSession } from "./use-auth-session";
 import type { AuthError, FormStatus, LoginCredentials } from "../types/auth";
 
@@ -16,11 +16,10 @@ export interface UseLoginFormOptions {
 export function useLoginForm(options: UseLoginFormOptions = {}) {
   const router = useRouter();
   const { user, acceptLogin } = useAuthSession();
-  const safeRedirect = getSafeRedirectUrl(options.redirectTo, "/learn");
 
   useEffect(() => {
-    if (user) router.replace(safeRedirect);
-  }, [user, router, safeRedirect]);
+    if (user) router.replace(getSafeRedirectUrl(options.redirectTo, getRoleHome(user.roles)));
+  }, [user, router, options.redirectTo]);
 
   const [values, setValues] = useState<LoginCredentials>({
     email: "",
@@ -104,8 +103,6 @@ export function useLoginForm(options: UseLoginFormOptions = {}) {
       acceptLogin(result.user);
       // Trang đăng nhập cũ còn nằm ẩn trong DOM sau khi chuyển trang: không để mật khẩu ở lại trong ô nhập.
       setValues((prev) => ({ ...prev, password: "" }));
-      // Safe navigation to requested route or default learning hub
-      router.replace(safeRedirect);
       return;
     }
 
@@ -149,7 +146,6 @@ export function useLoginForm(options: UseLoginFormOptions = {}) {
     isPasswordVisible,
     emailRef,
     passwordRef,
-    safeRedirect,
     togglePasswordVisibility,
     handleFieldChange,
     onSubmit,
