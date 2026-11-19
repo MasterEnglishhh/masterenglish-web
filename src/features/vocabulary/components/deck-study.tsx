@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useDeckBatch } from "../hooks/use-deck-batch";
 import { FlashcardView } from "./flashcard-view";
-import { VocabularyPagination as PageControls } from "./vocabulary-pagination";
-import { VocabularyError, VocabularyLoading } from "./vocabulary-status";
+import { ErrorState } from "@/components/error-state";
+import { Pagination } from "@/components/pagination";
+import { VocabularyLoading } from "./vocabulary-status";
 import styles from "./vocabulary.module.css";
 
 export function DeckStudy({
@@ -49,7 +50,7 @@ function DeckBatch({
   changePage: (page: number) => void;
 }) {
   const { data, error } = useDeckBatch(deckId, page);
-  if (error) return <VocabularyError message={error} retry={reload} />;
+  if (error) return <ErrorState message={error} onRetry={reload} idSuffix="-study-error" />;
   if (!data) return <VocabularyLoading />;
   return (
     <>
@@ -59,11 +60,12 @@ function DeckBatch({
         onBackToDecks={back}
         onReloadQueue={reload}
       />
-      <PageControls
-        page={page}
+      <Pagination
+        page={page + 1}
         totalPages={data.cards.totalPages}
         hasNext={data.cards.hasNext}
-        change={changePage}
+        onChange={(next) => changePage(next - 1)}
+        label="Phân trang thẻ"
       />
     </>
   );

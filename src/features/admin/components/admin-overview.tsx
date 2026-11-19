@@ -1,6 +1,7 @@
 "use client";
 
 import { RotateCw } from "lucide-react";
+import { Skeleton } from "@/components/skeleton";
 import { useAdminOverview } from "../hooks/use-admin-overview";
 import { ActivityStream } from "./overview/activity-stream";
 import { KpiCard } from "./overview/kpi-card";
@@ -37,9 +38,9 @@ export function AdminOverview() {
         {isLoading && kpis.length === 0
           ? Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="admin-kpi-card" aria-hidden="true">
-                <div className="admin-skeleton" style={{ height: 16, width: "60%" }} />
-                <div className="admin-skeleton" style={{ height: 32, width: "40%" }} />
-                <div className="admin-skeleton" style={{ height: 14, width: "80%" }} />
+                <Skeleton />
+                <Skeleton />
+                <Skeleton />
               </div>
             ))
           : kpis.map((kpi) => <KpiCard key={kpi.id} kpi={kpi} />)}

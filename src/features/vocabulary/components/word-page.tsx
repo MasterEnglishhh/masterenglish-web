@@ -1,13 +1,15 @@
 "use client";
 
-import { SearchX } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
+import { Pagination } from "@/components/pagination";
 import {
   useWordList,
   type WordFilter,
   type WordListMode,
 } from "../hooks/use-word-list";
 import { SavedWordCard, WordCard } from "./word-card";
-import { VocabularyPagination } from "./vocabulary-pagination";
+import { VocabularyLoading } from "./vocabulary-status";
 import styles from "./vocabulary.module.css";
 
 /** Một trang kết quả tra từ / sổ tay. Nơi gọi đổi `key` để tải lại khi bộ lọc hoặc trang đổi. */
@@ -28,26 +30,8 @@ export function WordPage({
 }) {
   const { data, error } = useWordList({ mode, page, filter, changePage });
   if (error)
-    return (
-      <div role="alert" className={styles.error}>
-        <span>{error}</span>
-        <button className={styles.secondary} onClick={reload}>
-          Thử tải lại
-        </button>
-      </div>
-    );
-  if (!data)
-    return (
-      <div
-        className={styles.wordGrid}
-        aria-label="Đang tải từ vựng"
-        role="status"
-      >
-        {[0, 1, 2].map((n) => (
-          <div key={n} className={styles.skeleton} />
-        ))}
-      </div>
-    );
+    return <ErrorState message={error} onRetry={reload} idSuffix="-words-error" />;
+  if (!data) return <VocabularyLoading label="Đang tải từ vựng" />;
   return (
     <>
       <div className={styles.resultBar}>
@@ -57,19 +41,15 @@ export function WordPage({
         </p>
       </div>
       {data.totalItems === 0 ? (
-        <div className={styles.empty}>
-          <SearchX size={32} aria-hidden="true" />
-          <h2>
-            {mode === "saved"
-              ? "Sổ tay đang trống"
-              : "Chưa tìm thấy từ phù hợp"}
-          </h2>
-          <p>
-            {mode === "saved"
-              ? "Lưu nghĩa từ khi tra cứu hoặc học flashcard để xem lại tại đây."
-              : "Thử một từ khác hoặc thay đổi bộ lọc trình độ và loại từ."}
-          </p>
-        </div>
+        <EmptyState
+          title={mode === "saved" ? "Sổ tay đang trống" : "Chưa tìm thấy từ phù hợp"}
+          mascot={mode === "saved" ? "sleepy" : "thinking"}
+          idSuffix="-words-empty"
+        >
+          {mode === "saved"
+            ? "Lưu nghĩa từ khi tra cứu hoặc học flashcard để xem lại tại đây."
+            : "Thử một từ khác hoặc thay đổi bộ lọc trình độ và loại từ."}
+        </EmptyState>
       ) : (
         <div className={styles.wordGrid}>
           {data.words.map((word) => (
@@ -85,11 +65,12 @@ export function WordPage({
           ))}
         </div>
       )}
-      <VocabularyPagination
-        page={page}
+      <Pagination
+        page={page + 1}
         totalPages={data.totalPages}
         hasNext={data.hasNext}
-        change={changePage}
+        onChange={(next) => changePage(next - 1)}
+        label="Phân trang từ vựng"
       />
     </>
   );

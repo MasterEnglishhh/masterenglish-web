@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { useDeckLibrary, type DeckFilter } from "../hooks/use-deck-library";
 import { DeckSelector } from "./deck-selector";
-import { VocabularyPagination as PageControls } from "./vocabulary-pagination";
-import { VocabularyError, VocabularyLoading } from "./vocabulary-status";
+import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
+import { Pagination } from "@/components/pagination";
+import { VocabularyLoading } from "./vocabulary-status";
 import styles from "./vocabulary.module.css";
 
 export function DeckLibrary({
@@ -84,7 +86,7 @@ function DeckLibraryPage({
   changePage: (page: number) => void;
 }) {
   const { data, error } = useDeckLibrary(filter, page);
-  if (error) return <VocabularyError message={error} retry={retry} />;
+  if (error) return <ErrorState message={error} onRetry={retry} idSuffix="-decks-error" />;
   if (!data) return <VocabularyLoading />;
   return (
     <>
@@ -96,10 +98,9 @@ function DeckLibraryPage({
         <p>{data.decks.totalItems} bộ từ phù hợp</p>
       </div>
       {data.decks.items.length === 0 ? (
-        <div className={styles.empty}>
-          <h2>Chưa có bộ từ phù hợp</h2>
-          <p>Thử một chủ đề khác hoặc thay đổi bộ lọc trình độ.</p>
-        </div>
+        <EmptyState title="Chưa có bộ từ phù hợp" mascot="thinking" idSuffix="-decks-empty">
+          Thử một chủ đề khác hoặc thay đổi bộ lọc trình độ.
+        </EmptyState>
       ) : (
         <DeckSelector
           decks={data.decks.items}
@@ -108,11 +109,12 @@ function DeckLibraryPage({
           onOpenReview={review}
         />
       )}
-      <PageControls
-        page={page}
+      <Pagination
+        page={page + 1}
         totalPages={data.decks.totalPages}
         hasNext={data.decks.hasNext}
-        change={changePage}
+        onChange={(next) => changePage(next - 1)}
+        label="Phân trang bộ từ"
       />
     </>
   );

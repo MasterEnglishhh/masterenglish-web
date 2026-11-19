@@ -2,6 +2,7 @@
 
 import { Calendar, Clock, Edit3, Target } from "lucide-react";
 import { Mascot } from "@/components/mascot";
+import { Skeleton } from "@/components/skeleton";
 import { useFocusReturn } from "../hooks/use-focus-return";
 import { useLearningGoal } from "../hooks/use-learning-goal";
 import { daysUntil, formatGoalDate, GOAL_LIMITS } from "../lib/goal-validation";
@@ -38,9 +39,9 @@ export function GoalCard() {
     return (
       <aside className="glass-card goal-card" role="status" aria-label="Đang tải mục tiêu học tập">
         <span className="section-kicker">MỤC TIÊU CỦA BẠN</span>
-        <div className="goal-skeleton goal-skeleton-lg" />
-        <div className="goal-skeleton" />
-        <div className="goal-skeleton goal-skeleton-sm" />
+        <Skeleton variant="line-lg" />
+        <Skeleton />
+        <Skeleton variant="line-sm" />
       </aside>
     );
   }

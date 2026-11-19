@@ -1,31 +1,12 @@
+import { Skeleton } from "@/components/skeleton";
 import styles from "./vocabulary.module.css";
 
-export function VocabularyError({
-  message,
-  retry,
-}: {
-  message: string;
-  retry: () => void;
-}) {
+/** Ba thẻ giữ chỗ trong lưới từ vựng/bộ từ khi đang tải. */
+export function VocabularyLoading({ label = "Đang tải dữ liệu từ vựng" }: { label?: string }) {
   return (
-    <div className={styles.error} role="alert">
-      <p>{message}</p>
-      <button className={styles.secondary} onClick={retry}>
-        Tải lại dữ liệu
-      </button>
-    </div>
-  );
-}
-
-export function VocabularyLoading() {
-  return (
-    <div
-      className={styles.wordGrid}
-      role="status"
-      aria-label="Đang tải dữ liệu từ vựng"
-    >
+    <div className={styles.wordGrid} role="status" aria-label={label}>
       {[0, 1, 2].map((n) => (
-        <div key={n} className={styles.skeleton} />
+        <Skeleton key={n} variant="card" />
       ))}
     </div>
   );

@@ -12,6 +12,7 @@ import type { WordSenseCardDto, RatingType } from "../types/vocabulary";
 import { useVocabularyPractice } from "../hooks/use-vocabulary-practice";
 import { partOfSpeechLabels } from "../lib/vocabulary-presentation";
 import { PronunciationPlayer } from "./pronunciation-player";
+import { EmptyState } from "@/components/empty-state";
 import { Mascot } from "@/components/mascot";
 import styles from "./vocabulary.module.css";
 
@@ -91,15 +92,20 @@ export function FlashcardView({
   ]);
   if (!cards.length)
     return (
-      <div className={styles.empty}>
-        <h2>Chưa có thẻ trong lượt này</h2>
-        <p>Chọn bộ từ khác hoặc quay lại danh sách để tiếp tục học.</p>
-        {onBackToDecks && (
-          <button className={styles.secondary} onClick={onBackToDecks}>
-            Về danh sách bộ từ
-          </button>
-        )}
-      </div>
+      <EmptyState
+        title="Chưa có thẻ trong lượt này"
+        mascot="thinking"
+        idSuffix="-cards-empty"
+        action={
+          onBackToDecks && (
+            <button className="btn-ghost btn-sm" onClick={onBackToDecks}>
+              Về danh sách bộ từ
+            </button>
+          )
+        }
+      >
+        Chọn bộ từ khác hoặc quay lại danh sách để tiếp tục học.
+      </EmptyState>
     );
   if (isFinished)
     return (

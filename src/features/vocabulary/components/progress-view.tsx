@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Mascot } from "@/components/mascot";
 import { useEffect, useState } from "react";
 import { useAuthSession } from "@/features/auth";
 import {
@@ -14,8 +13,9 @@ import type {
   RatingType,
   ReviewHistoryItemDto,
 } from "../types/vocabulary";
-import { VocabularyError } from "./vocabulary-status";
-import { VocabularyPagination } from "./vocabulary-pagination";
+import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
+import { Pagination } from "@/components/pagination";
 import "../styles/vocabulary.css";
 
 const ratingLabels: Record<RatingType, string> = {
@@ -70,7 +70,7 @@ function ProgressContent({ reload }: { reload: () => void }) {
     };
   }, [page]);
 
-  if (error) return <VocabularyError message={error} retry={reload} />;
+  if (error) return <ErrorState message={error} onRetry={reload} idSuffix="-progress-error" />;
   if (!progress || !history)
     return <p role="status">Đang tải tiến độ học tập...</p>;
 
@@ -104,14 +104,17 @@ function ProgressContent({ reload }: { reload: () => void }) {
 
       <h2 className="progress-heading">Lịch sử ôn tập</h2>
       {history.items.length === 0 ? (
-        <div className="glass-card empty-page">
-          <Mascot expression="sleepy" idSuffix="-empty" className="empty-page-mascot" />
-          <h2>Chưa có lượt ôn nào</h2>
-          <p>Học một bộ thẻ để bắt đầu ghi lại tiến độ.</p>
-          <Link className="btn-primary" href="/learn/vocabulary">
-            Học từ mới
-          </Link>
-        </div>
+        <EmptyState
+          title="Chưa có lượt ôn nào"
+          mascot="sleepy"
+          action={
+            <Link className="btn-primary" href="/learn/vocabulary">
+              Học từ mới
+            </Link>
+          }
+        >
+          Học một bộ thẻ để bắt đầu ghi lại tiến độ.
+        </EmptyState>
       ) : (
         <>
           <ul className="progress-history">
@@ -136,11 +139,12 @@ function ProgressContent({ reload }: { reload: () => void }) {
               </li>
             ))}
           </ul>
-          <VocabularyPagination
-            page={history.page}
+          <Pagination
+            page={history.page + 1}
             totalPages={history.totalPages}
             hasNext={history.hasNext}
-            change={setPage}
+            onChange={(next) => setPage(next - 1)}
+            label="Phân trang lịch sử ôn tập"
           />
         </>
       )}

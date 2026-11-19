@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowIcon } from "@/components/arrow-icon";
-import { Mascot } from "@/components/mascot";
+import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
 
 /** Trang AI Tutor: chưa có dữ liệu, chỉ giới thiệu và dẫn sang bài TOEIC mẫu. */
@@ -17,18 +17,20 @@ export function AiTutorPreview() {
         </p>
         <StatusBadge status="soon" />
       </div>
-      <div className="glass-card empty-page">
-        <Mascot expression="thinking" idSuffix="-tutor" className="empty-page-mascot" />
-        <span>KHÔNG GIAN ĐANG CHỜ DỮ LIỆU</span>
-        <h2>Chưa có câu đã nộp để hỏi AI Tutor.</h2>
-        <p>
-          Tính năng hỏi đáp sau khi nộp bài sẽ mở khi dữ liệu học tập được kết nối. Hiện bạn có thể khám phá bài
-          TOEIC mẫu.
-        </p>
-        <Link href="/learn/toeic" className="btn-primary">
-          Xem bài TOEIC mẫu <ArrowIcon />
-        </Link>
-      </div>
+      <EmptyState
+        title="Chưa có câu đã nộp để hỏi AI Tutor."
+        kicker="KHÔNG GIAN ĐANG CHỜ DỮ LIỆU"
+        mascot="thinking"
+        idSuffix="-tutor"
+        action={
+          <Link href="/learn/toeic" className="btn-primary">
+            Xem bài TOEIC mẫu <ArrowIcon />
+          </Link>
+        }
+      >
+        Tính năng hỏi đáp sau khi nộp bài sẽ mở khi dữ liệu học tập được kết nối. Hiện bạn có thể khám phá bài TOEIC
+        mẫu.
+      </EmptyState>
     </main>
   );
 }
