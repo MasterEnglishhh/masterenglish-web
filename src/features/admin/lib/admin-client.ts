@@ -153,6 +153,12 @@ export function fetchAdminUsers(
   );
 }
 
+export function fetchAdminUserDetail(
+  id: string
+): Promise<AdminResult<AdminUser>> {
+  return requestWithAuth<AdminUser>(`/api/v1/admin/users/${id}`);
+}
+
 export function updateAdminUserRoles(
   id: string,
   roles: UserRole[]
