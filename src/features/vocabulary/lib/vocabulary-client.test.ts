@@ -2,6 +2,7 @@ import { test, mock } from "node:test";
 import assert from "node:assert/strict";
 import {
   fetchDecks,
+  fetchSavedSenseIds,
   fetchDeckCards,
   saveWordSense,
   unsaveWordSense,
@@ -10,6 +11,40 @@ import {
   fetchPronunciationTicket,
 } from "./vocabulary-client.ts";
 import type { ReviewRequest } from "../types/vocabulary.ts";
+
+test("saved senses use the backend JsonValue array contract and reject object wrappers", async () => {
+  const original = globalThis.fetch;
+  const senseId = "10000000-0000-0000-0000-000000000001";
+  try {
+    globalThis.fetch = async () => Response.json([senseId]);
+    assert.deepEqual(await fetchSavedSenseIds("word-id"), {
+      success: true,
+      data: [senseId],
+    });
+    globalThis.fetch = async () => Response.json({ senseIds: [senseId] });
+    assert.equal((await fetchSavedSenseIds("word-id")).success, false);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test("vocabulary list rejects malformed DTO items before rendering", async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () =>
+    Response.json({
+      items: [null],
+      page: 0,
+      size: 10,
+      totalPages: 1,
+      totalItems: 1,
+      hasNext: false,
+    });
+  try {
+    assert.equal((await fetchDecks()).success, false);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
 
 test("pronunciation ticket refreshes an expired session before issuing a playback URL", async () => {
   const originalFetch = globalThis.fetch;
@@ -251,8 +286,7 @@ test("vocabulary client submitReview sends CSRF and body", async () => {
       }
       if (url.includes("/api/v1/vocabulary/reviews")) {
         sentBody = String(init?.body);
-        sentCsrf =
-          (init?.headers as Record<string, string>)?.["X-XSRF-TOKEN"] ?? null;
+        sentCsrf = new Headers(init?.headers).get("X-XSRF-TOKEN");
         return new Response(
           JSON.stringify({
             reviewId: "r1000000-0000-0000-0000-000000000001",

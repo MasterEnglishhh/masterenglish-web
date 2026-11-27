@@ -8,6 +8,7 @@ import {
   revokeAdminUserSessions,
   unlockAdminUser,
   updateAdminUserRoles,
+  type AdminResult,
 } from "../lib/admin-client";
 import type { AdminUser, UserFilterState, UserRole } from "../types/user-management";
 
@@ -18,29 +19,49 @@ export function useAdminUsers() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
 
-  const [filters, setFilters] = useState<UserFilterState>({
+  const [filters, setFilterState] = useState<UserFilterState>({
     search: "",
     role: "ALL",
     status: "ALL",
     page: 1,
     pageSize: 10,
   });
+  const currentFilters = useRef(filters);
 
   // Phản hồi của lần tải cũ không được ghi đè lần tải mới (gõ tìm kiếm nhanh, đổi trang).
   const requests = useRef(createLatestRequestTracker());
 
-  const loadUsers = useCallback(async () => {
+  const setFilters = useCallback((next: UserFilterState) => {
+    const current = currentFilters.current;
+    if (next.search !== current.search || next.role !== current.role || next.status !== current.status || next.pageSize !== current.pageSize) {
+      next = { ...next, page: 1 };
+    }
+    requests.current.invalidate();
+    currentFilters.current = next;
+    setFilterState(next);
+    setIsLoading(true);
+    setError(null);
+  }, []);
+
+  const loadUsers = useCallback(async (query = currentFilters.current) => {
     const ticket = requests.current.begin();
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetchAdminUsers(filters);
+      const res = await fetchAdminUsers(query);
       if (!requests.current.isCurrent(ticket)) return;
       if (res.success) {
+        const lastPage = Math.max(1, res.data.totalPages);
+        setTotalPages(lastPage);
+        if (query.page > lastPage) {
+          setFilters({ ...query, page: lastPage });
+          return;
+        }
         setUsers(res.data.items);
         setTotalCount(res.data.totalItems);
-        setTotalPages(Math.max(1, res.data.totalPages));
       } else {
         setError(res.error.message);
       }
@@ -49,65 +70,59 @@ export function useAdminUsers() {
       setError("Không thể tải danh sách tài khoản.");
     }
     setIsLoading(false);
-  }, [filters]);
+  }, [setFilters]);
 
   useEffect(() => {
     const tracker = requests.current;
     const timer = setTimeout(() => {
-      loadUsers();
+      void loadUsers(filters);
     }, 250);
     return () => {
       clearTimeout(timer);
       tracker.invalidate();
     };
-  }, [loadUsers]);
+  }, [filters, loadUsers]);
 
-  const toggleLockUser = async (userId: string, reason?: string) => {
-    setError(null);
+  const saveUserChange = async (save: () => Promise<AdminResult<AdminUser>>, failureLabel: string) => {
+    setMutationError(null);
     setNotice(null);
-    const target = users.find((u) => u.id === userId);
-    if (!target) return;
-
-    if (target.status === "LOCKED") {
-      const res = await unlockAdminUser(userId);
+    try {
+      const res = await save();
       if (res.success) {
         await loadUsers();
-      } else {
-        setError(`Mở khóa thất bại: ${res.error.message}`);
+        return true;
       }
-    } else {
-      const lockReason = reason || "Khóa thủ công bởi quản trị viên";
-      const res = await lockAdminUser(userId, lockReason);
-      if (res.success) {
-        await loadUsers();
-      } else {
-        setError(`Khóa tài khoản thất bại: ${res.error.message}`);
-      }
+      setMutationError(`${failureLabel}. ${res.error.message}`);
+    } catch {
+      setMutationError(`${failureLabel}. Vui lòng thử lại.`);
     }
+    return false;
   };
+
+  const toggleLockUser = (user: AdminUser, reason?: string) => user.status === "LOCKED"
+    ? saveUserChange(() => unlockAdminUser(user.id), "Mở khóa thất bại")
+    : saveUserChange(
+        () => lockAdminUser(user.id, reason?.trim() || "Khóa thủ công bởi quản trị viên"),
+        "Khóa tài khoản thất bại"
+      );
 
   const updateUserRoles = async (userId: string, newRoles: UserRole[]) => {
     if (newRoles.length === 0) {
-      setError("Tài khoản phải có tối thiểu 1 vai trò.");
-      return;
+      setMutationError("Tài khoản phải có tối thiểu 1 vai trò.");
+      return false;
     }
-    const res = await updateAdminUserRoles(userId, newRoles);
-    if (res.success) {
-      await loadUsers();
-    } else {
-      setError(`Đổi vai trò thất bại: ${res.error.message}`);
-    }
+    return saveUserChange(() => updateAdminUserRoles(userId, newRoles), "Đổi vai trò thất bại");
   };
 
   const revokeUserSessions = async (userId: string) => {
-    setError(null);
+    setRevokeError(null);
     setNotice(null);
     const res = await revokeAdminUserSessions(userId);
     if (res.success) {
       setNotice(res.data.message || "Đã thu hồi toàn bộ phiên đăng nhập của người dùng.");
       await loadUsers();
     } else {
-      setError(`Hủy phiên thất bại: ${res.error.message}`);
+      setRevokeError(`Hủy phiên thất bại. ${res.error.message}`);
     }
   };
 
@@ -117,12 +132,14 @@ export function useAdminUsers() {
     totalPages,
     isLoading,
     error,
+    mutationError,
+    revokeError,
     notice,
     filters,
     setFilters,
     toggleLockUser,
     updateUserRoles,
     revokeUserSessions,
-    refreshUsers: loadUsers,
+    refreshUsers: () => loadUsers(),
   };
 }

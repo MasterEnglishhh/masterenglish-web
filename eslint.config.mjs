@@ -15,14 +15,28 @@ const features = [
   "marketing",
   "toeic",
   "vocabulary",
+  "grammar",
+  "practice",
+  "results",
+  "notifications",
 ];
 const indexOf = (name) => `./${name}/index.ts`;
+const featureDependencies = {
+  grammar: ["learning", "practice"],
+  practice: ["learning"],
+  toeic: ["practice"],
+  results: ["practice", "vocabulary"],
+};
 
 const featureZones = features.map((name) => ({
   target: `./src/features/${name}`,
   from: "./src/features",
-  except: [`./${name}`, ...(name === "auth" ? [] : [indexOf("auth")])],
-  message: `"${name}" chỉ được import chính nó hoặc @/features/auth (qua index.ts).`,
+  except: [
+    `./${name}`,
+    ...(name === "auth" ? [] : [indexOf("auth")]),
+    ...(featureDependencies[name] ?? []).map(indexOf),
+  ],
+  message: `"${name}" chỉ import chính nó và public API của dependency được khai báo.`,
 }));
 
 const eslintConfig = defineConfig([
@@ -74,6 +88,7 @@ const eslintConfig = defineConfig([
     "build/**",
     // Skill agent cài vào repo, không phải mã nguồn của ứng dụng.
     ".claude/**",
+    ".audit/**",
     "next-env.d.ts",
   ]),
 ]);

@@ -1,5 +1,7 @@
 import type { PageResponse } from "../../../lib/http.ts";
+import { isPageResponse, isRecord, isUuid } from "../../../lib/api-validation.ts";
 import { requestWithAuth, type AdminResult } from "./admin-client.ts";
+import { isContentSource } from "./admin-validation.ts";
 
 export interface ContentSource {
   id: string;
@@ -33,17 +35,28 @@ interface WordWithSenses {
 }
 
 export function fetchContentSources(): Promise<AdminResult<PageResponse<ContentSource>>> {
-  return requestWithAuth<PageResponse<ContentSource>>("/api/v1/admin/content/sources?size=100");
+  return requestWithAuth<PageResponse<ContentSource>>("/api/v1/admin/content/sources?size=100", {
+    validate: (data) => isPageResponse(data, isContentSource),
+  });
 }
 
 export function createContentSource(payload: CreateSourcePayload): Promise<AdminResult<ContentSource>> {
-  return requestWithAuth<ContentSource>("/api/v1/admin/content/sources", { method: "POST", body: payload });
+  return requestWithAuth<ContentSource>("/api/v1/admin/content/sources", {
+    method: "POST", body: payload, validate: isContentSource,
+  });
+}
+
+function isWordWithSenses(value: unknown) {
+  return isRecord(value) && typeof value.lemma === "string" && Array.isArray(value.senses) &&
+    value.senses.every((sense) => isRecord(sense) && isUuid(sense.id) &&
+      [sense.partOfSpeech, sense.cefrLevel, sense.meaningVi].every((field) => typeof field === "string"));
 }
 
 /** Tìm trong các từ đã xuất bản: bộ thẻ chỉ nhận được nghĩa của từ đã xuất bản. */
 export async function searchPublishedSenses(query: string): Promise<AdminResult<PublishedSense[]>> {
   const res = await requestWithAuth<PageResponse<WordWithSenses>>(
-    `/api/v1/vocabulary/words?q=${encodeURIComponent(query.trim())}&size=10`
+    `/api/v1/vocabulary/words?q=${encodeURIComponent(query.trim())}&size=10`,
+    { validate: (data) => isPageResponse(data, isWordWithSenses) }
   );
   if (!res.success) return res;
   return {

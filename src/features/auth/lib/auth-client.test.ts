@@ -46,6 +46,10 @@ test("CSRF bootstrap uses same-origin cookies and disables caching", async () =>
     assert.equal(input, "/api/v1/auth/csrf");
     assert.equal(init?.credentials, "same-origin");
     assert.equal(init?.cache, "no-store");
+    assert.ok(
+      init?.signal,
+      "CSRF bootstrap must have a deadline so the auth lock can be released"
+    );
     return csrf();
   };
   assert.deepEqual(await fetchCsrfToken(), {
@@ -166,7 +170,7 @@ test("validation errors map backend field violations", async () => {
   }
 });
 
-test("login bootstraps a fresh CSRF token after 403 and retries only once", async () => {
+test("login never retries an ambiguous backend 403 denial", async () => {
   let bootstraps = 0;
   let posts = 0;
   globalThis.fetch = async (input, init) => {
@@ -180,11 +184,11 @@ test("login bootstraps a fresh CSRF token after 403 and retries only once", asyn
       new Headers(init?.headers).get("X-XSRF-TOKEN"),
       `token-${posts}`
     );
-    return posts === 1 ? new Response(null, { status: 403 }) : json(profile);
+    return json({ code: "ACCESS_DENIED", detail: "Access denied." }, 403);
   };
-  assert.equal((await login(credentials)).success, true);
-  assert.equal(posts, 2);
-  assert.equal(bootstraps, 2);
+  assert.equal((await login(credentials)).success, false);
+  assert.equal(posts, 1);
+  assert.equal(bootstraps, 1);
 });
 
 test("persistent CSRF rejection is bounded", async () => {
@@ -197,7 +201,7 @@ test("persistent CSRF rejection is bounded", async () => {
   const result = await login(credentials);
   assert.equal(result.success, false);
   if (!result.success) assert.equal(result.error.code, "FORBIDDEN");
-  assert.equal(posts, 2);
+  assert.equal(posts, 1);
 });
 
 test("HTML service error does not leak into the login UI", async () => {
@@ -524,6 +528,51 @@ test("registration validation maps field errors and password-policy errors", asy
   });
   assert.equal(rejected.success, false);
   if (!rejected.success) assert.equal(rejected.error.code, "PASSWORD_REJECTED");
+});
+
+test("auth preserves a backend validation error when its optional errors field is malformed", async () => {
+  globalThis.fetch = async (input) =>
+    input === "/api/v1/auth/csrf"
+      ? csrf()
+      : json(
+          {
+            code: "VALIDATION_ERROR",
+            detail: "Dữ liệu chưa hợp lệ.",
+            errors: { field: "email" },
+          },
+          400
+        );
+  const result = await registerAccount({
+    ...credentials,
+    firstName: "An",
+    lastName: "Nguyễn",
+  });
+  assert.equal(result.success, false);
+  if (!result.success) {
+    assert.equal(result.error.status, 400);
+    assert.equal(result.error.code, "VALIDATION_ERROR");
+    assert.equal(result.error.fieldViolations, undefined);
+  }
+});
+
+test("OTP rate limiting accepts an HTTP-date Retry-After like the shared API transport", async () => {
+  const until = new Date(Date.now() + 180_000).toUTCString();
+  globalThis.fetch = async (input) =>
+    input === "/api/v1/auth/csrf"
+      ? csrf()
+      : json({ code: "RATE_LIMITED" }, 429, { "Retry-After": until });
+  const result = await verifyRegistrationOtp({
+    registrationId: registration.registrationId,
+    email: credentials.email,
+    otp: "001234",
+  });
+  assert.equal(result.success, false);
+  if (!result.success) {
+    assert.ok(
+      result.error.retryAfterSeconds && result.error.retryAfterSeconds > 170
+    );
+    assert.ok(result.error.retryAfterSeconds <= 180);
+  }
 });
 
 test("registration and OTP return a retryable error on network failure", async () => {

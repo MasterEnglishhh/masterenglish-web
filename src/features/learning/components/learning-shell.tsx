@@ -22,7 +22,11 @@ export function LearningShell({ children }: { children: React.ReactNode }) {
         </Suspense>
         <div className="sidebar-bottom">
           <div className="sidebar-note">
-            <Mascot expression="happy" idSuffix="-side" className="side-mascot" />
+            <Mascot
+              expression="happy"
+              idSuffix="-side"
+              className="side-mascot"
+            />
             <strong>Cứ bắt đầu từ một bước nhỏ.</strong>
             <p>Mọi hành trình đều có điểm khởi đầu.</p>
           </div>
@@ -56,7 +60,6 @@ export function LearningShell({ children }: { children: React.ReactNode }) {
             <Link href="/learn/toeic">TOEIC</Link>
             <Link href="/">Trang chủ</Link>
           </nav>
-          <small>Bản xem trước: một phần nội dung là dữ liệu minh họa.</small>
         </footer>
       </div>
     </div>

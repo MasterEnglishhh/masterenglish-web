@@ -3,6 +3,19 @@ import {
   type HttpOutcome,
   type PageResponse,
 } from "../../../lib/http.ts";
+import { isPageResponse } from "../../../lib/api-validation.ts";
+import {
+  isAdminKpi,
+  isAdminMessage,
+  isAdminRevision,
+  isAdminUser,
+  isAiQuotaMetric,
+  isAuditLogEntry,
+  isContentItem,
+  isFeatureFlag,
+  isRecentActivity,
+  isStorageQuota,
+} from "./admin-validation.ts";
 import type { AdminKPI, RecentActivity } from "../types/admin";
 import type {
   AdminUser,
@@ -12,7 +25,9 @@ import type {
 import type {
   ContentFilterState,
   ContentItem,
-  ContentRevisionStatus,
+  AdminRevisionDto,
+  CreateWordDraftPayload,
+  CreateDeckDraftPayload,
 } from "../types/content-ops";
 import type {
   AiQuotaMetric,
@@ -32,38 +47,11 @@ export type AdminResult<T> =
   { success: true; data: T } | { success: false; error: AdminClientError };
 
 export type { PageResponse };
-
-export interface AdminRevisionDto {
-  revisionId: string;
-  contentItemId: string;
-  status: ContentRevisionStatus;
-  versionNo: number;
-  reviewNote?: string | null;
-  publishedAt?: string | null;
-  updatedAt: string;
-}
-
-export interface CreateWordDraftPayload {
-  lemma: string;
-  partOfSpeech: string;
-  cefrLevel: string;
-  meaningVi: string;
-  definitionEn?: string;
-  ipa?: string;
-  examplesEn?: string[];
-  examplesVi?: string[];
-  changeSummary?: string;
-  sourceId?: string;
-}
-
-export interface CreateDeckDraftPayload {
-  title: string;
-  description?: string;
-  level?: string;
-  wordSenseIds?: string[];
-  changeSummary?: string;
-  sourceId?: string;
-}
+export type {
+  AdminRevisionDto,
+  CreateWordDraftPayload,
+  CreateDeckDraftPayload,
+} from "../types/content-ops";
 
 function toResult<T>(outcome: HttpOutcome<T>): AdminResult<T> {
   if (outcome.ok) return { success: true, data: outcome.data };
@@ -99,6 +87,18 @@ function toResult<T>(outcome: HttpOutcome<T>): AdminResult<T> {
       "Lỗi kết nối máy chủ. Vui lòng kiểm tra đường truyền.",
       true
     );
+  if (problem?.code === "INVALID_RESPONSE")
+    return error(
+      "INVALID_RESPONSE",
+      "Máy chủ trả dữ liệu không đúng định dạng.",
+      true
+    );
+  if (status >= 500)
+    return error(
+      "SERVICE_ERROR",
+      "Dịch vụ quản trị đang gián đoạn. Vui lòng thử lại sau.",
+      true
+    );
   return error(
     problem?.code ?? "SERVICE_ERROR",
     problem?.detail ??
@@ -117,14 +117,17 @@ export async function requestWithAuth<T>(
 /* ==================== OVERVIEW APIS ==================== */
 
 export function fetchAdminKpis(): Promise<AdminResult<AdminKPI[]>> {
-  return requestWithAuth<AdminKPI[]>("/api/v1/admin/overview/kpis");
+  return requestWithAuth<AdminKPI[]>("/api/v1/admin/overview/kpis", {
+    validate: (data) => Array.isArray(data) && data.every(isAdminKpi),
+  });
 }
 
 export function fetchRecentActivities(
   limit = 10
 ): Promise<AdminResult<RecentActivity[]>> {
   return requestWithAuth<RecentActivity[]>(
-    `/api/v1/admin/overview/activities?limit=${limit}`
+    `/api/v1/admin/overview/activities?limit=${limit}`,
+    { validate: (data) => Array.isArray(data) && data.every(isRecentActivity) }
   );
 }
 
@@ -149,7 +152,18 @@ export function fetchAdminUsers(
   params.set("size", (filter.pageSize || 10).toString());
 
   return requestWithAuth<PageResponse<AdminUser>>(
-    `/api/v1/admin/users?${params.toString()}`
+    `/api/v1/admin/users?${params.toString()}`,
+    { validate: (data) => isPageResponse(data, isAdminUser) }
+  );
+}
+
+export function fetchAdminUser(id: string): Promise<AdminResult<AdminUser>> {
+  return requestWithAuth<AdminUser>(
+    `/api/v1/admin/users/${encodeURIComponent(id)}`,
+    {
+      validate: (data) =>
+        isAdminUser(data) && data.id.toLowerCase() === id.toLowerCase(),
+    }
   );
 }
 
@@ -157,10 +171,14 @@ export function updateAdminUserRoles(
   id: string,
   roles: UserRole[]
 ): Promise<AdminResult<AdminUser>> {
-  return requestWithAuth<AdminUser>(`/api/v1/admin/users/${id}/roles`, {
-    method: "PUT",
-    body: { roles },
-  });
+  return requestWithAuth<AdminUser>(
+    `/api/v1/admin/users/${encodeURIComponent(id)}/roles`,
+    {
+      method: "PUT",
+      body: { roles },
+      validate: isAdminUser,
+    }
+  );
 }
 
 export function lockAdminUser(
@@ -168,25 +186,34 @@ export function lockAdminUser(
   reason: string,
   lockedUntil?: string | null
 ): Promise<AdminResult<AdminUser>> {
-  return requestWithAuth<AdminUser>(`/api/v1/admin/users/${id}/lock`, {
-    method: "POST",
-    body: { reason, lockedUntil: lockedUntil || null },
-  });
+  return requestWithAuth<AdminUser>(
+    `/api/v1/admin/users/${encodeURIComponent(id)}/lock`,
+    {
+      method: "POST",
+      body: { reason, lockedUntil: lockedUntil || null },
+      validate: isAdminUser,
+    }
+  );
 }
 
 export function unlockAdminUser(id: string): Promise<AdminResult<AdminUser>> {
-  return requestWithAuth<AdminUser>(`/api/v1/admin/users/${id}/unlock`, {
-    method: "POST",
-  });
+  return requestWithAuth<AdminUser>(
+    `/api/v1/admin/users/${encodeURIComponent(id)}/unlock`,
+    {
+      method: "POST",
+      validate: isAdminUser,
+    }
+  );
 }
 
 export function revokeAdminUserSessions(
   id: string
 ): Promise<AdminResult<{ message: string }>> {
   return requestWithAuth<{ message: string }>(
-    `/api/v1/admin/users/${id}/revoke-sessions`,
+    `/api/v1/admin/users/${encodeURIComponent(id)}/revoke-sessions`,
     {
       method: "POST",
+      validate: isAdminMessage,
     }
   );
 }
@@ -211,7 +238,8 @@ export function fetchContentItems(
   params.set("size", (filter.pageSize || 10).toString());
 
   return requestWithAuth<PageResponse<ContentItem>>(
-    `/api/v1/admin/content/items?${params.toString()}`
+    `/api/v1/admin/content/items?${params.toString()}`,
+    { validate: (data) => isPageResponse(data, isContentItem) }
   );
 }
 
@@ -221,6 +249,7 @@ export function createWordDraft(
   return requestWithAuth<ContentItem>("/api/v1/admin/content/words", {
     method: "POST",
     body: payload,
+    validate: isContentItem,
   });
 }
 
@@ -230,6 +259,7 @@ export function createDeckDraft(
   return requestWithAuth<ContentItem>("/api/v1/admin/content/decks", {
     method: "POST",
     body: payload,
+    validate: isContentItem,
   });
 }
 
@@ -237,9 +267,10 @@ export function submitContentRevision(
   revisionId: string
 ): Promise<AdminResult<AdminRevisionDto>> {
   return requestWithAuth<AdminRevisionDto>(
-    `/api/v1/admin/content/revisions/${revisionId}/submit`,
+    `/api/v1/admin/content/revisions/${encodeURIComponent(revisionId)}/submit`,
     {
       method: "POST",
+      validate: isAdminRevision,
     }
   );
 }
@@ -249,10 +280,11 @@ export function approveContentRevision(
   reviewNote?: string
 ): Promise<AdminResult<AdminRevisionDto>> {
   return requestWithAuth<AdminRevisionDto>(
-    `/api/v1/admin/content/revisions/${revisionId}/approve`,
+    `/api/v1/admin/content/revisions/${encodeURIComponent(revisionId)}/approve`,
     {
       method: "POST",
       body: { reviewNote: reviewNote || "Approved" },
+      validate: isAdminRevision,
     }
   );
 }
@@ -262,10 +294,11 @@ export function rejectContentRevision(
   reviewNote: string
 ): Promise<AdminResult<AdminRevisionDto>> {
   return requestWithAuth<AdminRevisionDto>(
-    `/api/v1/admin/content/revisions/${revisionId}/reject`,
+    `/api/v1/admin/content/revisions/${encodeURIComponent(revisionId)}/reject`,
     {
       method: "POST",
       body: { reviewNote },
+      validate: isAdminRevision,
     }
   );
 }
@@ -274,9 +307,10 @@ export function publishContentRevision(
   revisionId: string
 ): Promise<AdminResult<AdminRevisionDto>> {
   return requestWithAuth<AdminRevisionDto>(
-    `/api/v1/admin/content/revisions/${revisionId}/publish`,
+    `/api/v1/admin/content/revisions/${encodeURIComponent(revisionId)}/publish`,
     {
       method: "POST",
+      validate: isAdminRevision,
     }
   );
 }
@@ -286,10 +320,11 @@ export function archiveContentItem(
   reason = "Lưu trữ nội dung"
 ): Promise<AdminResult<{ message: string }>> {
   return requestWithAuth<{ message: string }>(
-    `/api/v1/admin/content/items/${itemId}/archive`,
+    `/api/v1/admin/content/items/${encodeURIComponent(itemId)}/archive`,
     {
       method: "POST",
       body: { reason },
+      validate: isAdminMessage,
     }
   );
 }
@@ -297,7 +332,9 @@ export function archiveContentItem(
 /* ==================== SYSTEM & POLICY APIS ==================== */
 
 export function fetchFeatureFlags(): Promise<AdminResult<FeatureFlag[]>> {
-  return requestWithAuth<FeatureFlag[]>("/api/v1/admin/system/feature-flags");
+  return requestWithAuth<FeatureFlag[]>("/api/v1/admin/system/feature-flags", {
+    validate: (data) => Array.isArray(data) && data.every(isFeatureFlag),
+  });
 }
 
 export function updateFeatureFlag(
@@ -305,20 +342,25 @@ export function updateFeatureFlag(
   enabled: boolean
 ): Promise<AdminResult<FeatureFlag>> {
   return requestWithAuth<FeatureFlag>(
-    `/api/v1/admin/system/feature-flags/${key}`,
+    `/api/v1/admin/system/feature-flags/${encodeURIComponent(key)}`,
     {
       method: "PUT",
       body: { enabled },
+      validate: (data) => isFeatureFlag(data) && data.key === key,
     }
   );
 }
 
 export function fetchStorageQuota(): Promise<AdminResult<StorageQuota>> {
-  return requestWithAuth<StorageQuota>("/api/v1/admin/system/quotas/storage");
+  return requestWithAuth<StorageQuota>("/api/v1/admin/system/quotas/storage", {
+    validate: isStorageQuota,
+  });
 }
 
 export function fetchAiQuotaMetrics(): Promise<AdminResult<AiQuotaMetric[]>> {
-  return requestWithAuth<AiQuotaMetric[]>("/api/v1/admin/system/quotas/ai");
+  return requestWithAuth<AiQuotaMetric[]>("/api/v1/admin/system/quotas/ai", {
+    validate: (data) => Array.isArray(data) && data.every(isAiQuotaMetric),
+  });
 }
 
 export function fetchAuditLogs(
@@ -333,6 +375,7 @@ export function fetchAuditLogs(
   params.set("page", page.toString());
   params.set("size", size.toString());
   return requestWithAuth<PageResponse<AuditLogEntry>>(
-    `/api/v1/admin/system/audit-logs?${params.toString()}`
+    `/api/v1/admin/system/audit-logs?${params.toString()}`,
+    { validate: (data) => isPageResponse(data, isAuditLogEntry) }
   );
 }

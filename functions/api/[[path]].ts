@@ -3,6 +3,38 @@ interface ProxyContext {
   env: { BACKEND_URL?: string };
 }
 
+const MAX_BODY_BYTES = 2 * 1024 * 1024;
+
+async function readBody(request: Request): Promise<ArrayBuffer | null> {
+  const declared = Number(request.headers.get("Content-Length"));
+  if (declared > MAX_BODY_BYTES) return null;
+  if (!request.body) return new ArrayBuffer(0);
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > MAX_BODY_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const body = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body.buffer;
+}
+
 function problem(status: number, detail: string): Response {
   return new Response(JSON.stringify({ status, detail }), {
     status,
@@ -64,12 +96,15 @@ export async function onRequest({
   headers.set("X-Forwarded-Proto", "https");
   // Preserve Origin: Spring still checks its exact CORS allowlist and CSRF token.
   try {
+    const body = ["GET", "HEAD"].includes(request.method)
+      ? undefined
+      : await readBody(request);
+    if (body === null)
+      return problem(413, "Dữ liệu gửi lên vượt giới hạn 2 MiB.");
     const response = await fetch(upstream, {
       method: request.method,
       headers,
-      body: ["GET", "HEAD"].includes(request.method)
-        ? undefined
-        : await request.arrayBuffer(),
+      body,
       redirect: "manual",
       cache: "no-store",
       signal: AbortSignal.timeout(30_000),
@@ -90,6 +125,14 @@ export async function onRequest({
     const location = resultHeaders.get("Location");
     if (location) {
       const redirect = new URL(location, upstream);
+      if (
+        response.status >= 300 &&
+        response.status < 400 &&
+        !["GET", "HEAD"].includes(request.method) &&
+        (redirect.origin !== upstream.origin ||
+          !redirect.pathname.startsWith("/api/"))
+      )
+        return problem(502, "Máy chủ trả chuyển hướng API không hợp lệ.");
       if (redirect.origin === upstream.origin) {
         resultHeaders.set(
           "Location",

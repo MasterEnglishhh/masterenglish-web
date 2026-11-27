@@ -1,438 +1,191 @@
-# ĐẶC TẢ GIAO DIỆN API PHÂN HỆ QUẢN TRỊ (ADMIN API CONTRACTS)
+# Hợp đồng API cho giao diện quản trị
 
-**Hệ thống**: MasterEnglish E-Learning Platform  
-**Phân hệ**: Admin Portal (`/admin`, `/admin/users`, `/admin/content`, `/admin/system`)  
-**Phiên bản API**: `v1`  
-**Định dạng**: JSON (RFC 8259), Tiêu chuẩn lỗi RFC 7807 (Problem Details)  
-**Xác thực**: Same-Origin HTTP-Only Cookie (`access_token`, `refresh_token`) + Header `X-XSRF-TOKEN`  
-**Ngày cập nhật**: 04/11/2026  
+Cập nhật ngày 28/11/2026, đối chiếu controller và DTO trong
+`masterenglish-api/src/main/java/com/masterenglish/api/modules/admin/`.
+Đã đối chiếu mã nguồn local, chưa xác minh trên staging. Controller và DTO là
+nguồn chuẩn khi khác với ví dụ trong tài liệu cũ.
 
----
+## Quy tắc dùng chung
 
-## 1. Màn hình Tổng quan (`/admin`)
+- Gọi URL tương đối `/api/v1/*`; xác thực bằng cookie HttpOnly do backend cấp.
+- Trước mutation, lấy `GET /api/v1/auth/csrf` và gửi `X-XSRF-TOKEN`.
+  Phản hồi bootstrap: `{ headerName: "X-XSRF-TOKEN", token: "..." }`.
+- Client dùng `credentials: "same-origin"`, `cache: "no-store"`,
+  `redirect: "error"`. Request JSON không tự theo redirect để tránh phát lại
+  mật khẩu, body và header CSRF sang đích khác.
+- `401`: làm mới phiên một lần qua `POST /api/v1/auth/refresh`, rồi thử lại.
+  `403`: trả lỗi, không tự gửi lại. Backend dùng `ACCESS_DENIED` cho cả lỗi
+  CSRF và từ chối quyền, client không thể phân biệt an toàn.
+- Lỗi dạng Problem Details: `{ code, detail, title, errors: [{ field, ... }] }`.
+  Chỉ nhận trường đúng kiểu; không đưa `detail`/`message` của lỗi `5xx` lên UI.
+  `Retry-After` hỗ trợ số giây và ngày giờ HTTP.
+- ID của user, item, revision và source là UUID. Encode từng path segment.
+  ID item và ID revision có ý nghĩa khác nhau, không dùng thay cho nhau.
+- API quản trị trả JSON, kể cả mutation. Không coi `204` là thành công nếu
+  endpoint yêu cầu DTO. API lưu/bỏ lưu từ và đổi mật khẩu của người học có
+  hợp đồng `204` riêng.
+- Backend phân quyền từng API. Component bảo vệ route chỉ kiểm soát giao diện.
+- Mutation có phiên đăng nhập gửi `X-Session-User` của tài khoản lúc bắt đầu yêu cầu; backend kiểm tra khớp với cookie để chặn phát lại thao tác cũ sau khi đổi tài khoản. Header này không thay thế xác thực/phân quyền.
 
-### 1.1. Lấy chỉ số KPI & Nhật ký hoạt động gần đây
-- **Mục đích**: Hiển thị 4 thẻ KPI đo lường và dòng thời gian các tác vụ quản trị vừa thực hiện.
-- **Endpoint**: `GET /api/v1/admin/overview`
-- **Quyền hạn**: `SYSTEM_ADMIN`, `CONTENT_ADMIN`
-- **Request Headers**:
-  - `Cookie: access_token=...`
-- **Query Parameters**:
-  - `timeRange` *(string, tùy chọn)*: `24h`, `7d` (mặc định), `30d`.
-- **Response (200 OK)**:
-```json
-{
-  "kpis": [
-    {
-      "id": "total-users",
-      "title": "Người dùng đăng ký",
-      "value": "14,820",
-      "subValue": "1,240 trực tuyến",
-      "changePercent": 12.5,
-      "trendDirection": "up",
-      "trendText": "+12.5% so với tuần trước",
-      "iconName": "users"
-    },
-    {
-      "id": "content-bank",
-      "title": "Ngân hàng nội dung",
-      "value": "3,450",
-      "subValue": "128 chờ duyệt",
-      "changePercent": 8.2,
-      "trendDirection": "up",
-      "trendText": "+8.2% câu hỏi & từ vựng mới",
-      "iconName": "book-open"
-    },
-    {
-      "id": "storage-r2",
-      "title": "Dung lượng Cloudflare R2",
-      "value": "42.8 GB",
-      "subValue": "/ 100 GB định mức",
-      "changePercent": 42.8,
-      "trendDirection": "neutral",
-      "trendText": "42.8% tổng bộ nhớ",
-      "iconName": "database"
-    },
-    {
-      "id": "security-health",
-      "title": "Trạng thái hệ thống",
-      "value": "99.98%",
-      "subValue": "0 cảnh báo rủi ro",
-      "trendDirection": "neutral",
-      "trendText": "Toàn bộ API hoạt động ổn định",
-      "iconName": "shield-check"
-    }
-  ],
-  "activities": [
-    {
-      "id": "act-1",
-      "actorEmail": "admin@masterenglish.edu.vn",
-      "actorName": "Lê Hoàng Long",
-      "action": "Gán vai trò CONTENT_ADMIN",
-      "target": "nguyen.van.a@gmail.com",
-      "module": "IDENTITY",
-      "timestamp": "2026-11-04T12:30:00Z",
-      "status": "SUCCESS"
-    },
-    {
-      "id": "act-2",
-      "actorEmail": "editor@masterenglish.edu.vn",
-      "actorName": "Trần Minh Thư",
-      "action": "Xuất bản bài học ngữ pháp",
-      "target": "Lesson: Inversion in Advanced English",
-      "module": "CONTENT",
-      "timestamp": "2026-11-04T11:45:00Z",
-      "status": "SUCCESS"
-    }
-  ]
+Phân trang dùng cùng một cấu trúc:
+
+```ts
+interface PageResponse<T> {
+  items: T[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+  hasNext: boolean;
 }
 ```
 
----
+API bắt đầu trang từ `0`; UI admin chuyển từ `1` sang `0`. Backend mặc định
+`size=20`, tối đa `100`; bỏ bộ lọc `ALL` khỏi query. Không dùng
+`content`/`totalElements` của ví dụ cũ.
 
-## 2. Màn hình Người dùng & Phân quyền (`/admin/users`)
+## Tổng quan — SYSTEM_ADMIN hoặc CONTENT_ADMIN
 
-### 2.1. Tra cứu danh sách tài khoản (Tìm kiếm, Lọc, Phân trang)
-- **Mục đích**: Lấy danh sách tài khoản theo từ khóa, vai trò và trạng thái khóa.
-- **Endpoint**: `GET /api/v1/admin/users`
-- **Quyền hạn**: `SYSTEM_ADMIN`
-- **Query Parameters**:
-  - `search` *(string, tùy chọn)*: Email hoặc tên hiển thị.
-  - `role` *(string, tùy chọn)*: `ALL` (mặc định), `SYSTEM_ADMIN`, `CONTENT_ADMIN`, `LEARNER`.
-  - `status` *(string, tùy chọn)*: `ALL` (mặc định), `ACTIVE`, `LOCKED`, `PENDING_VERIFICATION`.
-  - `page` *(int, tùy chọn)*: Số trang (bắt đầu từ 0, mặc định 0).
-  - `size` *(int, tùy chọn)*: Số bản ghi mỗi trang (mặc định 10).
-- **Response (200 OK)**:
-```json
-{
-  "content": [
-    {
-      "id": "usr-01",
-      "email": "admin@masterenglish.edu.vn",
-      "displayName": "Lê Hoàng Long",
-      "firstName": "Long",
-      "lastName": "Lê Hoàng",
-      "phone": "0901234567",
-      "status": "ACTIVE",
-      "roles": ["SYSTEM_ADMIN", "CONTENT_ADMIN"],
-      "authVersion": 3,
-      "activeSessionsCount": 2,
-      "createdAt": "2026-08-15T08:00:00Z",
-      "lastLoginAt": "2026-11-04T15:20:00Z",
-      "lockReason": null,
-      "lockedUntil": null
-    },
-    {
-      "id": "usr-04",
-      "email": "suspicious.hacker@proton.me",
-      "displayName": "Anonymous User",
-      "firstName": null,
-      "lastName": null,
-      "phone": null,
-      "status": "LOCKED",
-      "roles": ["LEARNER"],
-      "authVersion": 5,
-      "activeSessionsCount": 0,
-      "createdAt": "2026-10-02T03:12:00Z",
-      "lastLoginAt": "2026-11-01T04:10:00Z",
-      "lockReason": "Vượt quá 10 lần xác thực OTP thất bại trong 5 phút",
-      "lockedUntil": "2026-12-31T23:59:59Z"
-    }
-  ],
-  "page": 0,
-  "size": 10,
-  "totalElements": 2,
-  "totalPages": 1
-}
-```
+| Method | Endpoint                            | Input    | Response                  |
+| ------ | ----------------------------------- | -------- | ------------------------- |
+| GET    | `/api/v1/admin/overview/kpis`       | Không có | `200 AdminKpiDto[]`       |
+| GET    | `/api/v1/admin/overview/activities` | `limit`  | `200 RecentActivityDto[]` |
 
-### 2.2. Gán hoặc Thu hồi vai trò người dùng (Assign Roles)
-- **Mục đích**: Điều chỉnh danh sách vai trò của một tài khoản.
-- **Endpoint**: `PUT /api/v1/admin/users/{userId}/roles`
-- **Quyền hạn**: `SYSTEM_ADMIN`
-- **Request Headers**:
-  - `Content-Type: application/json`
-  - `X-XSRF-TOKEN: [csrf_token]`
-- **Request Body**:
-```json
-{
-  "roles": ["CONTENT_ADMIN", "LEARNER"]
-}
-```
-- **Response (200 OK)**:
-```json
-{
-  "userId": "usr-01",
-  "roles": ["CONTENT_ADMIN", "LEARNER"],
-  "authVersion": 4,
-  "updatedAt": "2026-11-04T16:00:00Z"
-}
-```
-- **Lỗi nghiệp vụ**:
-  - `400 Bad Request`: Mảng `roles` rỗng (người dùng bắt buộc phải có ít nhất 1 vai trò).
-  - `403 Forbidden`: Admin tự tước bỏ vai trò `SYSTEM_ADMIN` của chính mình hoặc hạ quyền của Admin duy nhất còn lại trên hệ thống.
+Không có endpoint gộp `GET /admin/overview` hay bộ lọc `timeRange` trong controller.
+KPI gồm `id`, `title`, `value`, `subValue`, `changePercent`, `trendText`,
+`trendDirection`, `iconName`. Các trường xu hướng và giá trị phụ có thể `null`;
+không thay bằng tăng trưởng, uptime hoặc số cảnh báo giả.
 
-### 2.3. Khóa hoặc Mở khóa tài khoản (Lock / Unlock User)
-- **Mục đích**: Chặn người dùng vi phạm đăng nhập hoặc mở khóa khi khiếu nại thành công.
-- **Endpoint**: `POST /api/v1/admin/users/{userId}/lock`
-- **Quyền hạn**: `SYSTEM_ADMIN`
-- **Request Headers**:
-  - `Content-Type: application/json`
-  - `X-XSRF-TOKEN: [csrf_token]`
-- **Request Body (Khóa tài khoản)**:
-```json
-{
-  "status": "LOCKED",
-  "reason": "Vi phạm quy tắc an toàn / Nghi vấn tấn công brute-force",
-  "lockedUntil": "2026-12-31T23:59:59Z"
-}
-```
-- **Request Body (Mở khóa tài khoản)**:
-```json
-{
-  "status": "ACTIVE"
-}
-```
-- **Response (200 OK)**:
-```json
-{
-  "userId": "usr-04",
-  "status": "LOCKED",
-  "lockReason": "Vi phạm quy tắc an toàn / Nghi vấn tấn công brute-force",
-  "lockedUntil": "2026-12-31T23:59:59Z",
-  "revokedSessionsCount": 2,
-  "authVersion": 6
-}
-```
+Hoạt động gồm `id`, `actorEmail`, `actorName`, `action`, `target`, `module`,
+`timestamp`, `status`.
 
-### 2.4. Thu hồi toàn bộ phiên đăng nhập tức thì (Revoke Sessions)
-- **Mục đích**: Ép người dùng đăng xuất ngay lập tức khỏi mọi thiết bị mà không cần khóa tài khoản.
-- **Endpoint**: `POST /api/v1/admin/users/{userId}/revoke-sessions`
-- **Quyền hạn**: `SYSTEM_ADMIN`
-- **Request Headers**:
-  - `X-XSRF-TOKEN: [csrf_token]`
-- **Response (200 OK)**:
-```json
-{
-  "userId": "usr-01",
-  "revokedCount": 2,
-  "authVersion": 5
-}
-```
+## Người dùng — SYSTEM_ADMIN
 
----
+| Method | Endpoint                                   | Input                                                                        | Response                         |
+| ------ | ------------------------------------------ | ---------------------------------------------------------------------------- | -------------------------------- |
+| GET    | `/api/v1/admin/users`                      | `search`, `role`, `status`, `page`, `size`, `sortBy`, `sortDirection`        | `200 PageResponse<AdminUserDto>` |
+| GET    | `/api/v1/admin/users/{id}`                 | UUID người dùng                                                              | `200 AdminUserDto`               |
+| PUT    | `/api/v1/admin/users/{id}/roles`           | `{ roles: RoleCode[] }`, ít nhất một vai trò                                 | `200 AdminUserDto`               |
+| POST   | `/api/v1/admin/users/{id}/lock`            | `{ reason, lockedUntil }`; reason bắt buộc, lockedUntil là Instant hoặc null | `200 AdminUserDto`               |
+| POST   | `/api/v1/admin/users/{id}/unlock`          | Không body                                                                   | `200 AdminUserDto`               |
+| POST   | `/api/v1/admin/users/{id}/revoke-sessions` | Không body                                                                   | `200 { message: string }`        |
 
-## 3. Màn hình Quản trị Nội dung (`/admin/content`)
+Vai trò: `LEARNER`, `CONTENT_ADMIN`, `SYSTEM_ADMIN`.
+Trạng thái tài khoản: `ACTIVE`, `LOCKED`, `PENDING_VERIFICATION`, `DISABLED`.
+Sort hỗ trợ `createdAt`, `email`, `id`; chiều `asc` hoặc `desc`.
 
-### 3.1. Danh sách nội dung học thuật
-- **Mục đích**: Lấy danh mục bài học, bộ flashcard, đề thi theo module và trạng thái xuất bản.
-- **Endpoint**: `GET /api/v1/admin/content-items`
-- **Quyền hạn**: `CONTENT_ADMIN`, `SYSTEM_ADMIN`
-- **Query Parameters**:
-  - `search` *(string, tùy chọn)*: Tiêu đề hoặc mã code bài học.
-  - `module` *(string, tùy chọn)*: `ALL`, `VOCABULARY`, `GRAMMAR`, `QUESTION_BANK`, `TOEIC`.
-  - `status` *(string, tùy chọn)*: `ALL`, `DRAFT`, `IN_REVIEW`, `APPROVED`, `PUBLISHED`.
-  - `page` *(int)*: Số trang.
-  - `size` *(int)*: Số bản ghi.
-- **Response (200 OK)**:
-```json
-{
-  "content": [
-    {
-      "id": "cnt-01",
-      "title": "Oxford 3000: Essential Business Vocabulary",
-      "code": "VOCAB-BUS-01",
-      "module": "VOCABULARY",
-      "type": "FLASHCARD_DECK",
-      "status": "PUBLISHED",
-      "versionNo": 2,
-      "summary": "Bộ 50 flashcard thuật ngữ kinh doanh: negotiation, dividend...",
-      "author": "Trần Minh Thư",
-      "reviewer": "Lê Hoàng Long",
-      "level": "B2",
-      "updatedAt": "2026-11-01T09:30:00Z"
-    },
-    {
-      "id": "cnt-03",
-      "title": "TOEIC Full Practice Test 2026 - Simulation Set #04",
-      "code": "TOEIC-TEST-04",
-      "module": "TOEIC",
-      "type": "PRACTICE_SET",
-      "status": "IN_REVIEW",
-      "versionNo": 1,
-      "summary": "Trọn bộ 200 câu hỏi Listening (Part 1-4) và Reading (Part 5-7)",
-      "author": "Trần Minh Thư",
-      "reviewer": "Lê Hoàng Long",
-      "level": "TOEIC 750",
-      "updatedAt": "2026-11-03T11:00:00Z"
-    }
-  ],
-  "page": 0,
-  "size": 10,
-  "totalElements": 2,
-  "totalPages": 1
-}
-```
+`AdminUserDto`: `id`, `email`, `displayName`, `firstName`, `lastName`,
+`phone`, `status`, `roles`, `authVersion`, `activeSessionsCount`, `createdAt`,
+`lastLoginAt`, `lockReason`, `lockedUntil`. Các trường hồ sơ, thời điểm đăng
+nhập và thông tin khóa có thể `null`.
 
-### 3.2. Chuyển đổi trạng thái quy trình xuất bản (Change Revision Status)
-- **Mục đích**: Thẩm định bài học: Duyệt (`PUBLISHED`), gửi xét duyệt (`IN_REVIEW`), hoặc trả về (`DRAFT`).
-- **Endpoint**: `POST /api/v1/admin/content-items/{id}/status`
-- **Quyền hạn**: `CONTENT_ADMIN`, `SYSTEM_ADMIN`
-- **Request Headers**:
-  - `Content-Type: application/json`
-  - `X-XSRF-TOKEN: [csrf_token]`
-- **Request Body**:
-```json
-{
-  "status": "PUBLISHED",
-  "note": "Đã đối soát đạt chuẩn chất lượng học thuật và bản quyền media"
-}
-```
-- **Response (200 OK)**:
-```json
-{
-  "id": "cnt-03",
-  "status": "PUBLISHED",
-  "versionNo": 2,
-  "currentPublishedRevisionId": "rev-uuid-03",
-  "updatedAt": "2026-11-04T16:20:00Z"
-}
-```
+Hộp thoại vai trò phải lấy chi tiết trước khi cho phép lưu; lỗi tải không được
+biến thành danh sách vai trò rỗng. Lưu thất bại giữ nguyên hộp thoại và draft.
 
-### 3.3. Tải lên tệp nạp hàng loạt (Import Jobs Staging)
-- **Mục đích**: Nạp file CSV/JSON từ vựng hoặc câu hỏi vào bảng tạm để kiểm tra thử nghiệm (Dry-Run).
-- **Endpoint**: `POST /api/v1/admin/import-jobs`
-- **Quyền hạn**: `CONTENT_ADMIN`, `SYSTEM_ADMIN`
-- **Request**: `multipart/form-data`
-  - `file`: File `.csv` hoặc `.json`
-  - `module`: `VOCABULARY` hoặc `QUESTION_BANK`
-- **Response (201 Created)**:
-```json
-{
-  "jobId": "job-101",
-  "fileName": "vocab_business_batch1.csv",
-  "totalRows": 150,
-  "validRows": 148,
-  "errorRows": 2,
-  "status": "PREVIEW_READY",
-  "errorReportUrl": "/api/v1/admin/import-jobs/job-101/errors"
-}
-```
+## Nội dung — SYSTEM_ADMIN hoặc CONTENT_ADMIN
 
----
+| Method | Endpoint                                       | Input                                             | Response                                |
+| ------ | ---------------------------------------------- | ------------------------------------------------- | --------------------------------------- |
+| GET    | `/api/v1/admin/content/items`                  | `search`, `contentType`, `status`, `page`, `size` | `200 PageResponse<AdminContentItemDto>` |
+| POST   | `/api/v1/admin/content/words`                  | `CreateWordDraftRequest`                          | `201 AdminContentItemDto`               |
+| POST   | `/api/v1/admin/content/decks`                  | `CreateDeckDraftRequest`                          | `201 AdminContentItemDto`               |
+| POST   | `/api/v1/admin/content/revisions/{id}/submit`  | Không body                                        | `200 AdminRevisionDto`                  |
+| POST   | `/api/v1/admin/content/revisions/{id}/approve` | `{ reviewNote }`, body tùy chọn                   | `200 AdminRevisionDto`                  |
+| POST   | `/api/v1/admin/content/revisions/{id}/reject`  | `{ reviewNote }`; UI yêu cầu lý do                | `200 AdminRevisionDto`                  |
+| POST   | `/api/v1/admin/content/revisions/{id}/publish` | Không body                                        | `200 AdminRevisionDto`                  |
+| POST   | `/api/v1/admin/content/items/{id}/archive`     | `{ reason }`; UI yêu cầu lý do                    | `200 { message: string }`               |
+| GET    | `/api/v1/admin/content/sources`                | `search`, `page`, `size`                          | `200 PageResponse<ContentSourceDto>`    |
+| POST   | `/api/v1/admin/content/sources`                | `CreateContentSourceRequest`                      | `201 ContentSourceDto`                  |
 
-## 4. Màn hình Chính sách & Nhật ký (`/admin/system`)
+Hiện quản lý `WORD` và `DECK` trong module `VOCABULARY`. Bộ lọc gửi
+`contentType`, không gửi `module`. Trạng thái revision có `DRAFT`, `IN_REVIEW`,
+`APPROVED`, `REJECTED`, `PUBLISHED`, `ARCHIVED`; bộ lọc danh sách hiện không
+gửi `REJECTED`.
 
-### 4.1. Lấy danh sách Cờ tính năng động (Feature Flags)
-- **Endpoint**: `GET /api/v1/admin/system/feature-flags`
-- **Quyền hạn**: `SYSTEM_ADMIN`
-- **Response (200 OK)**:
-```json
-[
-  {
-    "key": "FLAG_AI_TUTOR_CONTEXT_v2",
-    "name": "AI Tutor Context v2 (Claude / GPT)",
-    "description": "Kích hoạt mô hình giải thích câu hỏi chuyên sâu và đối thoại ngữ cảnh khi làm bài.",
-    "enabled": true,
-    "category": "AI",
-    "updatedAt": "2026-11-04T02:00:00Z"
-  },
-  {
-    "key": "FLAG_R2_DIRECT_PRESIGNED_UPLOAD",
-    "name": "Tải file lên Cloudflare R2 qua Presigned URL",
-    "description": "Cho phép client upload trực tiếp file audio/hình ảnh mà không nghẽn bandwidth BE.",
-    "enabled": true,
-    "category": "STORAGE",
-    "updatedAt": "2026-10-30T10:00:00Z"
-  }
-]
-```
+`AdminContentItemDto`: `id`, `title`, `code`, `module`, `type`, `status`,
+`versionNo`, `summary`, `author`, `reviewer`, `updatedAt`, `level`,
+`latestRevisionId`. `reviewer`, `level`, `latestRevisionId` có thể `null`.
+Thao tác revision dùng `latestRevisionId` từ item.
 
-### 4.2. Bật / Tắt Cờ tính năng (Toggle Feature Flag)
-- **Endpoint**: `PUT /api/v1/admin/system/feature-flags/{key}`
-- **Quyền hạn**: `SYSTEM_ADMIN`
-- **Request Headers**:
-  - `Content-Type: application/json`
-  - `X-XSRF-TOKEN: [csrf_token]`
-- **Request Body**:
-```json
-{
-  "enabled": false
-}
-```
-- **Response (200 OK)**:
-```json
-{
-  "key": "FLAG_AI_TUTOR_CONTEXT_v2",
-  "enabled": false,
-  "updatedAt": "2026-11-04T16:25:00Z"
-}
-```
+`AdminRevisionDto`: `revisionId`, `contentItemId`, `status`, `versionNo`,
+`reviewNote`, `publishedAt`, `updatedAt`. `reviewNote` và `publishedAt` có thể
+`null`.
 
-### 4.3. Giám sát Định mức Lưu trữ R2 & Hạn ngạch AI Token
-- **Endpoint**: `GET /api/v1/admin/system/quotas`
-- **Quyền hạn**: `SYSTEM_ADMIN`
-- **Response (200 OK)**:
-```json
-{
-  "storage": {
-    "bucket": "masterenglish-media-r2",
-    "usedBytes": 45980000000,
-    "maxBytes": 107374182400,
-    "usedFormatted": "42.8 GB",
-    "limitFormatted": "100 GB",
-    "percentUsed": 42.8,
-    "filesCount": 1420
-  },
-  "ai": {
-    "provider": "Anthropic / OpenAI Enterprise",
-    "model": "claude-3-5-sonnet & gpt-4o-mini",
-    "dailyTokenUsage": 1420500,
-    "dailyTokenLimit": 5000000,
-    "percentUsed": 28.4,
-    "resetHours": 6
-  }
-}
-```
+- Word draft: `lemma`, `partOfSpeech`, `cefrLevel`, `meaningVi` bắt buộc;
+  `definitionEn`, `ipa`, `examplesEn`, `examplesVi`, `sourceId`, `changeSummary`
+  tùy chọn theo DTO. UI yêu cầu nguồn ngay khi tạo để tránh draft không đủ
+  điều kiện xuất bản mà chưa có API bổ sung nguồn.
+- Deck draft: `title` bắt buộc; `description`, `level`, `wordSenseIds`,
+  `sourceId`, `changeSummary` tùy chọn theo DTO. UI yêu cầu ít nhất một nghĩa
+  đã xuất bản và nguồn trích dẫn.
+- Source: `title`, `sourceType` bắt buộc; các trường khác gồm `sourceUrl`,
+  `author`, `licenseCode`, `licenseUrl`, `attribution`, `permissionNote`.
+  UI hiện tạo nguồn `EXTERNAL` kèm giấy phép và ghi công.
+- `ContentSourceDto`: `id`, `title`, `sourceType`, `sourceUrl`, `author`,
+  `licenseCode`, `status`, `createdAt`.
 
-### 4.4. Truy vấn Sổ cái Kiểm toán Bất biến (Audit Logs Ledger)
-- **Endpoint**: `GET /api/v1/admin/system/audit-logs`
-- **Quyền hạn**: `SYSTEM_ADMIN`
-- **Query Parameters**:
-  - `search` *(string)*: Từ khóa tìm kiếm trong email, hành động, chi tiết.
-  - `entityType` *(string)*: `ALL`, `USER`, `ROLE`, `CONTENT`, `FEATURE_FLAG`, `SESSION`.
-  - `page` *(int)*: Số trang.
-  - `size` *(int)*: Số bản ghi.
-- **Response (200 OK)**:
-```json
-{
-  "content": [
-    {
-      "id": "log-101",
-      "actorEmail": "admin@masterenglish.edu.vn",
-      "action": "UPDATE_FEATURE_FLAG",
-      "entityType": "FEATURE_FLAG",
-      "entityId": "FLAG_AI_TUTOR_CONTEXT_v2",
-      "details": "Đổi trạng thái từ false -> true (Production Enabled)",
-      "ipAddress": "14.238.12.90",
-      "timestamp": "2026-11-04T12:30:15Z",
-      "severity": "INFO"
-    },
-    {
-      "id": "log-102",
-      "actorEmail": "admin@masterenglish.edu.vn",
-      "action": "LOCK_USER_ACCOUNT",
-      "entityType": "USER",
-      "entityId": "usr-04",
-      "details": "Khóa tài khoản suspicious.hacker@proton.me do vi phạm rate limit OTP",
-      "ipAddress": "14.238.12.90",
-      "timestamp": "2026-11-04T11:15:00Z",
-      "severity": "WARNING"
-    }
-  ],
-  "page": 0,
-  "size": 10,
-  "totalElements": 2,
-  "totalPages": 1
-}
-```
+Không có `/admin/content-items`, `/admin/content-items/{id}/status` hay
+`/admin/import-jobs` trong controller hiện tại. Không tạo nút gọi các endpoint
+này. Chưa có API lấy toàn bộ nội dung revision để biên tập hoặc thẩm định chi
+tiết; bản xem hiện chỉ có metadata và summary.
+
+Bộ chọn nghĩa dùng `GET /api/v1/vocabulary/words`, yêu cầu `LEARNER`.
+Tài khoản chỉ có quyền admin không tự động có quyền học; UI khóa tạo deck
+trong trường hợp này thay vì tự cấp vai trò. Backend cần API tra nghĩa dành
+cho quản trị nếu muốn bỏ giới hạn này.
+
+## Hệ thống — SYSTEM_ADMIN
+
+| Method | Endpoint                                   | Input                                  | Response                             |
+| ------ | ------------------------------------------ | -------------------------------------- | ------------------------------------ |
+| GET    | `/api/v1/admin/system/feature-flags`       | Không có                               | `200 FeatureFlagDto[]`               |
+| PUT    | `/api/v1/admin/system/feature-flags/{key}` | `{ enabled: boolean }`                 | `200 FeatureFlagDto`                 |
+| GET    | `/api/v1/admin/system/quotas/storage`      | Không có                               | `200 StorageQuotaDto`                |
+| GET    | `/api/v1/admin/system/quotas/ai`           | Không có                               | `200 AiQuotaMetricDto[]`             |
+| GET    | `/api/v1/admin/system/audit-logs`          | `search`, `entityType`, `page`, `size` | `200 PageResponse<AuditLogEntryDto>` |
+
+Quota tách hai API; không có endpoint gộp `/system/quotas`. Backend giữ alias
+`/meters/storage` và `/meters/ai-quota`, client dùng `/quotas/*`.
+`key` của cờ là chuỗi, không phải UUID.
+
+- Flag: `key`, `name`, `description`, `enabled`, `category`, `updatedAt`.
+- Storage: `bucket`, `usedBytes`, `maxBytes`, `usedFormatted`, `limitFormatted`,
+  `percentUsed`, `filesCount`.
+- AI: `provider`, `model`, `dailyTokenUsage`, `dailyTokenLimit`, `percentUsed`,
+  `resetHours`. Phản hồi là mảng, không gộp thành một provider giả.
+- Audit: `id`, `actorEmail`, `action`, `entityType`, `entityId`, `details`,
+  `ipAddress`, `timestamp`, `severity`; `entityId`, `ipAddress` có thể `null`.
+
+Mỗi phần có loading/lỗi/retry độc lập. Không dùng số liệu mẫu khi API lỗi.
+Mỗi cờ chỉ có một mutation đang chờ; cập nhật UI theo DTO server xác nhận.
+
+## Thông báo quản trị — SYSTEM_ADMIN
+
+| Method | Endpoint                                     | Input                                                              |
+| ------ | -------------------------------------------- | ------------------------------------------------------------------ |
+| GET    | `/api/v1/admin/notifications/deliveries`     | `status`, `channel`, `type`, `from`, `to`, `page`, `size`          |
+| GET    | `/api/v1/admin/notifications/rules`          | Không có                                                           |
+| GET    | `/api/v1/admin/notifications/rules/{ruleId}` | UUID                                                               |
+| PUT    | `/api/v1/admin/notifications/rules/{ruleId}` | `{ enabled, minimumGapMinutes }`                                   |
+| GET    | `/api/v1/admin/notifications/history`        | `userId`, `type`, `status`, `ruleId`, `from`, `to`, `page`, `size` |
+
+Danh sách deliveries/history dùng `PageResponse`. Lưu quy tắc nhận lại DTO xác nhận từ server. Ngày lọc được gửi dạng thời điểm ISO; không giả lập lịch sử hoặc lần gửi khi API lỗi.
+
+## Các luồng học tập dùng chung
+
+| Luồng               | Endpoint chính                                                                                                  |
+| ------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Tổng quan           | `GET /api/v1/dashboard`                                                                                         |
+| Ngữ pháp            | `GET /api/v1/grammar/topics`, `/topics/{topicId}/lessons`, `/lessons/{lessonId}`, `/topics/{topicId}/exercises` |
+| Bộ luyện TOEIC      | `GET /api/v1/practice-sets`, `/practice-sets/{practiceSetId}`                                                   |
+| Phiên luyện         | `POST /api/v1/attempts`, `GET /api/v1/attempts/{attemptId}`                                                     |
+| Lưu đáp án          | `PUT /api/v1/attempts/{attemptId}/answers/{snapshotId}`                                                         |
+| Nộp/kết quả         | `POST /api/v1/attempts/{attemptId}/submit`, `GET /api/v1/attempts/{attemptId}/results`                          |
+| Lịch sử/thống kê    | `GET /api/v1/attempts`, `GET /api/v1/attempts/statistics/topics?category=GRAMMAR&view=allocation`               |
+| Thông báo người học | `GET /api/v1/notifications`, `/notifications/unread-count`, `/notifications/reminders/history`                  |
+| Đánh dấu đã đọc     | `POST /api/v1/notifications/{id}/read`, `/notifications/read-all` — `204`                                       |
+| Tùy chọn thông báo  | `GET`, `PUT /api/v1/notifications/preferences`                                                                  |
+
+Tạo lượt dùng nguồn `GRAMMAR_TOPIC` hoặc `PRACTICE_SET`, chế độ `PRACTICE`. Tạo/lưu gửi UUID `Idempotency-Key`; lưu gửi `{ selectedOptionId, expectedVersion }`. Khi mất phản hồi hoặc nhận `2xx` không đọc được DTO, thử lại cùng key và payload. `409` tải lại trạng thái server; chặn nộp khi còn đáp án chưa xác nhận. API kết quả chỉ thành công sau khi nộp; giao diện đang làm không render đáp án đúng, lời giải hoặc transcript. Kết quả TOEIC hiển thị số câu đúng/độ chính xác, không tự quy đổi sang thang 990.
+
+Tùy chọn thông báo gồm `inAppEnabled`, `emailEnabled`, `contentNotificationsEnabled`, `dailyReminderTime`, `timezone`, `quietHoursStart`, `quietHoursEnd`. Giờ dùng `HH:mm`, múi giờ IANA; giờ yên lặng phải có đủ hai đầu và khác nhau. Route dùng query UUID và Suspense để tương thích static export; không thêm server runtime cho các màn mới.

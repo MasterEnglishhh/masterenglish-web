@@ -15,7 +15,7 @@ import {
 interface Call {
   url: string;
   method: string;
-  headers: Record<string, string>;
+  headers: Headers;
   body: unknown;
 }
 
@@ -37,7 +37,7 @@ function withFetch(
       const call: Call = {
         url,
         method: init?.method ?? "GET",
-        headers: (init?.headers ?? {}) as Record<string, string>,
+        headers: new Headers(init?.headers),
         body: init?.body ? JSON.parse(String(init.body)) : undefined,
       };
       calls.push(call);
@@ -59,6 +59,27 @@ const emptyPage = {
 };
 const ok = (body: unknown = emptyPage) =>
   new Response(JSON.stringify(body), { status: 200 });
+
+test("admin server failures do not expose internal details or messages", () =>
+  withFetch(
+    () =>
+      new Response(
+        JSON.stringify({
+          code: "INTERNAL_ERROR",
+          detail: "jdbc password=secret",
+          message: "internal host",
+        }),
+        { status: 500 }
+      ),
+    async () => {
+      const result = await fetchStorageQuota();
+      assert.equal(result.success, false);
+      if (!result.success) {
+        assert.doesNotMatch(result.error.message, /jdbc|secret|internal host/);
+        assert.equal(result.error.retryable, true);
+      }
+    }
+  ));
 
 test("user list converts the 1-based UI page to the 0-based API page and omits ALL filters", () =>
   withFetch(
@@ -134,7 +155,7 @@ test("mutations send the CSRF header and the body shapes from the admin contract
         ]
       );
       for (const call of calls)
-        assert.equal(call.headers["X-XSRF-TOKEN"], "test-csrf");
+        assert.equal(call.headers.get("X-XSRF-TOKEN"), "test-csrf");
       assert.deepEqual(calls[0].body, { roles: ["LEARNER", "CONTENT_ADMIN"] });
       assert.deepEqual(calls[1].body, {
         reason: "Vi phạm điều khoản",
@@ -154,6 +175,28 @@ test("quota endpoints use the /quotas/* paths from the contract", () =>
       await fetchAiQuotaMetrics();
       assert.equal(calls[0].url, "/api/v1/admin/system/quotas/storage");
       assert.equal(calls[1].url, "/api/v1/admin/system/quotas/ai");
+    }
+  ));
+
+test("quota trả 200 với DTO sai được báo lỗi", () =>
+  withFetch(
+    () => ok({ bucket: "media", percentUsed: "10" }),
+    async () => {
+      const result = await fetchStorageQuota();
+      assert.ok(!result.success);
+      assert.equal(result.error.code, "INVALID_RESPONSE");
+    }
+  ));
+
+test("chỉ gửi khóa cờ trong một đoạn URL", () =>
+  withFetch(
+    () => ok({}),
+    async (calls) => {
+      await updateFeatureFlag("ai /flag?x", false);
+      assert.equal(
+        calls[0].url,
+        "/api/v1/admin/system/feature-flags/ai%20%2Fflag%3Fx"
+      );
     }
   ));
 

@@ -30,6 +30,21 @@ export async function mockSession(page: Page, user: typeof learner | null) {
     route.fulfill({ json: { targetScore: 750, dailyMinutes: 45, targetDate: null } })
   );
   await page.route("**/api/v1/admin/overview/**", (route) => route.fulfill({ json: [] }));
+  await page.route("**/api/v1/dashboard", route => route.fulfill({ json: {
+    overview: { todayLocal: "2026-11-28", timezone: "Asia/Ho_Chi_Minh", streakDays: 0, activeToday: false, totalActivityDays: 0 },
+    vocabularyProgress: { studiedSenses: 0, masteredSenses: 0, dueNow: 0, savedSenses: 0, totalReviews: 0, reviewsLast7Days: 0 },
+    todayReview: { dueNow: 0, dueDecks: [] },
+    studyPlan: {
+      studyGoal: { configured: true, plannedDailyMinutes: 45 },
+      toeicTarget: { configured: true, currentScore: null, targetScore: 750, targetDate: null, status: "TARGET_ONLY_BASELINE_UNAVAILABLE" },
+      studySchedule: { available: false, status: "UNAVAILABLE_PENDING_MIGRATION" },
+      studySession: { trackingAvailable: true, todayActualMinutes: 0, dailyGoalCompleted: false, status: "NO_DATA" },
+    },
+    practiceStatistics: { completedGrammarLessons: 0, submittedPracticeAttempts: 0, toeicPracticeAvailable: false, recentAttempts: [] },
+    weaknessAnalysis: { status: "NO_DATA", periodDays: 30, minimumSampleSize: 20, weakTopics: [] },
+    recommendations: [], notificationSummary: { unreadCount: 0, available: true, status: "READY" },
+  } }));
+  await page.route("**/api/v1/grammar/topics?**", route => route.fulfill({ json: { items: [], page: 0, size: 12, totalItems: 0, totalPages: 0, hasNext: false } }));
 }
 
 export async function overflow(page: Page) {

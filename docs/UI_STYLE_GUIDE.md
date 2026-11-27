@@ -35,11 +35,11 @@ Mọi thiết kế mới trên cả 6 phân hệ phải bám sát cột **MƯỢ
 
 ### 1.3. Luật Trung Thực Sản Phẩm (Product Truthfulness — Không Ngoại Lệ)
 1. **Không bịa đặt dữ liệu:** Cấm tuyệt đối con số người dùng ảo, điểm đánh giá sao, lời chứng thực giả, logo đối tác chưa có, hay số liệu hệ thống dự phòng giả (khi API chưa tải xong dùng trạng thái tải; khi lỗi hiện thông báo kèm nút thử lại).
-2. **Gắn nhãn dữ liệu mẫu:** Mọi khung giao diện mô phỏng trên Landing Page và câu hỏi TOEIC Part 5 mẫu ở `/learn/toeic` **bắt buộc** gắn component `<SampleTag />` (`src/components/sample-tag.tsx` — **`Ví dụ minh họa`**) và chỉ hiển thị đúng các trường dữ liệu có thật trong sản phẩm.
+2. **Gắn nhãn dữ liệu mẫu:** Mọi khung giao diện mô phỏng trên Landing Page **bắt buộc** gắn component `<SampleTag />` (`src/components/sample-tag.tsx` — **`Ví dụ minh họa`**). `/learn/toeic` dùng bộ luyện từ API; không đưa câu mẫu vào luồng học thật.
 3. **Đúng 3 nhãn trạng thái (`<StatusBadge />` — `src/components/status-badge.tsx`):**
-   * `available` (**`Đã có`** — nền `--lime`, chữ `--ink`): Bộ từ vựng, tra từ, sổ tay lưu từ, phát âm từng từ vựng, ôn tập ngắt quãng SM-2 (`Quên / Khó / Đã nhớ`), mục tiêu cá nhân, kết quả học, đăng ký email OTP.
-   * `rolling` (**`Đang mở dần`** — nền `--peach`, chữ `--ink`): Luyện đọc TOEIC Part 5 (hiện mới có một câu mẫu).
-   * `soon` (**`Sắp ra mắt`** — nền `--lavender`, chữ `--indigo-deep`): Luyện nghe đủ Part 1–4, luyện đọc đủ Part 5–7, ngữ pháp hệ thống, AI Tutor.
+   * `available` (**`Đã có`** — nền `--lime`, chữ `--ink`): Từ vựng, ôn tập SM-2, mục tiêu cá nhân, ngữ pháp, bộ luyện TOEIC, kết quả, thông báo và xác thực. Nội dung từng Part phụ thuộc bộ đề backend xuất bản; nhãn không cam kết mọi Part đã có dữ liệu.
+   * `rolling` (**`Đang mở dần`** — nền `--peach`, chữ `--ink`): Chỉ dùng khi có phạm vi triển khai từng phần được mô tả cụ thể; không dùng cho dữ liệu mẫu.
+   * `soon` (**`Sắp ra mắt`** — nền `--lavender`, chữ `--indigo-deep`): AI Tutor và các chức năng chưa triển khai.
 4. **Minh bạch giới hạn kỹ năng:** Luôn nêu rõ nền tảng tập trung **Nghe & Đọc** (đúng hai kỹ năng TOEIC L&R) và **chưa có luyện phát âm/nói** (hiện chỉ có audio phát âm mẫu cho từng từ vựng).
 5. **Trung thực với hợp đồng API:** Khi `GET /api/v1/vocabulary/progress` chỉ trả tổng `reviewsLast7Days`, chỉ hiển thị con số tổng hợp — tuyệt đối không vẽ biểu đồ 7 cột giả lập theo từng ngày trên `/learn/results`.
 

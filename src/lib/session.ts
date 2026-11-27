@@ -8,11 +8,18 @@ export interface CsrfPayload {
   token: string;
 }
 
-export const requestOptions = {
-  credentials: "same-origin",
-  cache: "no-store",
-  headers: { Accept: "application/json, application/problem+json" },
-} satisfies RequestInit;
+export const sessionIdentity: { userId: string | null } = { userId: null };
+
+export function requestOptions(signal?: AbortSignal) {
+  const deadline = AbortSignal.timeout(30_000);
+  return {
+    credentials: "same-origin",
+    cache: "no-store",
+    redirect: "error",
+    headers: { Accept: "application/json, application/problem+json" },
+    signal: signal ? AbortSignal.any([signal, deadline]) : deadline,
+  } satisfies RequestInit;
+}
 
 let csrfRequest: Promise<CsrfPayload | null> | null = null;
 let refreshRequest: Promise<boolean> | null = null;
@@ -39,11 +46,11 @@ export function fetchCsrfToken(): Promise<CsrfPayload | null> {
   if (!csrfRequest) {
     csrfRequest = (async () => {
       try {
-        const res = await fetch("/api/v1/auth/csrf", requestOptions);
+        const res = await fetch("/api/v1/auth/csrf", requestOptions());
         if (!res.ok) return null;
         const data = (await res.json()) as Partial<CsrfPayload>;
         if (
-          typeof data.headerName === "string" &&
+          data.headerName === "X-XSRF-TOKEN" &&
           typeof data.token === "string" &&
           data.token
         ) {
@@ -66,26 +73,23 @@ export function fetchCsrfToken(): Promise<CsrfPayload | null> {
 }
 
 export async function postAuth(path: string, body?: object): Promise<Response> {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const csrf = await fetchCsrfToken();
-    if (!csrf)
-      throw new Error(
-        "Không thể kết nối đến máy chủ bảo mật. Vui lòng thử lại."
-      );
-    const res = await fetch(`/api/v1/auth/${path}`, {
-      ...requestOptions,
-      method: "POST",
-      headers: {
-        ...requestOptions.headers,
-        "Content-Type": "application/json",
-        [csrf.headerName]: csrf.token,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    // CSRF rejection occurs before the controller; bootstrap once and retry.
-    if (res.status !== 403 || attempt === 1) return res;
-  }
-  throw new Error("Không thể xác nhận phiên bảo mật.");
+  const actor = sessionIdentity.userId;
+  const csrf = await fetchCsrfToken();
+  if (!csrf)
+    throw new Error("Không thể kết nối đến máy chủ bảo mật. Vui lòng thử lại.");
+  // Backend dùng ACCESS_DENIED cho cả CSRF và quyền truy cập; không tự phát lại 403.
+  const options = requestOptions();
+  return fetch(`/api/v1/auth/${path}`, {
+    ...options,
+    method: "POST",
+    headers: {
+      ...options.headers,
+      ...(path === "logout" && actor ? { "X-Session-User": actor } : {}),
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+      [csrf.headerName]: csrf.token,
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
 }
 
 /** Single flight prevents rotating the same refresh token twice in one tab. */
@@ -94,7 +98,7 @@ export function refreshSession(): Promise<boolean> {
     refreshRequest = withAuthLock(async () => {
       // Another tab may have rotated the shared cookies while we waited.
       if (typeof navigator !== "undefined" && navigator.locks) {
-        const profile = await fetch("/api/v1/users/me", requestOptions);
+        const profile = await fetch("/api/v1/users/me", requestOptions());
         if (profile.ok) return true;
         if (profile.status !== 401)
           throw new Error("Không thể kiểm tra phiên đăng nhập.");

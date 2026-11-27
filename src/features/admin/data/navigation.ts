@@ -25,10 +25,21 @@ export const adminNavItems: NavItem[] = [
     kicker: "SYSTEM & AUDIT",
     iconName: "Sliders",
   },
+  {
+    href: "/admin/notifications",
+    label: "Thông báo & Nhắc học",
+    kicker: "NOTIFICATIONS",
+    iconName: "Bell",
+  },
 ];
 
 export function getAdminNavItems(isSystemAdmin: boolean) {
   return isSystemAdmin
     ? adminNavItems
-    : adminNavItems.filter(({ href }) => href !== "/admin/users" && href !== "/admin/system");
+    : adminNavItems.filter(
+        ({ href }) =>
+          !["/admin/users", "/admin/system", "/admin/notifications"].includes(
+            href
+          )
+      );
 }

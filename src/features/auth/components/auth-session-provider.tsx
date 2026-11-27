@@ -10,6 +10,7 @@ import {
 } from "react";
 import { getCurrentUser, logout as apiLogout } from "../lib/auth-client";
 import type { AuthUser } from "../types/auth";
+import { sessionIdentity } from "../../../lib/session";
 
 interface AuthSession {
   user: AuthUser | null;
@@ -37,6 +38,7 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
     try {
       const current = await getCurrentUser();
       if (requestRevision === revision.current) {
+        sessionIdentity.userId = current?.id ?? null;
         setUser(current);
         setError(null);
       }
@@ -83,6 +85,7 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
 
   const acceptLogin = useCallback((current: AuthUser) => {
     ++revision.current;
+    sessionIdentity.userId = current.id;
     setUser(current);
     setError(null);
     setIsLoading(false);
@@ -94,7 +97,10 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
     ++revision.current;
     try {
       const ok = await apiLogout();
-      if (ok) setUser(null);
+      if (ok) {
+        sessionIdentity.userId = null;
+        setUser(null);
+      }
       // The account control shows logout failure without hiding the learning UI.
       if (ok) setError(null);
       setIsLoading(false);
@@ -106,6 +112,7 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
 
   const clearSession = useCallback(() => {
     ++revision.current;
+    sessionIdentity.userId = null;
     setUser(null);
     setError(null);
     setIsLoading(false);
@@ -113,6 +120,7 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthSessionContext.Provider
+      key={user?.id ?? "anonymous"}
       value={{
         user,
         isAuthenticated: !!user,

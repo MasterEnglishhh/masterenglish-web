@@ -36,7 +36,7 @@ Chạy local bằng `npm run dev`, mở `http://127.0.0.1:3000`. Chạy `npm run
 
 Phong cách giao diện của toàn ứng dụng (token, chữ, kính, nút, trạng thái, chuyển động, linh vật, luật trung thực, bẫy đã gặp) được ghi ở [docs/UI_STYLE_GUIDE.md](docs/UI_STYLE_GUIDE.md); đọc trước khi sửa giao diện.
 
-**Trạng thái bản xem trước:** nội dung thẻ từ, bài ngữ pháp và câu TOEIC là dữ liệu minh họa. Lật thẻ, đánh giá ghi nhớ và xem lời giải chỉ thay đổi trong phiên trình duyệt; không lưu tiến độ hay kết quả. Các trang Ôn tập, Kết quả và AI Tutor hiển thị trạng thái chờ dữ liệu. Đăng ký kèm OTP, quên/đặt lại mật khẩu, đăng nhập, khôi phục phiên và đăng xuất đã nối API thật. Phân quyền Learner/Content Admin/System Admin, media thật và các luồng học tập có lưu dữ liệu sẽ được nối với backend ở giai đoạn tiếp theo.
+**Trạng thái tích hợp:** xác thực, tài khoản, mục tiêu học, từ vựng/ôn tập, dashboard, ngữ pháp, TOEIC, lịch sử/kết quả và thông báo người học/quản trị đã có client API. TOEIC đọc bộ luyện thật từ `/api/v1/practice-sets`; grammar và TOEIC dùng chung `/learn/practice?attempt=<uuid>`. Đáp án được lưu với version/idempotency và lời giải chỉ mở sau khi nộp. AI Tutor vẫn hiển thị trạng thái chưa triển khai. Dữ liệu minh họa trên landing được gắn nhãn riêng. Việc có client API không xác nhận môi trường staging đã được nghiệm thu.
 
 ## Xác thực với backend
 

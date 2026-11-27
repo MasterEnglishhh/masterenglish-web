@@ -1,0 +1,194 @@
+.notification-page {
+  min-width: 0;
+}
+.notification-heading {
+  margin-bottom: 24px;
+}
+.notification-heading h1 {
+  margin-block: 8px;
+  font-size: clamp(28px, 4vw, 42px);
+}
+.notification-heading p,
+.notification-card p {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.notification-tabs,
+.notification-toolbar,
+.notification-actions,
+.notification-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.notification-tabs {
+  margin-bottom: 24px;
+}
+.notification-tabs [aria-pressed="true"] {
+  background: var(--lavender-wash);
+  border-color: var(--indigo);
+  color: var(--indigo);
+}
+.notification-toolbar {
+  justify-content: space-between;
+  margin-block: 16px;
+}
+.notification-toolbar h2 {
+  margin: 0;
+}
+.notification-list {
+  padding: 0;
+  margin: 20px 0;
+  list-style: none;
+  display: grid;
+  gap: 16px;
+}
+.notification-card {
+  padding: 24px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.notification-card h2,
+.notification-card h3 {
+  margin-top: 0;
+}
+.notification-meta {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.notification-meta strong {
+  color: var(--ink);
+}
+.notification-body {
+  white-space: pre-wrap;
+}
+.notification-fields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.notification-fields legend {
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+.notification-fields label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  font-weight: 700;
+}
+.notification-fields input:not([type="checkbox"]),
+.notification-fields select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--glass-bg-solid);
+  color: var(--ink);
+  font: inherit;
+}
+.notification-fields input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--indigo);
+}
+.notification-fields .notification-check,
+.notification-checks label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+.notification-checks {
+  display: grid;
+  gap: 8px;
+}
+.notification-fields small {
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.notification-fields > button {
+  justify-self: start;
+}
+.notification-fields:disabled {
+  opacity: 0.7;
+}
+.notification-form-grid,
+.notification-rule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.notification-filter {
+  margin-bottom: 20px;
+}
+.notification-facts {
+  display: grid;
+  gap: 10px;
+}
+.notification-facts > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 150px) minmax(0, 1fr);
+  gap: 12px;
+}
+.notification-facts dt {
+  color: var(--text-muted);
+}
+.notification-facts dd {
+  margin: 0;
+}
+.notification-outcomes {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  margin-block: 16px;
+}
+.notification-outcomes li {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+.notification-outcomes span {
+  color: var(--text-muted);
+}
+.notification-page button:focus-visible,
+.notification-card input:focus-visible,
+.notification-card select:focus-visible {
+  outline: 3px solid var(--indigo);
+  outline-offset: 3px;
+}
+@media (max-width: 700px) {
+  .notification-card {
+    padding: 20px;
+  }
+  .notification-form-grid,
+  .notification-rule-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .notification-fields input:not([type="checkbox"]),
+  .notification-fields select {
+    font-size: 16px;
+  }
+  .notification-facts > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .notification-actions {
+    width: 100%;
+  }
+  .notification-actions button,
+  .notification-actions a {
+    flex: 1 1 auto;
+  }
+}

@@ -1,112 +1,193 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createLatestRequestTracker } from "@/lib/latest-request";
 import {
   fetchAiQuotaMetrics,
   fetchAuditLogs,
   fetchFeatureFlags,
   fetchStorageQuota,
   updateFeatureFlag,
+  type AdminResult,
 } from "../lib/admin-client";
-import type {
-  AiQuotaMetric,
-  AuditLogEntry,
-  FeatureFlag,
-  StorageQuota,
-} from "../types/system-policy";
+import type { AuditEntityFilter } from "../types/system-policy";
+
+const LOG_PAGE_SIZE = 50;
+
+interface SystemResourceState<T> {
+  data: T | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+function useSystemResource<T, Args extends unknown[]>(
+  fetchData: (...args: Args) => Promise<AdminResult<T>>
+) {
+  const [state, setState] = useState<SystemResourceState<T>>({
+    data: null,
+    isLoading: true,
+    error: null,
+  });
+  const requests = useRef(createLatestRequestTracker());
+
+  const reload = useCallback(
+    async (...args: Args) => {
+      const tracker = requests.current;
+      const ticket = tracker.begin();
+      setState((previous) => ({ ...previous, isLoading: true, error: null }));
+      try {
+        const result = await fetchData(...args);
+        if (!tracker.isCurrent(ticket)) return;
+        if (result.success)
+          setState({ data: result.data, isLoading: false, error: null });
+        else
+          setState((previous) => ({
+            ...previous,
+            isLoading: false,
+            error: result.error.message,
+          }));
+      } catch {
+        if (tracker.isCurrent(ticket)) {
+          setState((previous) => ({
+            ...previous,
+            isLoading: false,
+            error: "Không thể tải dữ liệu hệ thống.",
+          }));
+        }
+      }
+    },
+    [fetchData]
+  );
+
+  const invalidate = useCallback(() => requests.current.invalidate(), []);
+  const markLoading = () => {
+    invalidate();
+    setState((previous) => ({ ...previous, isLoading: true, error: null }));
+  };
+
+  useEffect(() => invalidate, [invalidate]);
+
+  return { ...state, reload, invalidate, markLoading, setState };
+}
 
 export function useAdminSystem() {
-  const [flags, setFlags] = useState<FeatureFlag[]>([]);
-  const [storageQuota, setStorageQuota] = useState<StorageQuota | null>(null);
-  const [aiQuota, setAiQuota] = useState<AiQuotaMetric[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
-  const [totalLogs, setTotalLogs] = useState(0);
-  const [logSearch, setLogSearch] = useState("");
-  const [selectedEntity, setSelectedEntity] = useState<string>("ALL");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const storage = useSystemResource(fetchStorageQuota);
+  const ai = useSystemResource(fetchAiQuotaMetrics);
+  const flags = useSystemResource(fetchFeatureFlags);
+  const logs = useSystemResource(fetchAuditLogs);
+  const [logFilter, setLogFilter] = useState({
+    search: "",
+    entity: "ALL" as AuditEntityFilter,
+    page: 1,
+  });
+  const [logRevision, setLogRevision] = useState(0);
+  const mutations = useRef(new Set<string>());
+  const [pendingFlags, setPendingFlags] = useState<ReadonlySet<string>>(
+    () => new Set()
+  );
+  const [flagErrors, setFlagErrors] = useState<ReadonlyMap<string, string>>(
+    () => new Map()
+  );
 
-  const loadSystemData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [flagsRes, storageRes, aiRes, logsRes] = await Promise.all([
-        fetchFeatureFlags(),
-        fetchStorageQuota(),
-        fetchAiQuotaMetrics(),
-        fetchAuditLogs(logSearch, selectedEntity, 0, 50),
-      ]);
-
-      if (flagsRes.success) setFlags(flagsRes.data);
-      if (storageRes.success) setStorageQuota(storageRes.data);
-      if (aiRes.success) setAiQuota(aiRes.data);
-      if (logsRes.success) {
-        setAuditLogs(logsRes.data.items);
-        setTotalLogs(logsRes.data.totalItems);
-      }
-    } catch {
-      setError("Không thể tải cấu hình hệ thống.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [logSearch, selectedEntity]);
+  const { reload: reloadStorage } = storage;
+  const { reload: reloadAi } = ai;
+  const { reload: reloadFlags } = flags;
+  const { reload: reloadLogs, invalidate: invalidateLogs } = logs;
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      loadSystemData();
-    }, 250);
+      void reloadStorage();
+      void reloadAi();
+      void reloadFlags();
+    }, 0);
     return () => clearTimeout(timer);
-  }, [loadSystemData]);
+  }, [reloadStorage, reloadAi, reloadFlags]);
 
-  const toggleFeatureFlag = async (flagKey: string) => {
-    const targetFlag = flags.find((f) => f.key === flagKey);
-    if (!targetFlag) return;
-    const nextState = !targetFlag.enabled;
-    setError(null);
+  const loadLogs = useCallback(
+    () =>
+      reloadLogs(
+        logFilter.search,
+        logFilter.entity,
+        logFilter.page - 1,
+        LOG_PAGE_SIZE
+      ),
+    [logFilter, reloadLogs]
+  );
 
-    // Optimistic UI update
-    setFlags((prev) =>
-      prev.map((f) => (f.key === flagKey ? { ...f, enabled: nextState } : f))
-    );
+  useEffect(() => {
+    const timer = setTimeout(loadLogs, 250);
+    return () => {
+      clearTimeout(timer);
+      invalidateLogs();
+    };
+  }, [loadLogs, logRevision, invalidateLogs]);
 
-    const res = await updateFeatureFlag(flagKey, nextState);
-    if (!res.success) {
-      // Revert if error
-      setFlags((prev) =>
-        prev.map((f) => (f.key === flagKey ? { ...f, enabled: !nextState } : f))
-      );
-      setError(`Không thể đổi trạng thái cờ: ${res.error.message}`);
-    } else {
-      // Reload audit logs to reflect the new update
-      const logsRes = await fetchAuditLogs(logSearch, selectedEntity, 0, 50);
-      if (logsRes.success) {
-        setAuditLogs(logsRes.data.items);
-        setTotalLogs(logsRes.data.totalItems);
+  const changeLogs = (filter: typeof logFilter) => {
+    logs.markLoading();
+    setLogFilter(filter);
+  };
+
+  const toggleFeatureFlag = async (key: string) => {
+    const target = flags.data?.find((flag) => flag.key === key);
+    if (!target || flags.isLoading || mutations.current.has(key)) return;
+    mutations.current.add(key);
+    setPendingFlags(new Set(mutations.current));
+    setFlagErrors((previous) => {
+      const next = new Map(previous);
+      next.delete(key);
+      return next;
+    });
+
+    try {
+      const result = await updateFeatureFlag(key, !target.enabled);
+      if (result.success) {
+        flags.setState((previous) => ({
+          ...previous,
+          data:
+            previous.data?.map((flag) =>
+              flag.key === key ? result.data : flag
+            ) ?? null,
+        }));
+        logs.markLoading();
+        setLogRevision((revision) => revision + 1);
+      } else {
+        setFlagErrors((previous) =>
+          new Map(previous).set(key, result.error.message)
+        );
       }
+    } catch {
+      setFlagErrors((previous) =>
+        new Map(previous).set(
+          key,
+          "Không thể đổi trạng thái cờ. Vui lòng thử lại."
+        )
+      );
+    } finally {
+      mutations.current.delete(key);
+      setPendingFlags(new Set(mutations.current));
     }
   };
 
   return {
-    flags,
-    storageQuota: storageQuota || {
-      bucket: "r2-masterenglish-media",
-      usedBytes: 0,
-      maxBytes: 107374182400,
-      usedFormatted: "0 B",
-      limitFormatted: "100 GB",
-      percentUsed: 0,
-      filesCount: 0,
+    storage,
+    ai,
+    flags: {
+      ...flags,
+      reload: () => {
+        if (!mutations.current.size) return reloadFlags();
+      },
     },
-    aiQuota,
-    auditLogs,
-    totalLogs,
-    logSearch,
-    setLogSearch,
-    selectedEntity,
-    setSelectedEntity,
-    isLoading,
-    error,
+    logs: { ...logs, reload: loadLogs },
+    logSearch: logFilter.search,
+    setLogSearch: (search: string) =>
+      changeLogs({ ...logFilter, search, page: 1 }),
+    selectedEntity: logFilter.entity,
+    setSelectedEntity: (entity: AuditEntityFilter) =>
+      changeLogs({ ...logFilter, entity, page: 1 }),
+    logPage: logFilter.page,
+    setLogPage: (page: number) => changeLogs({ ...logFilter, page }),
+    pendingFlags,
+    flagErrors,
     toggleFeatureFlag,
-    refreshSystem: loadSystemData,
   };
 }

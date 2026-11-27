@@ -2,11 +2,13 @@
 
 import { useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { vocabularyPageNumber } from "../lib/vocabulary-presentation";
+import { pageFromQuery } from "@/lib/pagination";
 import type { WordFilter, WordListMode } from "../hooks/use-word-list";
 import { WordDetail } from "./word-detail";
 import { WordFilterBar } from "./word-filter-bar";
 import { WordPage } from "./word-page";
+import { isUuid } from "@/lib/api-validation";
+import { ErrorState } from "@/components/error-state";
 
 /** Tra từ / sổ tay: giữ bộ lọc và trang trên URL, hiện chi tiết khi có `?word=`. */
 export function WordCatalog({ mode }: { mode: WordListMode }) {
@@ -20,7 +22,7 @@ export function WordCatalog({ mode }: { mode: WordListMode }) {
   };
   const [attempt, setAttempt] = useState(0);
   const wordId = search.get("word");
-  const page = vocabularyPageNumber(search.get("page"));
+  const page = pageFromQuery(search.get("page"));
   const navigate = useCallback(
     (updates: Record<string, string | null>) => {
       const next = new URLSearchParams(query);
@@ -37,6 +39,14 @@ export function WordCatalog({ mode }: { mode: WordListMode }) {
     [navigate]
   );
   const reload = () => setAttempt((value) => value + 1);
+  if (wordId && !isUuid(wordId))
+    return (
+      <ErrorState
+        message="Mã từ trong đường dẫn không hợp lệ."
+        onRetry={() => navigate({ word: null })}
+        retryLabel="Về danh sách từ"
+      />
+    );
   if (wordId)
     return (
       <WordDetail

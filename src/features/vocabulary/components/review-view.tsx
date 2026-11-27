@@ -9,12 +9,14 @@ import { FlashcardView } from "./flashcard-view";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import Link from "next/link";
+import { isUuid } from "@/lib/api-validation";
 
 export function ReviewView() {
   const params = useSearchParams();
   const { user } = useAuthSession();
   const deckId = params.get("deck") || undefined;
   const [attempt, setAttempt] = useState(0);
+  if (deckId && !isUuid(deckId)) return <ErrorState message="Mã bộ từ cần ôn không hợp lệ." />;
   return (
     <ReviewQueue
       key={[user?.id, deckId, attempt].join(":")}

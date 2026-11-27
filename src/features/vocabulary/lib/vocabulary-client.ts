@@ -1,4 +1,5 @@
 import { requestJson, type HttpOutcome } from "../../../lib/http.ts";
+import { isVocabularyResponse } from "./vocabulary-validation.ts";
 import type {
   DeckDetailDto,
   DeckDto,
@@ -117,7 +118,7 @@ async function requestWithAuth<T>(
   path: string,
   options?: Parameters<typeof requestJson>[1]
 ): Promise<VocabularyResult<T>> {
-  return toResult(await requestJson<T>(path, options));
+  return toResult(await requestJson<T>(path, { ...options, validate: value => isVocabularyResponse(path, value) }));
 }
 
 export function fetchWords(params?: {
@@ -147,14 +148,14 @@ export function fetchWords(params?: {
 export function fetchWordDetail(
   wordId: string
 ): Promise<VocabularyResult<WordDetailDto>> {
-  return requestWithAuth<WordDetailDto>(`/api/v1/vocabulary/words/${wordId}`);
+  return requestWithAuth<WordDetailDto>(`/api/v1/vocabulary/words/${encodeURIComponent(wordId)}`);
 }
 
 export function fetchSavedSenseIds(
   wordId: string
 ): Promise<VocabularyResult<string[]>> {
   return requestWithAuth<string[]>(
-    `/api/v1/vocabulary/words/${wordId}/saved-senses`
+    `/api/v1/vocabulary/words/${encodeURIComponent(wordId)}/saved-senses`
   );
 }
 
@@ -179,7 +180,7 @@ export function fetchDecks(params?: {
 export function fetchDeckDetail(
   deckId: string
 ): Promise<VocabularyResult<DeckDetailDto>> {
-  return requestWithAuth<DeckDetailDto>(`/api/v1/vocabulary/decks/${deckId}`);
+  return requestWithAuth<DeckDetailDto>(`/api/v1/vocabulary/decks/${encodeURIComponent(deckId)}`);
 }
 
 export function fetchDeckCards(
@@ -199,7 +200,7 @@ export function fetchDeckCards(
 
   const qs = query.toString();
   return requestWithAuth<PageResponse<WordSenseCardDto>>(
-    `/api/v1/vocabulary/decks/${deckId}/words${qs ? `?${qs}` : ""}`
+    `/api/v1/vocabulary/decks/${encodeURIComponent(deckId)}/words${qs ? `?${qs}` : ""}`
   );
 }
 
@@ -223,7 +224,7 @@ export function saveWordSense(
   senseId: string,
   signal?: AbortSignal
 ): Promise<VocabularyResult<void>> {
-  return requestWithAuth<void>(`/api/v1/vocabulary/saved-words/${senseId}`, {
+  return requestWithAuth<void>(`/api/v1/vocabulary/saved-words/${encodeURIComponent(senseId)}`, {
     method: "PUT",
     signal,
   });
@@ -233,7 +234,7 @@ export function unsaveWordSense(
   senseId: string,
   signal?: AbortSignal
 ): Promise<VocabularyResult<void>> {
-  return requestWithAuth<void>(`/api/v1/vocabulary/saved-words/${senseId}`, {
+  return requestWithAuth<void>(`/api/v1/vocabulary/saved-words/${encodeURIComponent(senseId)}`, {
     method: "DELETE",
     signal,
   });

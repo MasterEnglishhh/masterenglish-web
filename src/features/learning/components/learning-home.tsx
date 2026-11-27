@@ -6,8 +6,16 @@ import { Mascot } from "@/components/mascot";
 import { StatusBadge, type Status } from "@/components/status-badge";
 import { useAuthSession } from "@/features/auth";
 import { GoalCard } from "./goal-card";
+import { DashboardPanel } from "./dashboard-panel";
 
-const SHORTCUTS: { href: string; symbol: string; tone: string; title: string; body: string; status: Status }[] = [
+const SHORTCUTS: {
+  href: string;
+  symbol: string;
+  tone: string;
+  title: string;
+  body: string;
+  status: Status;
+}[] = [
   {
     href: "/learn/vocabulary",
     symbol: "Aa",
@@ -22,15 +30,15 @@ const SHORTCUTS: { href: string; symbol: string; tone: string; title: string; bo
     tone: "peach",
     title: "Hiểu rõ ngữ pháp",
     body: "Cấu trúc, ví dụ và cách dùng đặt cạnh nhau để dễ nhớ.",
-    status: "soon",
+    status: "available",
   },
   {
     href: "/learn/toeic",
     symbol: "▷",
     tone: "lavender",
     title: "Luyện TOEIC từng Part",
-    body: "Hiện có một câu Part 5 mẫu; các Part khác đang mở dần.",
-    status: "rolling",
+    body: "Chọn bộ luyện theo Part, làm bài và xem lại kết quả.",
+    status: "available",
   },
 ];
 
@@ -54,7 +62,10 @@ export function LearningHome() {
           {name ? `Chào ${name}, ` : "Chào bạn, "}
           <em>sẵn sàng học chứ?</em>
         </h1>
-        <p>Chọn một phần phù hợp với bạn hôm nay. Mục tiêu và tiến độ cá nhân nằm ngay bên dưới.</p>
+        <p>
+          Chọn một phần phù hợp với bạn hôm nay. Mục tiêu và tiến độ cá nhân nằm
+          ngay bên dưới.
+        </p>
       </header>
 
       <section className="glass-card learning-spotlight">
@@ -63,21 +74,36 @@ export function LearningHome() {
           <h2>
             Mỗi ngày một chút, <em>vững vàng hơn.</em>
           </h2>
-          <p>Bắt đầu bằng một phần ngắn: học vài từ mới, rồi ôn lại những từ sắp quên.</p>
+          <p>
+            Bắt đầu bằng một phần ngắn: học vài từ mới, rồi ôn lại những từ sắp
+            quên.
+          </p>
           <Link className="btn-lime" href="/learn/vocabulary">
             Khám phá từ vựng <ArrowIcon />
           </Link>
         </div>
-        <Mascot expression="happy" idSuffix="-home" className="spotlight-mascot" />
+        <Mascot
+          expression="happy"
+          idSuffix="-home"
+          className="spotlight-mascot"
+        />
       </section>
 
+      <DashboardPanel />
       <section className="dashboard-body">
         <div>
           <h2 className="dashboard-title">Học theo cách của bạn</h2>
           <div className="learning-feature-list">
             {SHORTCUTS.map((item) => (
-              <Link key={item.href} href={item.href} className="glass-card learning-feature">
-                <span className={`feature-symbol symbol-${item.tone}`} aria-hidden="true">
+              <Link
+                key={item.href}
+                href={item.href}
+                className="glass-card learning-feature"
+              >
+                <span
+                  className={`feature-symbol symbol-${item.tone}`}
+                  aria-hidden="true"
+                >
                   {item.symbol}
                 </span>
                 <span className="feature-text">

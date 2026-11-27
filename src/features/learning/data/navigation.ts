@@ -7,5 +7,6 @@ export const learningNavigation = [
   { href: "/learn/grammar", label: "Ngữ pháp", icon: "{}" },
   { href: "/learn/toeic", label: "Luyện TOEIC", icon: "▷" },
   { href: "/learn/results", label: "Kết quả", icon: "↗" },
+  { href: "/learn/notifications", label: "Thông báo", icon: "◉" },
   { href: "/learn/ai-tutor", label: "AI Tutor", icon: "✳" },
 ] as const satisfies readonly LearningNavigationItem[];
