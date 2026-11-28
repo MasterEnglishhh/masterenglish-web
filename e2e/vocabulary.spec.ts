@@ -62,7 +62,7 @@ test("ôn tập: Space lật thẻ, phím 3 chấm Đã nhớ, lỗi 500 đượ
   await expect(page.getByRole("button", { name: "Xem lại mặt trước thẻ" })).toHaveAttribute("aria-pressed", "true");
 
   await page.keyboard.press("3");
-  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "Dịch vụ học tập" })).toBeVisible();
   const retry = page.getByRole("button", { name: "Gửi lại cùng đánh giá" });
   await expect(retry).toBeVisible();
   await retry.click();

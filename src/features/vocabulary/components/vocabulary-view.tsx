@@ -10,6 +10,8 @@ import { useAuthSession } from "@/features/auth";
 import { DeckLibrary } from "./deck-library";
 import { DeckStudy } from "./deck-study";
 import { WordCatalog } from "./word-catalog";
+import { isUuid } from "@/lib/api-validation";
+import { ErrorState } from "@/components/error-state";
 
 const VIEWS = ["decks", "words", "saved"] as const;
 
@@ -25,6 +27,7 @@ export function VocabularyView() {
   const view: (typeof VIEWS)[number] =
     requestedView === "words" || requestedView === "saved" ? requestedView : "decks";
   useSlidingIndicator(tabsRef, indicatorRef, deckId ? "" : view);
+  if (deckId && !isUuid(deckId)) return <><h1>Bộ từ vựng</h1><ErrorState message="Mã bộ từ trong đường dẫn không hợp lệ." onRetry={back} retryLabel="Về danh sách bộ từ" /></>;
   if (deckId)
     return (
       <DeckStudy key={user?.id + ":" + deckId} deckId={deckId} back={back} />

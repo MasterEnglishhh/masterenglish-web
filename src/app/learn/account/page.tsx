@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AccountSettings, RequireAuth } from "@/features/auth";
 import { AccountGoalForm } from "@/features/learning";
+import { NotificationPreferencesCard } from "@/features/notifications";
 
 export const metadata: Metadata = { title: "Tài khoản | MasterEnglish" };
 
@@ -19,6 +20,7 @@ export default function AccountPage() {
         </div>
         <AccountSettings>
           <AccountGoalForm />
+          <NotificationPreferencesCard />
         </AccountSettings>
       </main>
     </RequireAuth>

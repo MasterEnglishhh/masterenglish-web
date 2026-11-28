@@ -1,6 +1,7 @@
 import { requestJson } from "../../../lib/http.ts";
 import { toUserResult, type UserResult } from "../../../lib/user-result.ts";
 import type { AuthUser } from "../types/auth.ts";
+import { isAuthUser } from "./auth-client.ts";
 
 export type AccountResult<T> = UserResult<T>;
 
@@ -14,18 +15,23 @@ const fieldLabels: Record<string, string> = {
 
 async function accountRequest<T>(
   path: string,
-  init: { method?: "GET" | "PUT" | "POST"; body?: object } = {}
+  init: Parameters<typeof requestJson>[1] = {}
 ): Promise<AccountResult<T>> {
   return toUserResult(await requestJson<T>(path, init), fieldLabels);
 }
 
-export function updateProfile(input: {
-  firstName: string;
-  lastName: string;
-  phone: string;
-}): Promise<AccountResult<AuthUser>> {
+export function updateProfile(
+  input: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+  },
+  signal?: AbortSignal
+): Promise<AccountResult<AuthUser>> {
   return accountRequest<AuthUser>("/api/v1/users/me", {
     method: "PUT",
+    signal,
+    validate: isAuthUser,
     body: {
       firstName: input.firstName.trim(),
       lastName: input.lastName.trim(),
@@ -35,12 +41,16 @@ export function updateProfile(input: {
 }
 
 /** On success the server revokes every session and clears the auth cookies. */
-export function changePassword(input: {
-  currentPassword: string;
-  newPassword: string;
-}): Promise<AccountResult<void>> {
+export function changePassword(
+  input: {
+    currentPassword: string;
+    newPassword: string;
+  },
+  signal?: AbortSignal
+): Promise<AccountResult<void>> {
   return accountRequest<void>("/api/v1/users/me/password", {
     method: "POST",
+    signal,
     body: input,
   });
 }

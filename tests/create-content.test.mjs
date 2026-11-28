@@ -9,6 +9,7 @@ const event = { preventDefault() {} };
 function setup(mocks) {
   const calls = { created: 0, closed: 0 };
   return mountHook(loadCreateContent(mocks), {
+    canCreateDeck: true,
     onCreated: () => calls.created++,
     onClose: () => calls.closed++,
   }).then((fixture) => ({ fixture, calls }));

@@ -35,11 +35,11 @@ Mọi thiết kế mới trên cả 6 phân hệ phải bám sát cột **MƯỢ
 
 ### 1.3. Luật Trung Thực Sản Phẩm (Product Truthfulness — Không Ngoại Lệ)
 1. **Không bịa đặt dữ liệu:** Cấm tuyệt đối con số người dùng ảo, điểm đánh giá sao, lời chứng thực giả, logo đối tác chưa có, hay số liệu hệ thống dự phòng giả (khi API chưa tải xong dùng trạng thái tải; khi lỗi hiện thông báo kèm nút thử lại).
-2. **Gắn nhãn dữ liệu mẫu:** Mọi khung giao diện mô phỏng trên Landing Page và câu hỏi TOEIC Part 5 mẫu ở `/learn/toeic` **bắt buộc** gắn component `<SampleTag />` (`src/components/sample-tag.tsx` — **`Ví dụ minh họa`**) và chỉ hiển thị đúng các trường dữ liệu có thật trong sản phẩm.
+2. **Gắn nhãn dữ liệu mẫu:** Mọi khung giao diện mô phỏng trên Landing Page **bắt buộc** gắn component `<SampleTag />` (`src/components/sample-tag.tsx` — **`Ví dụ minh họa`**). `/learn/toeic` dùng bộ luyện từ API; không đưa câu mẫu vào luồng học thật.
 3. **Đúng 3 nhãn trạng thái (`<StatusBadge />` — `src/components/status-badge.tsx`):**
-   * `available` (**`Đã có`** — nền `--lime`, chữ `--ink`): Bộ từ vựng, tra từ, sổ tay lưu từ, phát âm từng từ vựng, ôn tập ngắt quãng SM-2 (`Quên / Khó / Đã nhớ`), mục tiêu cá nhân, kết quả học, đăng ký email OTP.
-   * `rolling` (**`Đang mở dần`** — nền `--peach`, chữ `--ink`): Luyện đọc TOEIC Part 5 (hiện mới có một câu mẫu).
-   * `soon` (**`Sắp ra mắt`** — nền `--lavender`, chữ `--indigo-deep`): Luyện nghe đủ Part 1–4, luyện đọc đủ Part 5–7, ngữ pháp hệ thống, AI Tutor.
+   * `available` (**`Đã có`** — nền `--lime`, chữ `--ink`): Từ vựng, ôn tập SM-2, mục tiêu cá nhân, ngữ pháp, bộ luyện TOEIC, kết quả, thông báo và xác thực. Nội dung từng Part phụ thuộc bộ đề backend xuất bản; nhãn không cam kết mọi Part đã có dữ liệu.
+   * `rolling` (**`Đang mở dần`** — nền `--peach`, chữ `--ink`): Chỉ dùng khi có phạm vi triển khai từng phần được mô tả cụ thể; không dùng cho dữ liệu mẫu.
+   * `soon` (**`Sắp ra mắt`** — nền `--lavender`, chữ `--indigo-deep`): AI Tutor và các chức năng chưa triển khai.
 4. **Minh bạch giới hạn kỹ năng:** Luôn nêu rõ nền tảng tập trung **Nghe & Đọc** (đúng hai kỹ năng TOEIC L&R) và **chưa có luyện phát âm/nói** (hiện chỉ có audio phát âm mẫu cho từng từ vựng).
 5. **Trung thực với hợp đồng API:** Khi `GET /api/v1/vocabulary/progress` chỉ trả tổng `reviewsLast7Days`, chỉ hiển thị con số tổng hợp — tuyệt đối không vẽ biểu đồ 7 cột giả lập theo từng ngày trên `/learn/results`.
 
@@ -212,7 +212,7 @@ Mọi màu sắc thương hiệu, nền kính và đường cong chuyển độn
 3. **Learning (`/learn`, `/learn/grammar`, `/learn/ai-tutor` — `src/features/learning/`):**
    * `LearningShell`: sidebar kính cố định bên trái trên desktop (7 mục có `.slide-indicator` trượt dọc) + thanh pill cuộn ngang trên mobile (`.slide-indicator` trượt ngang).
    * `GoalCard` & `GoalEditModal`: tách bạch 4 trạng thái (`isLoading`, `loadError`, `goal === null`, `goal !== null`), bước điểm `5` (`10–990`), `5–240` phút/ngày, tính ngày theo giờ địa phương `toLocalIsoDate`.
-   * `GrammarPreview` & `AiTutorPreview`: gắn rõ `<StatusBadge status="soon" />` / `<SampleTag />`.
+   * `AiTutorPreview`: gắn rõ `<StatusBadge status="soon" />` / `<SampleTag />`.
 4. **Vocabulary, Review & Results (`/learn/vocabulary`, `/learn/review`, `/learn/results` — `src/features/vocabulary/`):**
    * 3 tab trượt ngang (`Bộ từ`, `Tra từ`, `Từ đã lưu`) đồng bộ `?view=...` và `?deck=...`; thẻ từ hiện đủ từ vựng, `.ipa-text`, CEFR, loại từ, nghĩa tiếng Việt, `PronunciationPlayer` (khóa `currentAudio` chống phát chồng, hỗ trợ `1x`/`0.8x`), `WordSaveButton`.
    * Flashcard 3D hai mặt cố định trong DOM (`key={wordSenseId}`), giữ nguyên cơ chế lũy đẳng SM-2 (`pendingRequest` giữ `reviewRequestId` khi lỗi mạng/`5xx`, không ép reload khi `429`, chế độ `previewOnly`).

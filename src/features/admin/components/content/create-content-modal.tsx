@@ -1,6 +1,7 @@
 "use client";
 
 import { Dialog } from "@/components/dialog";
+import { useAuthSession } from "@/features/auth";
 import { useCreateContent } from "../../hooks/use-create-content";
 import { DeckDraftFields } from "./deck-draft-fields";
 import { DeckSensePicker } from "./deck-sense-picker";
@@ -18,7 +19,9 @@ const TYPES = [
 ] as const;
 
 export function CreateContentModal({ onClose, onCreated }: CreateContentModalProps) {
-  const create = useCreateContent({ onCreated, onClose });
+  const { user } = useAuthSession();
+  const canCreateDeck = user?.roles.includes("LEARNER") === true;
+  const create = useCreateContent({ onCreated, onClose, canCreateDeck });
 
   return (
     <Dialog
@@ -43,6 +46,8 @@ export function CreateContentModal({ onClose, onCreated }: CreateContentModalPro
             key={type}
             type="button"
             aria-pressed={create.contentType === type}
+            disabled={create.isSubmitting === true || (type === "DECK" && !canCreateDeck)}
+            aria-describedby={type === "DECK" && !canCreateDeck ? "admin-deck-unavailable" : undefined}
             className={create.contentType === type ? "btn-lime btn-sm" : "btn-ghost btn-sm"}
             onClick={() => create.setContentType(type)}
           >
@@ -50,6 +55,9 @@ export function CreateContentModal({ onClose, onCreated }: CreateContentModalPro
           </button>
         ))}
       </div>
+      {!canCreateDeck && <p id="admin-deck-unavailable" className="admin-modal-note">
+        Bộ chọn thẻ cần vai trò LEARNER để tra cứu từ vựng đã xuất bản. Hệ thống chưa có API tra cứu dành cho quản trị viên.
+      </p>}
       <form onSubmit={create.submit} className="admin-form">
         {create.contentType === "WORD" ? (
           <WordDraftFields value={create.word} onChange={create.patchWord} />
@@ -61,7 +69,7 @@ export function CreateContentModal({ onClose, onCreated }: CreateContentModalPro
         )}
         <SourceSelect value={create.sourceId} onChange={create.setSourceId} />
         <div className="admin-form-actions">
-          <button type="button" className="btn-ghost btn-sm" onClick={onClose}>
+          <button type="button" className="btn-ghost btn-sm" disabled={create.isSubmitting} onClick={onClose}>
             Hủy
           </button>
           <button type="submit" disabled={create.isSubmitting} className="btn-lime btn-sm">

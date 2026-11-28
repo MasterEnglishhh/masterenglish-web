@@ -1,7 +1,7 @@
 // Components
 export { AuthSessionProvider } from "./components/auth-session-provider";
 export { RequireAuth } from "./components/require-auth";
-export { AccountMenu } from "./components/account-menu";
+export { AccountActions, AccountMenu } from "./components/account-menu";
 export { AccountSettings } from "./components/account-settings";
 export { AuthLayout } from "./components/auth-layout";
 export { AuthField } from "./components/auth-field";
@@ -27,7 +27,7 @@ export {
   verifyPasswordResetOtp,
   resetPassword,
 } from "./lib/auth-client";
-export { getSafeRedirectUrl } from "./lib/redirect";
+export { getRoleHome, getSafeRedirectUrl } from "./lib/redirect";
 
 // Types
 export type {

@@ -26,7 +26,7 @@ test("profile update sends CSRF, trims input and maps an empty phone to null", (
   return withFetch(
     (url, init) => {
       sent = { headers: init?.headers, body: init?.body };
-      return new Response(JSON.stringify({ id: "u1", email: "a@b.c" }), {
+      return new Response(JSON.stringify({ id: "u1", email: "a@b.c", displayName: "Nguyen An", roles: ["LEARNER"], firstName: "An", lastName: "Nguyen", phone: null, avatarMediaId: null }), {
         status: 200,
       });
     },
@@ -38,7 +38,7 @@ test("profile update sends CSRF, trims input and maps an empty phone to null", (
       });
       assert.equal(result.success, true);
       assert.equal(
-        (sent.headers as Record<string, string>)["X-XSRF-TOKEN"],
+        new Headers(sent.headers).get("X-XSRF-TOKEN"),
         "test-csrf"
       );
       assert.deepEqual(JSON.parse(String(sent.body)), {
@@ -49,6 +49,12 @@ test("profile update sends CSRF, trims input and maps an empty phone to null", (
     }
   );
 });
+
+test("profile update rejects a malformed success response", () => withFetch(
+  () => Response.json({ id: "u1", roles: null }), async () => {
+    assert.equal((await updateProfile({ firstName: "An", lastName: "Nguyen", phone: "" })).success, false);
+  }
+));
 
 test("change password surfaces the backend's Vietnamese reason and field errors", () =>
   withFetch(

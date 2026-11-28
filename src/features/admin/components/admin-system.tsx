@@ -16,16 +16,18 @@ export function AdminSystem() {
 
 function AdminSystemContent() {
   const {
-    error,
+    storage,
+    ai,
     flags,
-    storageQuota,
-    aiQuota,
-    auditLogs,
-    totalLogs,
+    logs,
     logSearch,
     setLogSearch,
     selectedEntity,
     setSelectedEntity,
+    logPage,
+    setLogPage,
+    pendingFlags,
+    flagErrors,
     toggleFeatureFlag,
   } = useAdminSystem();
 
@@ -43,22 +45,18 @@ function AdminSystemContent() {
         </p>
       </div>
 
-      {error && (
-        <div role="alert" className="admin-alert">
-          {error}
-        </div>
-      )}
-      <SystemMeters storage={storageQuota} ai={aiQuota} />
+      <SystemMeters storage={storage} ai={ai} />
 
-      <FeatureFlagsPanel flags={flags} onToggle={toggleFeatureFlag} />
+      <FeatureFlagsPanel flags={flags} pendingFlags={pendingFlags} flagErrors={flagErrors} onToggle={toggleFeatureFlag} />
 
       <AuditLogsTable
-        logs={auditLogs}
-        totalLogs={totalLogs}
+        logs={logs}
         search={logSearch}
         onSearchChange={setLogSearch}
         selectedEntity={selectedEntity}
         onEntityChange={setSelectedEntity}
+        page={logPage}
+        onPageChange={setLogPage}
       />
     </div>
   );

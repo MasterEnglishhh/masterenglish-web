@@ -38,11 +38,14 @@ const emptyDeck: DeckDraft = { title: "", description: "", level: "B1" };
 export function useCreateContent({
   onCreated,
   onClose,
+  canCreateDeck,
 }: {
   onCreated: () => void;
   onClose: () => void;
+  canCreateDeck: boolean;
 }) {
-  const [contentType, setContentType] = useState<ContentType>("WORD");
+  const [selectedType, setContentType] = useState<ContentType>("WORD");
+  const contentType = canCreateDeck ? selectedType : "WORD";
   const [word, setWord] = useState(emptyWord);
   const [deck, setDeck] = useState(emptyDeck);
   const [sourceId, setSourceId] = useState("");
@@ -111,7 +114,9 @@ export function useCreateContent({
 
   return {
     contentType,
-    setContentType,
+    setContentType: (type: ContentType) => {
+      if (type === "WORD" || canCreateDeck) setContentType(type);
+    },
     word,
     patchWord,
     deck,

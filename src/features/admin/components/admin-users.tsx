@@ -1,6 +1,7 @@
 "use client";
 
 import { useAdminUsers } from "../hooks/use-admin-users";
+import { ErrorState } from "@/components/error-state";
 import { UserTable } from "./users/user-table";
 import { RequireSystemAdmin } from "./require-admin";
 
@@ -19,12 +20,15 @@ function AdminUsersContent() {
     totalPages,
     isLoading,
     error,
+    mutationError,
+    revokeError,
     notice,
     filters,
     setFilters,
     toggleLockUser,
     updateUserRoles,
     revokeUserSessions,
+    refreshUsers,
   } = useAdminUsers();
 
   return (
@@ -42,10 +46,9 @@ function AdminUsersContent() {
       </div>
 
       {error && (
-        <div role="alert" className="admin-alert">
-          {error}
-        </div>
+        <ErrorState variant="inline" message={error} onRetry={refreshUsers} />
       )}
+      {revokeError && <ErrorState variant="inline" message={revokeError} />}
       {notice && (
         <div role="status" className="admin-notice">
           {notice}
@@ -57,6 +60,8 @@ function AdminUsersContent() {
         totalCount={totalCount}
         totalPages={totalPages}
         isLoading={isLoading}
+        hasLoadError={Boolean(error)}
+        mutationError={mutationError}
         filters={filters}
         onFilterChange={setFilters}
         onToggleLock={toggleLockUser}

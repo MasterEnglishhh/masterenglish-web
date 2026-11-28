@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useId } from "react";
 import { useAccountMenu } from "../hooks/use-account-menu";
+import { WorkspaceSwitcher } from "./workspace-switcher";
 import type { AuthUser } from "../types/auth";
 import "../styles/account-menu.css";
 
@@ -18,6 +20,7 @@ function roleOf(user: AuthUser) {
 
 /** Menu tài khoản dạng thả xuống: gọn ở mọi cỡ màn hình, không làm tràn thanh đầu trang. */
 export function AccountMenu() {
+  const pathname = usePathname();
   const { user, isLoading, open, toggle, close, rootRef, triggerRef, isSigningOut, logoutError, handleLogout } =
     useAccountMenu();
   const panelId = useId();
@@ -35,7 +38,9 @@ export function AccountMenu() {
   const name = displayName(user);
   const role = roleOf(user);
   const isAdmin = user.roles.some((r) => r === "SYSTEM_ADMIN" || r === "CONTENT_ADMIN");
-  const accountHref = isAdmin && !user.roles.includes("LEARNER") ? "/admin/account" : "/learn/account";
+  const inAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
+  const inLearning = pathname === "/learn" || pathname.startsWith("/learn/");
+  const accountHref = isAdmin && (inAdmin || !user.roles.includes("LEARNER")) ? "/admin/account" : "/learn/account";
 
   return (
     <div className="account-menu" ref={rootRef}>
@@ -65,7 +70,7 @@ export function AccountMenu() {
           <Link className="account-item" href={accountHref} onClick={() => close()}>
             Tài khoản của tôi
           </Link>
-          {isAdmin && (
+          {isAdmin && !inAdmin && !inLearning && (
             <Link className="account-item" href="/admin" onClick={() => close()}>
               Cổng quản trị ↗
             </Link>
@@ -85,6 +90,15 @@ export function AccountMenu() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+export function AccountActions() {
+  return (
+    <div className="header-account-actions">
+      <WorkspaceSwitcher />
+      <AccountMenu />
     </div>
   );
 }

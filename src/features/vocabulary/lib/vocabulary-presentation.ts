@@ -11,8 +11,3 @@ export const partOfSpeechLabels: Record<string, string> = {
   NUMERAL: "Số từ",
   PHRASE: "Cụm từ",
 };
-
-export function vocabularyPageNumber(value: string | null): number {
-  const number = Number(value);
-  return Number.isSafeInteger(number) && number >= 0 ? number : 0;
-}

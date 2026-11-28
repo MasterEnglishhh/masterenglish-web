@@ -164,12 +164,23 @@
 }
 .admin-topbar-breadcrumb {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 8px;
   color: var(--indigo-deep);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.1em;
+}
+.admin-topbar-breadcrumb span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 479px) {
+  .admin-topbar:has(.workspace-switcher) .brand-logo-word {
+    display: none;
+  }
 }
 .admin-topbar-brand {
   display: block;
@@ -501,11 +512,25 @@
 .admin-table-wrap {
   width: 100%;
   margin-top: 16px;
-  overflow-x: auto;
+  overflow: hidden;
   border: 1px solid var(--glass-line);
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: var(--glass-shadow);
+}
+.admin-table-scroll {
+  overflow-x: auto;
+}
+.admin-table-scroll:focus-visible {
+  outline-offset: -2px;
+}
+.admin-empty.empty-page {
+  min-height: 0;
+  margin-top: 16px;
+  padding: 20px;
+}
+.admin-empty.empty-page h2 {
+  font-size: 1rem;
 }
 .admin-table {
   width: 100%;
@@ -537,12 +562,6 @@
 }
 .admin-table .cell-right {
   text-align: right;
-}
-.admin-table .cell-empty {
-  padding: 40px 20px;
-  color: var(--text-muted);
-  font-weight: 600;
-  text-align: center;
 }
 .cell-name {
   font-weight: 800;
@@ -717,11 +736,15 @@
   transform: translateX(24px);
   color: var(--indigo);
 }
+.flag-switch:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
 
 /* Đồng hồ đo dung lượng */
 .meter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 16px;
   margin-bottom: 28px;
 }
@@ -740,10 +763,14 @@
   align-items: center;
   gap: 10px;
 }
-.meter-title h3 {
+.meter-title h2 {
   margin: 0;
   font-size: 1rem;
   font-weight: 900;
+}
+.meter-ai-list {
+  display: grid;
+  gap: 20px;
 }
 .meter-percent {
   color: var(--indigo-deep);

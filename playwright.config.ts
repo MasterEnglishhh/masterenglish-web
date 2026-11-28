@@ -10,7 +10,9 @@ const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${port}`;
  * Gặp dev server đang chạy ở cổng 3000 thì dùng lại, nếu không thì tự khởi động một cái.
  */
 export default defineConfig({
+  workers: process.env.CI ? undefined : 1,
   testDir: "./e2e",
+  testIgnore: ["**/real/**"],
   outputDir: "./test-results",
   reporter: [["list"]],
   use: {

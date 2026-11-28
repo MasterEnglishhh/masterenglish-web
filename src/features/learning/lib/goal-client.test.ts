@@ -2,6 +2,12 @@ import { test, mock } from "node:test";
 import assert from "node:assert/strict";
 import { fetchLearningGoal, updateLearningGoal } from "./goal-client.ts";
 
+test("goal response with missing or mistyped fields is not an empty goal", () => withFetch(
+  () => Response.json({ targetScore: "750", dailyMinutes: 30 }), async () => {
+    assert.equal((await fetchLearningGoal()).success, false);
+  }
+));
+
 function withFetch(
   handler: (url: string, init?: RequestInit) => Response,
   run: () => Promise<void>
@@ -69,7 +75,7 @@ test("saving sends CSRF, maps an empty date to null and labels field violations"
         targetDate: "",
       });
       assert.equal(
-        (sent.headers as Record<string, string>)["X-XSRF-TOKEN"],
+        new Headers(sent.headers).get("X-XSRF-TOKEN"),
         "test-csrf"
       );
       assert.deepEqual(JSON.parse(String(sent.body)), {

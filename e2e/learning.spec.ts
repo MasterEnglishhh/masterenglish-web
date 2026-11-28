@@ -55,9 +55,10 @@ test("lỗi tải mục tiêu: không hiện form trống cho người học lư
   );
   await page.goto("/learn");
   await expect(page.getByText("Chưa đặt mục tiêu")).toHaveCount(0);
-  const retry = page.getByRole("button", { name: /Thử|Tải lại/ }).first();
+  const goal = page.locator(".goal-card");
+  const retry = goal.getByRole("button", { name: "Thử lại", exact: true });
   await expect(retry).toBeVisible();
   failing = false;
   await retry.click();
-  await expect(page.getByText("750")).toBeVisible();
+  await expect(goal.locator(".goal-score")).toContainText("750");
 });

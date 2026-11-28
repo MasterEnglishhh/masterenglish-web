@@ -38,6 +38,7 @@ export function AdminContent() {
         totalCount={totalCount}
         totalPages={totalPages}
         isLoading={isLoading}
+        hasLoadError={Boolean(error)}
         filters={filters}
         onFilterChange={setFilters}
         onReload={refreshContent}

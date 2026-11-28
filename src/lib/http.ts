@@ -3,7 +3,13 @@
  * problem+json. File này không biết câu báo lỗi nào; mỗi feature tự đổi `HttpOutcome`
  * thành thông báo tiếng Việt của mình.
  */
-import { fetchCsrfToken, refreshSession, requestOptions } from "./session.ts";
+import {
+  fetchCsrfToken,
+  refreshSession,
+  requestOptions,
+  sessionIdentity,
+} from "./session.ts";
+import { isRecord } from "./api-validation.ts";
 
 export interface Problem {
   code?: string;
@@ -20,6 +26,27 @@ export interface PageResponse<T> {
   totalItems: number;
   totalPages: number;
   hasNext: boolean;
+}
+
+export async function readProblem(res: Response): Promise<Problem | null> {
+  const raw: unknown = await res.json().catch(() => null);
+  return isRecord(raw)
+    ? {
+        ...Object.fromEntries(
+          ["code", "detail", "message", "title"].flatMap((key) =>
+            typeof raw[key] === "string" ? [[key, raw[key]]] : []
+          )
+        ),
+        ...(Array.isArray(raw.errors)
+          ? {
+              errors: raw.errors.filter(
+                (v): v is { field: string } =>
+                  isRecord(v) && typeof v.field === "string"
+              ),
+            }
+          : {}),
+      }
+    : null;
 }
 
 /**
@@ -40,10 +67,34 @@ export type HttpOutcome<T> =
       retryAfterSeconds: number | null;
     };
 
+export function apiErrorMessage(outcome: HttpOutcome<unknown>): string {
+  if (outcome.ok) return "";
+  if (outcome.status === 401)
+    return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+  if (outcome.status === 403)
+    return "Bạn chưa có quyền thực hiện thao tác này.";
+  if (outcome.status === 404) return "Nội dung hoặc dịch vụ này chưa khả dụng.";
+  if (outcome.status === 409)
+    return "Dữ liệu đã thay đổi. Hãy tải lại trước khi tiếp tục.";
+  if (outcome.status === 429)
+    return outcome.retryAfterSeconds
+      ? `Vui lòng chờ ${outcome.retryAfterSeconds} giây rồi thử lại.`
+      : "Bạn thao tác quá nhanh. Vui lòng chờ rồi thử lại.";
+  if (outcome.problem?.code === "INVALID_RESPONSE")
+    return "Dữ liệu máy chủ chưa hợp lệ. Vui lòng thử lại sau.";
+  return outcome.status >= 400 &&
+    outcome.status < 500 &&
+    outcome.problem?.detail
+    ? outcome.problem.detail
+    : "Chưa kết nối được dịch vụ. Vui lòng thử lại.";
+}
+
 interface RequestJsonOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   signal?: AbortSignal;
+  headers?: HeadersInit;
+  validate?: (data: unknown) => boolean;
 }
 
 /** `Retry-After` là số giây hoặc ngày giờ HTTP; trả `null` nếu không dùng được. */
@@ -66,25 +117,42 @@ function failure(
 
 export async function requestJson<T>(
   path: string,
-  { method = "GET", body, signal }: RequestJsonOptions = {}
+  {
+    method = "GET",
+    body,
+    signal,
+    headers: customHeaders,
+    validate,
+  }: RequestJsonOptions = {}
 ): Promise<HttpOutcome<T>> {
+  const actor = sessionIdentity.userId;
   try {
+    if (
+      !path.startsWith("/api/") ||
+      /[\\\u0000-\u0020\u007f]/.test(path) ||
+      !new URL(path, "https://masterenglish.local").pathname.startsWith("/api/")
+    )
+      return failure("http", 400, { code: "INVALID_API_PATH" });
     // 401 làm mới phiên rồi thử lại đúng một lần; token CSRF được lấy lại vì cookie đã xoay.
     for (let attempt = 0; ; attempt++) {
-      const headers: Record<string, string> = { ...requestOptions.headers };
+      const defaults = requestOptions(signal);
+      const headers = new Headers(customHeaders);
+      for (const [name, value] of Object.entries(defaults.headers))
+        headers.set(name, value);
       if (method !== "GET") {
+        if (actor) headers.set("X-Session-User", actor);
+        else headers.delete("X-Session-User");
         const csrf = await fetchCsrfToken();
         if (!csrf) return failure("csrf", 403);
-        headers[csrf.headerName] = csrf.token;
-        headers["Content-Type"] = "application/json";
+        headers.set(csrf.headerName, csrf.token);
       }
+      if (body !== undefined) headers.set("Content-Type", "application/json");
 
       const res = await fetch(path, {
-        ...requestOptions,
+        ...defaults,
         method,
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
-        signal,
       });
 
       if (res.status === 401) {
@@ -93,13 +161,19 @@ export async function requestJson<T>(
       }
 
       if (res.ok) {
-        if (res.status === 204)
+        if (res.status === 204) {
+          if (validate && !validate(undefined))
+            return failure("http", res.status, { code: "INVALID_RESPONSE" });
           return { ok: true, status: 204, data: undefined as T };
+        }
         try {
+          const data: unknown = await res.json();
+          if (validate && !validate(data))
+            return failure("http", res.status, { code: "INVALID_RESPONSE" });
           return {
             ok: true,
             status: res.status,
-            data: (await res.json()) as T,
+            data: data as T,
           };
         } catch {
           // Ví dụ proxy cấu hình sai trả HTML với mã 200.
@@ -107,11 +181,10 @@ export async function requestJson<T>(
         }
       }
 
-      const problem = (await res.json().catch(() => null)) as Problem | null;
       return failure(
         "http",
         res.status,
-        problem,
+        await readProblem(res),
         retryAfterSeconds(res.headers.get("Retry-After"))
       );
     }

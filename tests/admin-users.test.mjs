@@ -46,29 +46,29 @@ test("tải danh sách sau khoảng chờ và ghi tổng số, số trang", asyn
 
 test("khóa tài khoản đang hoạt động: dùng lý do mặc định rồi tải lại danh sách", async () => {
   const { calls, run } = await setup();
-  await run((h) => h.toggleLockUser("a1"));
+  await run((h) => h.toggleLockUser(h.users[0]));
   assert.deepEqual(calls.slice(1, 3), [["lock", "a1", "Khóa thủ công bởi quản trị viên"], ["fetch", "", 1]]);
 });
 
 test("tài khoản đang khóa thì bấm sẽ mở khóa", async () => {
   const { calls, run } = await setup();
-  await run((h) => h.toggleLockUser("a2"));
+  await run((h) => h.toggleLockUser(h.users[1]));
   assert.deepEqual(calls[1], ["unlock", "a2"]);
 });
 
-test("khóa thất bại: báo lỗi trong trang, không dùng alert và không tải lại", async () => {
+test("khóa thất bại trả false với lý do lỗi và giữ danh sách", async () => {
   const { fixture, calls, run } = await setup({
     lockAdminUser: async () => ({ success: false, error: { message: "Không đủ quyền." } }),
   });
-  await run((h) => h.toggleLockUser("a1"));
-  assert.equal(fixture.current().error, "Khóa tài khoản thất bại: Không đủ quyền.");
+  await run(async (h) => assert.equal(await h.toggleLockUser(h.users[0]), false));
+  assert.equal(fixture.current().mutationError, "Khóa tài khoản thất bại. Không đủ quyền.");
   assert.equal(calls.length, 1);
 });
 
 test("đổi vai trò về rỗng bị chặn ngay ở client", async () => {
   const { fixture, calls, run } = await setup();
   await run((h) => h.updateUserRoles("a1", []));
-  assert.equal(fixture.current().error, "Tài khoản phải có tối thiểu 1 vai trò.");
+  assert.equal(fixture.current().mutationError, "Tài khoản phải có tối thiểu 1 vai trò.");
   assert.equal(calls.length, 1);
 });
 
@@ -92,4 +92,27 @@ test("phản hồi chậm của bộ lọc cũ không ghi đè kết quả của
   assert.deepEqual(fixture.current().users.map((u) => u.id), ["moi"]);
   await act(async () => release(page([user("cu")])));
   assert.deepEqual(fixture.current().users.map((u) => u.id), ["moi"]);
+});
+
+test("đổi bộ lọc người dùng đưa danh sách về trang đầu", async () => {
+  const { fixture, calls, run } = await setup();
+  await run((h) => h.setFilters({ ...h.filters, page: 3 }));
+  await act(async () => wait(DEBOUNCE));
+  await run((h) => h.setFilters({ ...h.filters, role: "CONTENT_ADMIN" }));
+  await act(async () => wait(DEBOUNCE));
+  assert.equal(fixture.current().filters.page, 1);
+  assert.deepEqual(calls.at(-1), ["fetch", "", 1]);
+});
+
+test("trang người dùng vượt phạm vi được tải lại ở trang cuối", async () => {
+  const pages = [];
+  const { fixture, run } = await setup({
+    fetchAdminUsers: async (filter) => (pages.push(filter.page), page(filter.page > 2 ? [] : [user("a1")], 2)),
+  });
+  await run((h) => h.setFilters({ ...h.filters, page: 3 }));
+  await act(async () => wait(DEBOUNCE));
+  await act(async () => wait(DEBOUNCE));
+  assert.deepEqual(pages, [1, 3, 2]);
+  assert.equal(fixture.current().filters.page, 2);
+  assert.equal(fixture.current().users[0].id, "a1");
 });

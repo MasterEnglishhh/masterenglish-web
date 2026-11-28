@@ -1,10 +1,13 @@
 import { RequireAuth } from "@/features/auth";
-import { GrammarPreview } from "@/features/learning";
+import { Suspense } from "react";
+import { GrammarPageView } from "@/features/grammar";
 
 export default function GrammarPage() {
   return (
     <RequireAuth>
-      <GrammarPreview />
+      <Suspense fallback={<p role="status">Đang mở ngữ pháp...</p>}>
+        <GrammarPageView />
+      </Suspense>
     </RequireAuth>
   );
 }

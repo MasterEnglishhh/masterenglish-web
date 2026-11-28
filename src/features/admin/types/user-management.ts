@@ -14,7 +14,7 @@ export interface AdminUser {
   activeSessionsCount: number;
   createdAt: string;
   lastLoginAt: string | null;
-  lockReason?: string;
+  lockReason?: string | null;
   lockedUntil?: string | null;
 }
 

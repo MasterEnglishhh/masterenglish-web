@@ -3,7 +3,7 @@ export interface FeatureFlag {
   name: string;
   description: string;
   enabled: boolean;
-  category: "AI" | "STORAGE" | "AUTH" | "LEARNING";
+  category: string;
   updatedAt: string;
 }
 
@@ -26,14 +26,22 @@ export interface AiQuotaMetric {
   resetHours: number;
 }
 
+export type AuditEntityFilter = "ALL" | "USER" | "WORD" | "DECK" | "CONTENT_REVISION" | "FEATURE_FLAG";
+
 export interface AuditLogEntry {
   id: string;
   actorEmail: string;
   action: string;
-  entityType: "USER" | "ROLE" | "CONTENT" | "FEATURE_FLAG" | "SESSION";
-  entityId: string;
+  entityType: string;
+  entityId?: string | null;
   details: string;
-  ipAddress: string;
+  ipAddress?: string | null;
   timestamp: string;
   severity: "INFO" | "WARNING" | "CRITICAL";
+}
+export interface SystemResource<T> {
+  data: T | null;
+  isLoading: boolean;
+  error: string | null;
+  reload: () => void;
 }

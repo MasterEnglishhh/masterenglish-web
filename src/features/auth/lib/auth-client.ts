@@ -2,7 +2,6 @@ import type {
   AuthResult,
   AuthUser,
   LoginCredentials,
-  ProblemDetail,
   RegisterCredentials,
   RegistrationChallenge,
   RegistrationIdentity,
@@ -21,15 +20,14 @@ import {
   waitForRefresh,
   withAuthLock,
 } from "../../../lib/session.ts";
-import { retryAfterSeconds } from "../../../lib/http.ts";
+import { readProblem, retryAfterSeconds } from "../../../lib/http.ts";
 
 // Giữ API cũ: các client khác và `auth/index.ts` vẫn import từ file này.
 export { fetchCsrfToken, refreshSession };
 
 let profileRequest: Promise<AuthUser | null> | null = null;
 
-
-function isAuthUser(data: unknown): data is AuthUser {
+export function isAuthUser(data: unknown): data is AuthUser {
   if (!data || typeof data !== "object") return false;
   const user = data as Partial<AuthUser>;
   return (
@@ -38,18 +36,18 @@ function isAuthUser(data: unknown): data is AuthUser {
     typeof user.email === "string" &&
     !!user.email &&
     Array.isArray(user.roles) &&
-    user.roles.every((role) => typeof role === "string")
+    user.roles.every((role) => typeof role === "string") &&
+    [
+      user.displayName,
+      user.firstName,
+      user.lastName,
+      user.phone,
+      user.avatarMediaId,
+    ].every(
+      (value) =>
+        value === undefined || value === null || typeof value === "string"
+    )
   );
-}
-
-async function parseProblemDetail(
-  res: Response
-): Promise<ProblemDetail | null> {
-  try {
-    return (await res.json()) as ProblemDetail;
-  } catch {
-    return null;
-  }
 }
 
 export async function login(
@@ -79,7 +77,7 @@ export async function login(
       };
     }
 
-    const problem = await parseProblemDetail(res);
+    const problem = await readProblem(res);
     if (res.status === 401) {
       return {
         success: false,
@@ -151,10 +149,10 @@ export async function login(
 export function getCurrentUser(): Promise<AuthUser | null> {
   if (!profileRequest) {
     profileRequest = (async () => {
-      let res = await fetch("/api/v1/users/me", requestOptions);
+      let res = await fetch("/api/v1/users/me", requestOptions());
       if (res.status === 401) {
         if (!(await refreshSession())) return null;
-        res = await fetch("/api/v1/users/me", requestOptions);
+        res = await fetch("/api/v1/users/me", requestOptions());
       }
       if (res.status === 401) return null;
       if (!res.ok)
@@ -183,8 +181,8 @@ export async function logout(): Promise<boolean> {
 }
 
 async function registrationError(res: Response) {
-  const problem = await parseProblemDetail(res);
-  const seconds = Number(res.headers.get("Retry-After"));
+  const problem = await readProblem(res);
+  const seconds = retryAfterSeconds(res.headers.get("Retry-After"));
   const fieldViolations: Record<string, string> = {};
   const labels: Record<string, string> = {
     firstName: "Vui lòng nhập tên hợp lệ (tối đa 30 ký tự).",
@@ -208,8 +206,7 @@ async function registrationError(res: Response) {
     retryable: res.status >= 500 || res.status === 403,
     ...(res.status === 429
       ? {
-          retryAfterSeconds:
-            Number.isFinite(seconds) && seconds > 0 ? seconds : 60,
+          retryAfterSeconds: seconds ?? 60,
         }
       : {}),
     ...(Object.keys(fieldViolations).length ? { fieldViolations } : {}),

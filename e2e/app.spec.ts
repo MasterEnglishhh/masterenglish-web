@@ -24,6 +24,7 @@ for (const { width, height } of viewports) {
     await page.setViewportSize({ width, height });
     for (const path of ["/learn", "/learn/toeic", "/learn/grammar"]) {
       await page.goto(path);
+      await expect(page.getByRole("status").filter({ hasText: "Đang kiểm tra phiên đăng nhập..." })).toBeHidden({ timeout: 15_000 });
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       expect(await overflow(page), `${path} tràn ngang`).toBeLessThanOrEqual(0);
     }
@@ -35,7 +36,7 @@ test("trang tổng quan chào đúng tên và có thẻ mục tiêu", async ({ p
   await mockSession(page, learner);
   await page.goto("/learn");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Chào An");
-  await expect(page.getByText("750")).toBeVisible();
+  await expect(page.locator(".goal-card .goal-score")).toContainText("750");
 });
 
 test("menu tài khoản: mở bằng bàn phím, Esc đóng và trả focus về nút", async ({ page }) => {

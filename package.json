@@ -11,6 +11,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:e2e": "playwright test",
+    "test:e2e:real": "node scripts/acceptance/run-frontend.mjs",
     "test": "node --test \"src/**/*.test.ts\" \"tests/*.test.ts\" \"tests/*.test.mjs\""
   },
   "dependencies": {

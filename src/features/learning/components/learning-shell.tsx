@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Brand } from "@/components/brand";
 import { Mascot } from "@/components/mascot";
-import { AccountMenu } from "@/features/auth";
+import { AccountActions } from "@/features/auth";
 import { LearningContentTransition } from "./learning-content-transition";
 import { LearningNav } from "./learning-nav";
 import "../styles/learning.css";
@@ -22,7 +22,11 @@ export function LearningShell({ children }: { children: React.ReactNode }) {
         </Suspense>
         <div className="sidebar-bottom">
           <div className="sidebar-note">
-            <Mascot expression="happy" idSuffix="-side" className="side-mascot" />
+            <Mascot
+              expression="happy"
+              idSuffix="-side"
+              className="side-mascot"
+            />
             <strong>Cứ bắt đầu từ một bước nhỏ.</strong>
             <p>Mọi hành trình đều có điểm khởi đầu.</p>
           </div>
@@ -38,7 +42,7 @@ export function LearningShell({ children }: { children: React.ReactNode }) {
             <Brand />
           </div>
           <span className="topbar-label">KHÔNG GIAN HỌC</span>
-          <AccountMenu />
+          <AccountActions />
         </header>
 
         <div className="mobile-learning-nav">
@@ -56,7 +60,6 @@ export function LearningShell({ children }: { children: React.ReactNode }) {
             <Link href="/learn/toeic">TOEIC</Link>
             <Link href="/">Trang chủ</Link>
           </nav>
-          <small>Bản xem trước: một phần nội dung là dữ liệu minh họa.</small>
         </footer>
       </div>
     </div>

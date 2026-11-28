@@ -16,7 +16,7 @@ function daysRemainingLabel(days: number | null): string | null {
 }
 
 /** Thẻ mục tiêu học tập: bốn trạng thái tách bạch là đang tải, lỗi tải, chưa đặt và đã có mục tiêu. */
-export function GoalCard() {
+export function GoalCard({ onSaved }: { onSaved?: () => void }) {
   const {
     goal,
     isLoading,
@@ -37,7 +37,11 @@ export function GoalCard() {
 
   if (isLoading) {
     return (
-      <aside className="glass-card goal-card" role="status" aria-label="Đang tải mục tiêu học tập">
+      <aside
+        className="glass-card goal-card"
+        role="status"
+        aria-label="Đang tải mục tiêu học tập"
+      >
         <span className="section-kicker">MỤC TIÊU CỦA BẠN</span>
         <Skeleton variant="line-lg" />
         <Skeleton />
@@ -55,7 +59,11 @@ export function GoalCard() {
         <div role="alert" className="goal-error">
           <h3>Chưa tải được mục tiêu</h3>
           <p>{loadError}</p>
-          <button type="button" className="btn-ghost btn-sm goal-wide" onClick={refreshGoal}>
+          <button
+            type="button"
+            className="btn-ghost btn-sm goal-wide"
+            onClick={refreshGoal}
+          >
             Thử lại
           </button>
         </div>
@@ -65,7 +73,9 @@ export function GoalCard() {
 
   const daysRemaining = goal?.targetDate ? daysUntil(goal.targetDate) : null;
   const remainingLabel = daysRemainingLabel(daysRemaining);
-  const scorePercent = goal ? Math.min(100, Math.round((goal.targetScore / GOAL_LIMITS.maxScore) * 100)) : 0;
+  const scorePercent = goal
+    ? Math.min(100, Math.round((goal.targetScore / GOAL_LIMITS.maxScore) * 100))
+    : 0;
 
   return (
     <>
@@ -78,7 +88,9 @@ export function GoalCard() {
             className="goal-edit-icon"
             onClick={open}
             title="Chỉnh sửa mục tiêu"
-            aria-label={goal ? "Chỉnh sửa mục tiêu học tập" : "Đặt mục tiêu học tập"}
+            aria-label={
+              goal ? "Chỉnh sửa mục tiêu học tập" : "Đặt mục tiêu học tập"
+            }
           >
             <Edit3 size={16} aria-hidden="true" />
           </button>
@@ -108,23 +120,38 @@ export function GoalCard() {
                   <Calendar size={16} aria-hidden="true" />
                   <span>
                     Hạn đích: <strong>{formatGoalDate(goal.targetDate)}</strong>
-                    {remainingLabel && <em className="goal-remaining">({remainingLabel})</em>}
+                    {remainingLabel && (
+                      <em className="goal-remaining">({remainingLabel})</em>
+                    )}
                   </span>
                 </li>
               )}
             </ul>
-            <button type="button" className="btn-ghost btn-sm goal-wide" onClick={open}>
+            <button
+              type="button"
+              className="btn-ghost btn-sm goal-wide"
+              onClick={open}
+            >
               Chỉnh sửa mục tiêu
             </button>
           </>
         ) : (
           <div className="goal-empty">
-            <Mascot expression="thinking" idSuffix="-goal" className="goal-empty-mascot" />
+            <Mascot
+              expression="thinking"
+              idSuffix="-goal"
+              className="goal-empty-mascot"
+            />
             <h3>Chưa đặt mục tiêu TOEIC</h3>
             <p>
-              Xác định điểm số mong muốn và thời gian ôn luyện mỗi ngày để hệ thống cá nhân hóa lộ trình cho bạn.
+              Xác định điểm số mong muốn và thời gian ôn luyện mỗi ngày để hệ
+              thống cá nhân hóa lộ trình cho bạn.
             </p>
-            <button type="button" className="btn-lime btn-sm goal-wide" onClick={open}>
+            <button
+              type="button"
+              className="btn-lime btn-sm goal-wide"
+              onClick={open}
+            >
               <Target size={14} aria-hidden="true" /> Đặt mục tiêu ngay
             </button>
           </div>
@@ -136,7 +163,11 @@ export function GoalCard() {
         isSubmitting={isSubmitting}
         serverError={saveError}
         onClose={closeModal}
-        onSave={saveGoal}
+        onSave={async (input) => {
+          const saved = await saveGoal(input);
+          if (saved) onSaved?.();
+          return saved;
+        }}
       />
     </>
   );

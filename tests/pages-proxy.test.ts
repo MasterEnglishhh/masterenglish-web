@@ -160,3 +160,99 @@ test("Pages proxy returns a generic failure without leaking upstream details", a
   assert.equal(response.headers.get("Cache-Control"), "no-store");
   assert.doesNotMatch(await response.text(), /credential|api\.example/);
 });
+
+test("Pages proxy blocks mutation redirects outside the API before a browser can replay the body", async () => {
+  for (const location of [
+    "https://evil.test/collect",
+    "/collect",
+    "//evil.test/collect",
+  ]) {
+    for (const status of [302, 303, 307, 308]) {
+      globalThis.fetch = async () =>
+        new Response(null, { status, headers: { Location: location } });
+      const response = await onRequest({
+        env,
+        request: new Request(origin + "/api/v1/auth/login", {
+          method: "POST",
+          body: "private password",
+        }),
+      });
+      assert.equal(response.status, 502, `${status} ${location}`);
+      assert.equal(response.headers.get("Location"), null);
+      assert.doesNotMatch(await response.text(), /evil\.test|private password/);
+    }
+  }
+});
+
+test("Pages proxy preserves GET pronunciation redirects and internal API mutation redirects", async () => {
+  globalThis.fetch = async () =>
+    new Response(null, {
+      status: 302,
+      headers: { Location: "https://media.example.test/audio.mp3" },
+    });
+  const playback = await onRequest({
+    env,
+    request: new Request(origin + "/api/v1/vocabulary/pronunciations/id"),
+  });
+  assert.equal(playback.status, 302);
+  assert.equal(
+    playback.headers.get("Location"),
+    "https://media.example.test/audio.mp3"
+  );
+  globalThis.fetch = async () =>
+    new Response(null, { status: 307, headers: { Location: "/api/new" } });
+  const internal = await onRequest({
+    env,
+    request: new Request(origin + "/api/old", {
+      method: "POST",
+      body: "private",
+    }),
+  });
+  assert.equal(internal.status, 307);
+  assert.equal(internal.headers.get("Location"), origin + "/api/new");
+});
+
+test("Pages proxy rejects oversized bodies even with a missing or false content length", async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return new Response("{}");
+  };
+  for (const contentLength of [null, "1", String(2 * 1024 * 1024 + 1)]) {
+    const headers = contentLength
+      ? { "Content-Length": contentLength }
+      : undefined;
+    const response = await onRequest({
+      env,
+      request: new Request(origin + "/api/write", {
+        method: "POST",
+        headers,
+        body: new Uint8Array(2 * 1024 * 1024 + 1),
+      }),
+    });
+    assert.equal(response.status, 413);
+    assert.equal(response.headers.get("Cache-Control"), "no-store");
+  }
+  assert.equal(calls, 0);
+});
+
+test("Pages proxy accepts exactly 2 MiB without altering bytes", async () => {
+  const payload = new Uint8Array(2 * 1024 * 1024).fill(42);
+  globalThis.fetch = async (_url, init) => {
+    const bytes = new Uint8Array(init?.body as ArrayBuffer);
+    assert.deepEqual(bytes, payload);
+    return new Response("{}");
+  };
+  assert.equal(
+    (
+      await onRequest({
+        env,
+        request: new Request(origin + "/api/write", {
+          method: "POST",
+          body: payload,
+        }),
+      })
+    ).status,
+    200
+  );
+});
