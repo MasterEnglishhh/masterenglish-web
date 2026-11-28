@@ -23,11 +23,10 @@ export function useLearnerNotifications({
         fetchUnreadCount(signal),
       ]);
       if (!feed.ok) return feed;
-      if (!unread.ok) return unread;
       return {
         ok: true as const,
         status: 200,
-        data: { feed: feed.data, count: unread.data.count },
+        data: { feed: feed.data, count: unread.ok ? unread.data.count : null },
       };
     },
     [page, type, unreadOnly]

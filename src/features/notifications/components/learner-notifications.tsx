@@ -82,7 +82,7 @@ function NotificationFeed() {
         <span role="status">
           {isLoading
             ? "Đang cập nhật số chưa đọc..."
-            : data
+            : data?.count != null
               ? `${data.count} chưa đọc`
               : "Chưa tải được số chưa đọc"}
         </span>

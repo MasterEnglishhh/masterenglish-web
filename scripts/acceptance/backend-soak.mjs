@@ -38,28 +38,39 @@ export async function runTimedWorkers(
   const deadline = performance.now() + durationMs;
   const counts = Array(concurrency).fill(0);
   let firstError;
+  let rejectStopped;
+  const stopped = new Promise((_, reject) => {
+    rejectStopped = reject;
+  });
+  const onAbort = () => rejectStopped(controller.signal.reason);
+  controller.signal.addEventListener("abort", onAbort, { once: true });
   const timer = setTimeout(() => {
     firstError ??= new Error("Soak drain deadline exceeded");
     controller.abort(firstError);
   }, durationMs + drainMs);
   try {
-    await Promise.allSettled(
-      counts.map(async (_, user) => {
-        try {
-          while (!controller.signal.aborted && performance.now() < deadline) {
-            await flow(user, controller.signal);
-            counts[user]++;
+    // shortcut: flow phải xử lý AbortSignal; dùng worker riêng khi cần cưỡng chế dừng công việc.
+    await Promise.race([
+      stopped,
+      Promise.allSettled(
+        counts.map(async (_, user) => {
+          try {
+            while (!controller.signal.aborted && performance.now() < deadline) {
+              await flow(user, controller.signal);
+              counts[user]++;
+            }
+          } catch (error) {
+            firstError ??= error;
+            controller.abort(firstError);
           }
-        } catch (error) {
-          firstError ??= error;
-          controller.abort(firstError);
-        }
-      })
-    );
+        })
+      ),
+    ]);
     if (firstError) throw firstError;
     controller.signal.throwIfAborted();
     return counts;
   } finally {
     clearTimeout(timer);
+    controller.signal.removeEventListener("abort", onAbort);
   }
 }

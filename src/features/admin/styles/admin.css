@@ -164,12 +164,23 @@
 }
 .admin-topbar-breadcrumb {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 8px;
   color: var(--indigo-deep);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.1em;
+}
+.admin-topbar-breadcrumb span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 479px) {
+  .admin-topbar:has(.workspace-switcher) .brand-logo-word {
+    display: none;
+  }
 }
 .admin-topbar-brand {
   display: block;

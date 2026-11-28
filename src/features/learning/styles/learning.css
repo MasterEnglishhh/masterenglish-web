@@ -155,6 +155,11 @@
 .mobile-brand {
   display: block;
 }
+@media (max-width: 479px) {
+  .learning-topbar:has(.workspace-switcher) .brand-logo-word {
+    display: none;
+  }
+}
 .topbar-label {
   display: none;
   color: var(--text-muted);

@@ -44,8 +44,17 @@ function Block({ block, index }: { block: LessonBlock; index: number }) {
 }
 
 export function LessonView({ id }: { id: string }) {
-  const { data, error, reload, isLoading, complete, isSaving, saveError } =
-    useGrammarLesson(id);
+  const {
+    data,
+    error,
+    reload,
+    isLoading,
+    begin,
+    complete,
+    isSaving,
+    saveError,
+    startError,
+  } = useGrammarLesson(id);
   const tracking = useStudySession("LESSON", id, Boolean(data));
   if (!data)
     return error ? (
@@ -100,7 +109,20 @@ export function LessonView({ id }: { id: string }) {
           {lesson.body.blocks.map((block, index) => (
             <Block key={index} block={block} index={index} />
           ))}
-          {saveError && <ErrorState message={saveError} variant="inline" />}
+          {saveError && (
+            <ErrorState
+              message={saveError}
+              onRetry={complete}
+              variant="inline"
+            />
+          )}
+          {startError && (
+            <ErrorState
+              message={startError}
+              onRetry={() => void begin()}
+              variant="inline"
+            />
+          )}
           <div className="study-actions">
             <button
               className="btn-primary"

@@ -34,6 +34,9 @@ export function useAdminContent() {
         setItems(res.data.items);
         setTotalCount(res.data.totalItems);
         setTotalPages(Math.max(1, res.data.totalPages));
+        if (filters.page > Math.max(1, res.data.totalPages)) {
+          setFilters({ ...filters, page: Math.max(1, res.data.totalPages) });
+        }
       } else {
         setError(res.error.message);
       }

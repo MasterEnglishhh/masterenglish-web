@@ -37,7 +37,7 @@ export function useStartAttempt() {
       if (!mounted.current) return;
       if (result.ok) {
         router.push(
-          `/learn/${result.data.status === "SUBMITTED" ? "results" : "practice"}?attempt=${encodeURIComponent(result.data.id)}`
+          `/learn/${result.data.status === "SUBMITTED" ? "results" : "practice"}?${result.data.status === "SUBMITTED" && current.body.source.type === "GRAMMAR_TOPIC" ? "view=grammar&" : ""}attempt=${encodeURIComponent(result.data.id)}`
         );
       } else {
         const code = result.problem?.code;
@@ -52,6 +52,11 @@ export function useStartAttempt() {
         );
         if (!isUncertain(result)) request.current = null;
         setHasRetry(Boolean(request.current));
+      }
+    } catch {
+      if (mounted.current) {
+        setFailure("Chưa xác nhận được lượt luyện. Hãy thử lại yêu cầu này.");
+        setHasRetry(true);
       }
     } finally {
       busy.current = false;

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { ArrowIcon } from "@/components/arrow-icon";
 import { Mascot } from "@/components/mascot";
 import { StatusBadge, type Status } from "@/components/status-badge";
@@ -53,6 +54,7 @@ function greetingName(user: ReturnType<typeof useAuthSession>["user"]) {
 export function LearningHome() {
   const { user } = useAuthSession();
   const name = greetingName(user);
+  const [goalRevision, setGoalRevision] = useState(0);
 
   return (
     <main className="learning-content">
@@ -89,7 +91,7 @@ export function LearningHome() {
         />
       </section>
 
-      <DashboardPanel />
+      <DashboardPanel key={goalRevision} />
       <section className="dashboard-body">
         <div>
           <h2 className="dashboard-title">Học theo cách của bạn</h2>
@@ -116,7 +118,7 @@ export function LearningHome() {
             ))}
           </div>
         </div>
-        <GoalCard />
+        <GoalCard onSaved={() => setGoalRevision((value) => value + 1)} />
       </section>
     </main>
   );

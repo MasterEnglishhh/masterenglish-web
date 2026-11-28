@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiErrorMessage, type HttpOutcome } from "@/lib/http";
 import { useApiResource } from "@/lib/use-api-resource";
 import {
@@ -24,15 +24,10 @@ export function useGrammarLesson(id: string) {
         fetchLessonProgress(signal),
       ]);
       if (!lesson.ok) return lesson;
-      let current = progress.ok
+      const current = progress.ok
         ? (progress.data.find((item) => item.lessonId === id) ?? null)
         : null;
-      let warning = progress.ok ? null : apiErrorMessage(progress);
-      if (progress.ok && current?.state !== "COMPLETED" && !signal.aborted) {
-        const updated = await updateLessonProgress(id, "IN_PROGRESS", signal);
-        if (updated.ok) current = updated.data;
-        else warning = apiErrorMessage(updated);
-      }
+      const warning = progress.ok ? null : apiErrorMessage(progress);
       return {
         ok: true,
         status: 200,
@@ -42,9 +37,47 @@ export function useGrammarLesson(id: string) {
     [id]
   );
   const resource = useApiResource(load);
+  const { reload } = resource;
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [startError, setStartError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const busy = useRef(false);
+  const begun = useRef<string | null>(null);
+  const begin = useCallback(
+    async (signal?: AbortSignal) => {
+      if (busy.current) return;
+      busy.current = true;
+      setIsSaving(true);
+      setStartError(null);
+      try {
+        const result = await updateLessonProgress(id, "IN_PROGRESS", signal);
+        if (signal?.aborted) return;
+        if (result.ok) reload();
+        else setStartError(apiErrorMessage(result));
+      } finally {
+        busy.current = false;
+        if (!signal?.aborted) setIsSaving(false);
+      }
+    },
+    [id, reload]
+  );
+  useEffect(() => {
+    const data = resource.data;
+    if (
+      !data ||
+      data.lesson.id !== id ||
+      data.warning ||
+      data.progress ||
+      begun.current === id
+    )
+      return;
+    const controller = new AbortController();
+    begun.current = id;
+    void begin(controller.signal);
+    return () => {
+      controller.abort();
+    };
+  }, [id, resource.data, begin]);
   async function complete() {
     if (busy.current) return;
     busy.current = true;
@@ -56,5 +89,5 @@ export function useGrammarLesson(id: string) {
     if (result.ok) resource.reload();
     else setSaveError(apiErrorMessage(result));
   }
-  return { ...resource, complete, isSaving, saveError };
+  return { ...resource, begin, complete, isSaving, saveError, startError };
 }

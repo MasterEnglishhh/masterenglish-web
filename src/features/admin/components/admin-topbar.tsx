@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Brand } from "@/components/brand";
-import { AccountMenu } from "@/features/auth";
+import { AccountActions } from "@/features/auth";
 
 function sectionLabel(pathname: string) {
   if (pathname.includes("/users")) return "TÀI KHOẢN & PHÂN QUYỀN";
@@ -23,7 +23,7 @@ export function AdminTopbar() {
         <span aria-hidden="true">✳</span>
         <span>{sectionLabel(pathname)}</span>
       </div>
-      <AccountMenu />
+      <AccountActions />
     </header>
   );
 }

@@ -6,19 +6,31 @@ const topicId = "10000000-0000-0000-0000-000000000001";
 
 async function fixture(startAttempt) {
   const paths = [];
+  const useStartAttempt = loadHook(
+    "src/features/practice/hooks/use-start-attempt.ts",
+    "useStartAttempt",
+    {
+      useRouter: () => ({ push: (path) => paths.push(path) }),
+      apiErrorMessage: () => "Chưa xác nhận được lượt luyện.",
+      isUncertain: (result) =>
+        !result.ok &&
+        (result.status === 0 ||
+          result.status >= 500 ||
+          (result.status >= 200 && result.status < 300)),
+      startAttempt,
+    }
+  );
   const useGrammarPractice = loadHook(
     "src/features/grammar/hooks/use-grammar-practice.ts",
     "useGrammarPractice",
     {
-      useRouter: () => ({ push: (path) => paths.push(path) }),
       useApiResource: () => ({
         data: { availableQuestions: 20 },
         error: null,
         reload() {},
       }),
       fetchExercises: async () => {},
-      apiErrorMessage: () => "Chưa xác nhận được lượt luyện.",
-      startAttempt,
+      useStartAttempt,
     }
   );
   return {

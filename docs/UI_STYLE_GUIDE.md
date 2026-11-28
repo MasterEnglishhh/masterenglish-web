@@ -212,7 +212,7 @@ Mọi màu sắc thương hiệu, nền kính và đường cong chuyển độn
 3. **Learning (`/learn`, `/learn/grammar`, `/learn/ai-tutor` — `src/features/learning/`):**
    * `LearningShell`: sidebar kính cố định bên trái trên desktop (7 mục có `.slide-indicator` trượt dọc) + thanh pill cuộn ngang trên mobile (`.slide-indicator` trượt ngang).
    * `GoalCard` & `GoalEditModal`: tách bạch 4 trạng thái (`isLoading`, `loadError`, `goal === null`, `goal !== null`), bước điểm `5` (`10–990`), `5–240` phút/ngày, tính ngày theo giờ địa phương `toLocalIsoDate`.
-   * `GrammarPreview` & `AiTutorPreview`: gắn rõ `<StatusBadge status="soon" />` / `<SampleTag />`.
+   * `AiTutorPreview`: gắn rõ `<StatusBadge status="soon" />` / `<SampleTag />`.
 4. **Vocabulary, Review & Results (`/learn/vocabulary`, `/learn/review`, `/learn/results` — `src/features/vocabulary/`):**
    * 3 tab trượt ngang (`Bộ từ`, `Tra từ`, `Từ đã lưu`) đồng bộ `?view=...` và `?deck=...`; thẻ từ hiện đủ từ vựng, `.ipa-text`, CEFR, loại từ, nghĩa tiếng Việt, `PronunciationPlayer` (khóa `currentAudio` chống phát chồng, hỗ trợ `1x`/`0.8x`), `WordSaveButton`.
    * Flashcard 3D hai mặt cố định trong DOM (`key={wordSenseId}`), giữ nguyên cơ chế lũy đẳng SM-2 (`pendingRequest` giữ `reviewRequestId` khi lỗi mạng/`5xx`, không ép reload khi `429`, chế độ `previewOnly`).

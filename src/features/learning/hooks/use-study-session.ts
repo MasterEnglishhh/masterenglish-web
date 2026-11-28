@@ -32,6 +32,11 @@ export function useStudySession(
     });
     const active = () =>
       document.visibilityState === "visible" && document.hasFocus();
+    function stop() {
+      stopped = true;
+      clearInterval(timer);
+      release?.();
+    }
     function tick() {
       if (disposed || stopped || !session || heartbeat) return;
       const current = session;
@@ -45,7 +50,7 @@ export function useStudySession(
           session = result.data;
           if (!disposed) setTodayActiveMinutes(result.data.todayActiveMinutes);
         } else {
-          stopped = true;
+          stop();
           if (!disposed)
             setWarning(
               result.status === 409
@@ -55,7 +60,7 @@ export function useStudySession(
         }
       })()
         .catch(() => {
-          stopped = true;
+          stop();
           if (!disposed) setWarning("Chưa ghi nhận được thời gian học.");
         })
         .finally(() => {
@@ -87,7 +92,7 @@ export function useStudySession(
     }
     // Khóa giữ trong suốt phiên, tab thứ hai không chiếm phiên đang ghi nhận.
     function wake() {
-      if (session) {
+      if (session && !stopped) {
         tick();
         return;
       }

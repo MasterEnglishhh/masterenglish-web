@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Brand } from "@/components/brand";
 import { Mascot } from "@/components/mascot";
-import { AccountMenu } from "@/features/auth";
+import { AccountActions } from "@/features/auth";
 import { LearningContentTransition } from "./learning-content-transition";
 import { LearningNav } from "./learning-nav";
 import "../styles/learning.css";
@@ -42,7 +42,7 @@ export function LearningShell({ children }: { children: React.ReactNode }) {
             <Brand />
           </div>
           <span className="topbar-label">KHÔNG GIAN HỌC</span>
-          <AccountMenu />
+          <AccountActions />
         </header>
 
         <div className="mobile-learning-nav">

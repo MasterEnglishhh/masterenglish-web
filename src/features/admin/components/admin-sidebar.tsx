@@ -92,11 +92,6 @@ export function AdminSidebar() {
               : "Soạn từ vựng, bộ thẻ và duyệt nội dung chờ xuất bản."}
           </p>
         </div>
-        {user?.roles.includes("LEARNER") && (
-          <Link href="/learn" className="admin-back-link">
-            <ArrowLeft size={14} aria-hidden="true" /> Khu vực học tập
-          </Link>
-        )}
         <Link href="/" className="admin-back-link">
           <ArrowLeft size={14} aria-hidden="true" /> Trang chủ
         </Link>
